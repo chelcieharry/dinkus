@@ -469,6 +469,115 @@ body { font-family: var(--font-body); background: var(--paper); color: var(--ink
 .journal-input{font-family:var(--font-body);font-size:13px;padding:8px 12px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);color:var(--ink);outline:none;}
 .journal-input:focus{border-color:var(--accent-2);}
 
+/* ─────────────────────────────────────────────────────────────
+   MOBILE — single media query, all phone overrides here.
+   Sidebar becomes a fixed bottom nav. Grids stack. Form rows
+   collapse. Touch targets bumped. iOS safe-area respected.
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .app { flex-direction: column; }
+  /* Sidebar → fixed bottom nav */
+  .sidebar {
+    position: fixed; bottom: 0; left: 0; right: 0; top: auto;
+    width: 100%; height: auto; min-height: 0;
+    flex-direction: row; padding: 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    overflow: visible; z-index: 200;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .sidebar-logo, .sidebar-footer { display: none; }
+  .sidebar nav { display: flex; flex: 1; }
+  .nav-item {
+    flex: 1 1 0; min-width: 0;
+    flex-direction: column; gap: 3px;
+    padding: 9px 4px 7px;
+    font-size: 9px; text-align: center;
+    border-left: none; border-top: 2px solid transparent;
+    line-height: 1.15;
+  }
+  .nav-item.active { border-left: none; border-top-color: var(--accent-2); }
+  .nav-icon { width: 18px !important; height: 18px !important; }
+
+  /* Main column gets full width + bottom padding for the nav clearance */
+  .main { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0)); }
+  .topbar { padding: 18px 16px 0; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+  .page-title { font-size: 22px !important; line-height: 1.15; }
+  .page-subtitle { font-size: 12px !important; }
+  .btn-add { font-size: 12px; padding: 8px 14px; }
+  .content { padding: 0 16px 24px; }
+
+  /* Stats — stack to 2 columns; the 5-card year row needs !important to beat inline style */
+  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+  .stat-card { padding: 14px 16px; }
+  .stat-value { font-size: 22px; }
+  .stat-block { padding: 14px 16px; }
+  .stats-two-col { grid-template-columns: 1fr; gap: 14px; }
+  .stats-three-col { grid-template-columns: 1fr; gap: 14px; }
+  .section { margin-bottom: 22px; }
+  .section-header { margin-bottom: 10px; }
+
+  /* Modals fill most of the viewport with tighter inner padding */
+  .modal-backdrop { padding: 12px 8px; align-items: flex-start; }
+  .modal { padding: 22px 18px; max-width: 100%; max-height: 95vh; margin-top: 12px; }
+
+  /* Form rows collapse */
+  .form-row.cols-2, .form-row.cols-3 { grid-template-columns: 1fr; }
+
+  /* Pill pickers — larger tap targets */
+  .pick-pill { padding: 6px 12px; font-size: 12px; }
+  .pill-picker { max-height: 140px; }
+
+  /* Library */
+  .shelf-toolbar { flex-wrap: wrap; gap: 8px; }
+  .shelf-toolbar input { min-width: 100%; flex: 1 0 100%; }
+  .shelf-toolbar select, .shelf-toolbar input { font-size: 12px; padding: 8px 10px; }
+  .lib-view-toggle { margin-left: auto; }
+  .cover-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 12px; }
+  .cover-tile-title { font-size: 10px; }
+  .cover-tile-author { font-size: 9px; }
+
+  /* Dashboard reading cards stack */
+  .reading-grid { grid-template-columns: 1fr; }
+
+  /* TBR — 3 across on phone */
+  .want-list { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .want-card { padding: 8px; gap: 6px; }
+  .want-title { font-size: 11px; line-height: 1.3; }
+  .want-author { font-size: 10px; }
+
+  /* Word of the day */
+  .word-of-day { padding: 14px 16px; gap: 14px; }
+  .word-of-day-asterisks { display: none; }
+  .word-of-day-word { font-size: 22px; }
+
+  /* Tropes + goals + series stack to a single column */
+  .tropes-grid { grid-template-columns: 1fr; }
+  .goals-grid { grid-template-columns: 1fr !important; gap: 12px; }
+  .series-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+
+  /* Tarot — let the card centre when text wraps below */
+  .tarot-layout { gap: 18px; justify-content: center; }
+  .tarot-flip { width: 200px; height: 310px; }
+  .tarot-text { min-width: 100%; padding-top: 0; }
+  .tarot-text-name { font-size: 24px; margin-bottom: 12px; }
+
+  /* BOTY calendar grid uses 2 columns on phone */
+  .boty-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Book table — tighter rows, smaller text */
+  .book-table th, .book-table td { padding: 8px 8px; font-size: 12px; }
+  .tbl-title { font-size: 12px; }
+
+  /* Heatmap is already horizontally scrollable; just ensure padding doesn't get cut */
+  .heatmap-wrap { padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
+
+  /* Range slider thumbs slightly bigger for fingers */
+  .log-slider::-webkit-slider-thumb { width: 26px; height: 26px; }
+  .log-slider::-moz-range-thumb { width: 26px; height: 26px; }
+
+  /* Reading log slider value cleaner */
+  .log-slider-value { min-width: 60px; font-size: 16px; }
+}
 </style>
 </head>
 <body>
@@ -678,6 +787,22 @@ body { font-family: var(--font-body); background: var(--paper); color: var(--ink
 </main>
 </div>
 
+<!-- ISBN scanner modal -->
+<div class="modal-backdrop" id="modal-scanner">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3 class="modal-title">scan an ISBN</h3>
+      <button class="modal-close" onclick="closeIsbnScanner()">×</button>
+    </div>
+    <div style="font-size:12px;color:var(--ink-3);margin-bottom:12px;">point the camera at the barcode on the back of a book. it'll auto-detect.</div>
+    <div id="scanner-container" style="width:100%;background:#000;border-radius:var(--radius);overflow:hidden;min-height:240px;"></div>
+    <div id="scanner-status" style="text-align:center;margin-top:12px;font-size:13px;color:var(--ink-2);min-height:18px;"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+      <button onclick="closeIsbnScanner()" style="font-family:var(--font-body);padding:9px 18px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Add/Edit Book Modal -->
 <div class="modal-backdrop" id="modal-book">
   <div class="modal">
@@ -686,8 +811,8 @@ body { font-family: var(--font-body); background: var(--paper); color: var(--ink
       <button class="modal-close" onclick="closeModal('modal-book')">×</button>
     </div>
     <div class="form-section-title">Search &amp; autofill</div>
-    <div class="form-row">
-      <div class="field">
+    <div class="form-row" style="align-items:flex-end;gap:10px;">
+      <div class="field" style="flex:1;">
         <label>Search by title</label>
         <div class="autofill-wrap">
           <input type="text" id="search-title" placeholder="Start typing…" autocomplete="off" oninput="handleTitleSearch(this.value)">
@@ -695,6 +820,7 @@ body { font-family: var(--font-body); background: var(--paper); color: var(--ink
           <div class="autofill-suggestions hidden" id="autofill-suggestions"></div>
         </div>
       </div>
+      <button type="button" onclick="openIsbnScanner()" style="font-family:var(--font-body);font-size:13px;padding:9px 14px;background:var(--paper-2);border:1px solid var(--paper-3);color:var(--ink-2);border-radius:var(--radius);cursor:pointer;white-space:nowrap;flex-shrink:0;">📷 scan</button>
     </div>
     <div class="divider"></div>
     <div class="form-section-title">Book details</div>
@@ -3664,6 +3790,111 @@ async function doSearch(val) {
   status.textContent = items.length ? note : 'no results';
   status.className = 'autofill-status';
 }
+// ── ISBN SCANNER ──────────────────────────────────────────────
+let _html5QrScanner = null;
+
+function _loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector('script[src="'+src+'"]')) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = () => reject(new Error('failed to load '+src));
+    document.head.appendChild(s);
+  });
+}
+
+async function openIsbnScanner() {
+  openModal('modal-scanner');
+  const status = document.getElementById('scanner-status');
+  status.textContent = 'loading scanner…';
+  try {
+    if (typeof Html5Qrcode === 'undefined') {
+      await _loadScript('https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js');
+    }
+  } catch (e) {
+    status.textContent = 'couldn\u2019t load the scanner. need internet.';
+    return;
+  }
+  status.textContent = 'starting camera…';
+  try {
+    _html5QrScanner = new Html5Qrcode('scanner-container');
+    await _html5QrScanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 280, height: 120 },
+        formatsToSupport: typeof Html5QrcodeSupportedFormats !== 'undefined'
+          ? [Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8]
+          : undefined },
+      _onIsbnDetected,
+      () => {}  // silent — barcode parse misses are normal between frames
+    );
+    status.textContent = 'point at a book\u2019s barcode';
+  } catch (e) {
+    status.textContent = 'camera unavailable: ' + (e.message || e);
+  }
+}
+
+async function closeIsbnScanner() {
+  if (_html5QrScanner) {
+    try { await _html5QrScanner.stop(); } catch (e) {}
+    try { _html5QrScanner.clear(); } catch (e) {}
+    _html5QrScanner = null;
+  }
+  closeModal('modal-scanner');
+}
+
+async function _onIsbnDetected(decodedText) {
+  if (!_html5QrScanner) return;  // already closing
+  // Validate ISBN-13 (starts 978/979, 13 digits)
+  const isbn = (decodedText || '').replace(/[^0-9]/g, '');
+  if (!/^97[89]\d{10}$/.test(isbn)) return;
+
+  const status = document.getElementById('scanner-status');
+  status.textContent = 'found ' + isbn + ' \u2014 looking it up\u2026';
+  await closeIsbnScanner();
+
+  const autofillStatus = document.getElementById('autofill-status');
+  autofillStatus.textContent = 'looking up ' + isbn + '\u2026';
+  autofillStatus.className = 'autofill-status loading';
+
+  let item = await _lookupIsbnGoogle(isbn);
+  if (!item) item = await _lookupIsbnOpenLibrary(isbn);
+
+  if (item) {
+    autofill(item);
+  } else {
+    autofillStatus.textContent = 'no match for ' + isbn;
+    autofillStatus.className = 'autofill-status';
+  }
+}
+
+async function _lookupIsbnGoogle(isbn) {
+  try {
+    const r = await fetch('https://www.googleapis.com/books/v1/volumes?q=isbn:' + isbn);
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d.items && d.items.length ? d.items[0] : null;
+  } catch (e) { return null; }
+}
+
+async function _lookupIsbnOpenLibrary(isbn) {
+  try {
+    const r = await fetch('https://openlibrary.org/api/books?bibkeys=ISBN:' + isbn + '&format=json&jscmd=data');
+    if (!r.ok) return null;
+    const d = await r.json();
+    const data = d['ISBN:' + isbn];
+    if (!data) return null;
+    return {
+      volumeInfo: {
+        title: data.title || '',
+        authors: (data.authors || []).map(a => a.name).filter(Boolean),
+        publishedDate: data.publish_date || '',
+        pageCount: data.number_of_pages || undefined,
+        categories: (data.subjects || []).slice(0, 5).map(s => s.name || s).filter(Boolean),
+        imageLinks: data.cover ? { thumbnail: data.cover.medium || data.cover.small || data.cover.large } : undefined,
+      },
+    };
+  } catch (e) { return null; }
+}
+
 // Pull "Title (Series Name, #N)" / "(Series Name Book N)" / "(Series Name #N)" out of a raw title
 function parseSeriesFromTitle(raw) {
   if (!raw) return null;
