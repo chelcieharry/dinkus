@@ -108,8 +108,9 @@ body { font-family: var(--font-body); background: var(--paper); color: var(--ink
 .oracle-section { margin-bottom: 36px; }
 .oracle-section-title { font-family: var(--font-display); font-size: 17px; font-style: italic; font-weight: 500; color: var(--ink); margin-bottom: 14px; }
 .oracle-section-sub { font-size: 12px; color: var(--ink-3); margin-bottom: 16px; line-height: 1.5; }
-.tarot-layout { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 18px; }
-.tarot-flip { perspective: 1200px; width: 220px; height: 340px; cursor: pointer; flex-shrink: 0; }
+.tarot-layout { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 12px; }
+.tarot-flip { perspective: 1200px; width: 260px; aspect-ratio: 2/3; cursor: pointer; flex-shrink: 0; }
+.tarot-caption { font-family: var(--font-display); font-style: italic; font-size: 13px; color: var(--ink-3); line-height: 1.5; }
 .tarot-inner { position: relative; width: 100%; height: 100%; transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
 .tarot-flip.flipped .tarot-inner { transform: rotateY(180deg); }
 .tarot-front, .tarot-back { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius-lg); display: flex; flex-direction: column; box-shadow: var(--shadow-lg); overflow: hidden; }
@@ -560,9 +561,9 @@ body { font-family: var(--font-body); background: var(--paper); color: var(--ink
   .goals-grid { grid-template-columns: 1fr !important; gap: 12px; }
   .series-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 
-  /* Tarot — let the card centre when text wraps below */
+  /* Tarot — card takes ~2/3 of phone screen so the art reads properly */
   .tarot-layout { gap: 18px; justify-content: center; }
-  .tarot-flip { width: 200px; height: 310px; }
+  .tarot-flip { width: min(66vw, 320px); height: auto; }
   .tarot-text { min-width: 100%; padding-top: 0; }
   .tarot-text-name { font-size: 24px; margin-bottom: 12px; }
 
@@ -758,7 +759,6 @@ body { font-family: var(--font-body); background: var(--paper); color: var(--ink
 <div id="page-oracle" class="hidden">
   <div class="topbar">
     <div><h2 class="page-title">your reading horoscope</h2><p class="page-subtitle">data dressed as divination. the shelves are reading you back.</p></div>
-    <button class="btn-add" onclick="openOracleSettings()" style="background:var(--paper-2);color:var(--ink-2);border:1px solid var(--paper-3);">⚙ settings</button>
   </div>
   <div class="content">
     <div id="oracle-content"></div>
@@ -2909,10 +2909,7 @@ function flipTarot() {
   const today = new Date().toISOString().split('T')[0];
   const card = pickTarot(today);
   flipEl.classList.toggle('flipped');
-  const nowFlipped = flipEl.classList.contains('flipped');
-  _renderTarotText(card, nowFlipped);
-  if (nowFlipped) localStorage.setItem('rj_tarot_revealed', today);
-  else localStorage.removeItem('rj_tarot_revealed');
+  _renderTarotText(card, flipEl.classList.contains('flipped'));
 }
 
 function reshuffleTarot() {
@@ -3185,7 +3182,6 @@ async function renderOracle() {
   wrap.innerHTML =
     // Tarot section — card on the left (flippable, art placeholder for now), text on the right
     (() => {
-      const revealedToday = localStorage.getItem('rj_tarot_revealed') === today;
       const cardArt = card.image
         ? '<div class="tarot-back-image" style="background-image:url(\'' + card.image + '\');"></div>'
         : '<div class="tarot-back-placeholder">'
@@ -3194,28 +3190,18 @@ async function renderOracle() {
             + '<div class="tarot-back-placeholder-note">art incoming</div>'
           + '</div>';
       return '<div class="oracle-section">'
-        + '<div class="oracle-section-title">your card today</div>'
-        + '<div class="oracle-section-sub">drawn from the last sixty days of reading. tap to flip. shuffle to see what else the deck has to say.</div>'
         + '<div class="tarot-layout">'
-          + '<div class="tarot-flip' + (revealedToday ? ' flipped' : '') + '" id="tarot-flip" onclick="flipTarot()">'
+          + '<div class="tarot-flip" id="tarot-flip" onclick="flipTarot()">'
             + '<div class="tarot-inner">'
-              + '<div class="tarot-front">'
-                + '<div class="tarot-front-emoji">🔮</div>'
-                + '<div class="tarot-front-label">tap to draw</div>'
-              + '</div>'
+              + '<div class="tarot-front"></div>'
               + '<div class="tarot-back">' + cardArt + '</div>'
             + '</div>'
           + '</div>'
           + '<div class="tarot-text" id="tarot-text">'
-            + (revealedToday
-                ? '<div class="tarot-text-name">' + card.name + '</div>'
-                  + '<div class="tarot-text-meaning">' + card.meaning + '</div>'
-                  + '<div class="tarot-text-prophecy-label">this week\u2019s prophecy</div>'
-                  + '<div class="tarot-text-prophecy">' + card.prophecy + '</div>'
-                : '<div class="tarot-text-prompt">the deck is shuffled. tap the card to see what it has to say.</div>')
+            + '<div class="tarot-text-prompt">the deck is shuffled. tap the card to see what it has to say.</div>'
           + '</div>'
         + '</div>'
-        + '<div class="tarot-actions"><button class="tarot-btn" onclick="reshuffleTarot()">↻ shuffle / draw again</button></div>'
+        + '<div class="tarot-caption">drawn from the last sixty days of reading · tap to draw, tap again to reset.</div>'
       + '</div>';
     })()
     +
