@@ -884,8 +884,16 @@ body { font-family: var(--font-body); background: var(--paper); color: var(--ink
     <div class="divider"></div>
     <div class="form-section-title">Author</div>
     <div class="form-row cols-2">
-      <div class="field"><label>Nationality</label><input type="text" id="f-nationality" placeholder="e.g. Irish"></div>
-      <div class="field"><label>Gender</label><input type="text" id="f-gender" placeholder="e.g. Female"></div>
+      <div class="field">
+        <label>Nationality</label>
+        <input type="text" id="f-nationality" list="nationality-list" placeholder="start typing — or use 'X / Y' for dual">
+        <datalist id="nationality-list"></datalist>
+      </div>
+      <div class="field">
+        <label>Gender</label>
+        <select id="f-gender" style="font-family:var(--font-body);font-size:13px;padding:8px 10px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);color:var(--ink);outline:none;width:100%;">
+        </select>
+      </div>
     </div>
     <div class="form-row">
       <div class="field" style="flex:1;"><label>Race / ethnicity</label><input type="text" id="f-race" placeholder="click below; multi-select for mixed heritage"></div>
@@ -2504,6 +2512,48 @@ function logReread() {
 function allGenreOptions() {
   return [...new Set(books.flatMap(b=>(b.genre||'').split(',').map(g=>g.trim()).filter(Boolean)))].sort((a,b)=>a.localeCompare(b));
 }
+// Gender — single-select dropdown. Existing values (e.g. "Female (duo)") are appended
+// so they survive editing. Free-text for genuinely new values isn't supported here —
+// stick with these or expand the constant.
+const GENDER_OPTIONS = ['Female', 'Male', 'Non-binary'];
+
+function allGenderOptions() {
+  const inUse = new Set(books.map(b => (b.gender||'').trim()).filter(Boolean));
+  GENDER_OPTIONS.forEach(g => inUse.add(g));
+  return [...inUse].sort();
+}
+
+function populateGenderSelect() {
+  const sel = document.getElementById('f-gender');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">—</option>'
+    + allGenderOptions().map(g => '<option value="'+g+'">'+g+'</option>').join('');
+  if (cur) sel.value = cur;
+}
+
+// Country adjective forms for the nationality datalist. Pre-populated with common
+// countries; existing values from the user's library are merged in so duals (e.g.
+// "Italian / USA") appear in suggestions too.
+const COUNTRY_OPTIONS = [
+  'USA','American','British','English','Scottish','Welsh','Irish','Canadian','Australian','New Zealander',
+  'French','German','Italian','Spanish','Portuguese','Dutch','Belgian','Swedish','Norwegian','Danish',
+  'Finnish','Icelandic','Polish','Czech','Hungarian','Austrian','Swiss','Russian','Ukrainian','Greek',
+  'Turkish','Israeli','Egyptian','Nigerian','Ghanian','Kenyan','South African','Moroccan','Ethiopian','Senegalese',
+  'Indian','Pakistani','Bangladeshi','Sri Lankan','Nepali','Chinese','Japanese','Korean','Taiwanese','Vietnamese',
+  'Thai','Indonesian','Filipino','Malaysian','Singaporean','Mexican','Brazilian','Argentinian','Chilean','Colombian',
+  'Peruvian','Venezuelan','Cuban','Iranian','Iraqi','Lebanese','Syrian','Saudi Arabian','Emirati','Jordanian',
+];
+
+function populateNationalityList() {
+  const list = document.getElementById('nationality-list');
+  if (!list) return;
+  const inUse = new Set();
+  books.forEach(b => (b.nationality||'').split('/').map(s=>s.trim()).filter(Boolean).forEach(n => inUse.add(n)));
+  COUNTRY_OPTIONS.forEach(c => inUse.add(c));
+  list.innerHTML = [...inUse].sort().map(c => '<option value="'+c+'">').join('');
+}
+
 // Curated ethnicity options — multi-select via pill picker. No single list is canonical;
 // this leans on the union of UK ONS + US Census + diasporic identity terms common in
 // publishing data. Free-text values from existing records still display alongside.
@@ -3609,6 +3659,8 @@ function openAddBook(defaultStatus) {
   buildPillPicker('f-genre','pick-genre',allGenreOptions());
   buildPillPicker('f-tags','pick-tags',allTagOptions());
   buildPillPicker('f-race','pick-race',allEthnicityOptions());
+  populateGenderSelect();
+  populateNationalityList();
   pendingReadings = [];
   document.getElementById('reread-section').classList.add('hidden');
   openModal('modal-book');
@@ -3645,6 +3697,8 @@ function openEditBook(id) {
   buildPillPicker('f-genre','pick-genre',allGenreOptions());
   buildPillPicker('f-tags','pick-tags',allTagOptions());
   buildPillPicker('f-race','pick-race',allEthnicityOptions());
+  populateGenderSelect();
+  populateNationalityList();
   pendingReadings = [];
   document.getElementById('reread-section').classList.remove('hidden');
   renderReadingsHistory(b.readings || [], 0);
