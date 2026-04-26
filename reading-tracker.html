@@ -113,9 +113,8 @@ body { font-family: var(--font-body); background: var(--paper); color: var(--ink
 .tarot-inner { position: relative; width: 100%; height: 100%; transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
 .tarot-flip.flipped .tarot-inner { transform: rotateY(180deg); }
 .tarot-front, .tarot-back { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius-lg); display: flex; flex-direction: column; box-shadow: var(--shadow-lg); overflow: hidden; }
-.tarot-front { background: linear-gradient(135deg, #2a1f3d, #4a3a5c); color: var(--paper); align-items: center; justify-content: center; text-align: center; gap: 16px; padding: 22px; border: 2px solid var(--accent-2); }
-.tarot-front-emoji { font-size: 56px; }
-.tarot-front-label { font-family: var(--font-display); font-style: italic; font-size: 16px; opacity: 0.85; line-height: 1.4; }
+.tarot-front { background: url('tarot/back.webp') center/cover no-repeat; border: 2px solid var(--accent-2); }
+.tarot-front-emoji, .tarot-front-label { display: none; }
 .tarot-back { transform: rotateY(180deg); border: 2px solid var(--accent-2); }
 .tarot-back-image { background-size: cover; background-position: center; width: 100%; height: 100%; }
 .tarot-back-placeholder { background: linear-gradient(160deg, #f5ede4, #e8ddcf 60%, #d6c5b1); width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 22px; text-align: center; }
@@ -2782,23 +2781,23 @@ const TAROT_DECK = [
     meaning:'currently reading: that one book. for far too long. it\u2019s not bad. it\u2019s not over. it just\u2026 lingers. like a guest who won\u2019t take coats.',
     prophecy:'you will either finish it or admit you won\u2019t. the universe doesn\u2019t mind which.',
     score: r => probableDNFs().length > 0 ? 70 : 0 },
-  { id:'five_star_hattrick', emoji:'🎩', name:'The Five-Star Hat-Trick',
+  { id:'five_star_hattrick', image:'tarot/five_star_hattrick.webp', emoji:'🎩', name:'The Five-Star Hat-Trick',
     meaning:'three (or more) consecutive five-star reads. uncanny luck or impeccable taste \u2014 frankly, both. the slump is statistically due. brace.',
     prophecy:'a slump is coming. carry a comfort read in your bag.',
     score: r => { const recent = [...r.recent30].sort((a,b)=>(b.finished||'').localeCompare(a.finished||'')).slice(0,5); let streak=0; for (const b of recent) { if (b.rating>=5) streak++; else break; } return streak >= 3 ? 80 : 0; } },
-  { id:'annotated_soul', emoji:'📝', name:'The Annotated Soul',
+  { id:'annotated_soul', image:'tarot/annotated_soul.webp', emoji:'📝', name:'The Annotated Soul',
     meaning:'you write notes. you have thoughts. the post-its are doing numbers. every page is a conversation. the books are talking back.',
     prophecy:'a book will demand annotations. underline freely.',
     score: r => _ratio(r.recent60, b => (b.thoughts||'').length > 80) > 0.5 ? 50 : 0 },
-  { id:'cosy_pilgrim', emoji:'🍂', name:'The Cosy Pilgrim',
+  { id:'cosy_pilgrim', image:'tarot/cosy_pilgrim.webp', emoji:'🍂', name:'The Cosy Pilgrim',
     meaning:'the heart is a bookshop in autumn. you read for warmth, for return, for the small kindnesses. categorically no shame. cosy is correct.',
     prophecy:'a cosy fantasy will find you exactly when you need it.',
     score: r => _ratio(r.recent60, b => _hasGenre(b,'feel-good') || _hasGenre(b,'cosy') || _hasGenre(b,'cozy')) > 0.2 ? 60 : 0 },
-  { id:'mystery_hound', emoji:'🔍', name:'The Mystery Hound',
+  { id:'mystery_hound', image:'tarot/mystery_hound.webp', emoji:'🔍', name:'The Mystery Hound',
     meaning:'a body has dropped in chapter one and you are already on it. nobody trusts you with twist spoilers. with reason.',
     prophecy:'a thriller will be unputdownable. cancel one (1) plan.',
     score: r => _ratio(r.recent60, b => _hasGenre(b,'mystery') || _hasGenre(b,'thriller') || _hasGenre(b,'crime')) > 0.3 ? 60 : 0 },
-  { id:'beginners_tarot', emoji:'🌱', name:'The Beginner\u2019s Tarot',
+  { id:'beginners_tarot', image:'tarot/beginners_tarot.webp', emoji:'🌱', name:'The Beginner\u2019s Tarot',
     meaning:'the deck doesn\u2019t know you yet. the shelves are filling. soon the patterns will speak.',
     prophecy:'log a few more books. the oracle is patient. the universe is taking notes.',
     score: r => r.recent60.length < 5 ? 100 : 0 },
