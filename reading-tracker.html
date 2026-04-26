@@ -78,7 +78,8 @@ body { font-family: var(--font-body); background: var(--paper); color: var(--ink
 .book-cover { width: 48px; height: 68px; border-radius: 4px; flex-shrink: 0; overflow: hidden; }
 .book-cover img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
 .reading-info { flex: 1; min-width: 0; }
-.reading-title { font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.reading-info { min-width: 0; }
+.reading-title { font-weight: 500; font-size: 13px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .reading-author { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
 .progress-wrap { margin-top: 10px; }
 .progress-bar { height: 3px; background: var(--paper-3); border-radius: 2px; overflow: hidden; }
@@ -787,8 +788,8 @@ body { font-family: var(--font-body); background: var(--paper); color: var(--ink
 </main>
 </div>
 
-<!-- ISBN scanner modal -->
-<div class="modal-backdrop" id="modal-scanner">
+<!-- ISBN scanner modal — explicit higher z-index so it sits above the book modal -->
+<div class="modal-backdrop" id="modal-scanner" style="z-index:300;">
   <div class="modal" style="max-width:480px;">
     <div class="modal-header">
       <h3 class="modal-title">scan an ISBN</h3>
@@ -2029,6 +2030,8 @@ const PAGES = ['dashboard','library','stats','want','series','oracle','goals'];
 function showPage(name) {
   PAGES.forEach(p => document.getElementById('page-'+p).classList.toggle('hidden', p !== name));
   document.querySelectorAll('.nav-item').forEach((el,i) => el.classList.toggle('active', PAGES[i] === name));
+  // Always start a fresh page at the top
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   if (name==='dashboard') renderDashboard();
   if (name==='library') { populateGenreFilter(); renderVisualLibrary(); }
   if (name==='want') renderWantToRead();
@@ -3857,6 +3860,12 @@ async function _onIsbnDetected(decodedText) {
 
   let item = await _lookupIsbnGoogle(isbn);
   if (!item) item = await _lookupIsbnOpenLibrary(isbn);
+
+  // Defensive: make sure the book modal is still open before we autofill into it.
+  // If the user manually closed it (e.g. before z-index was fixed), reopen so they see
+  // the filled fields land.
+  const bookModal = document.getElementById('modal-book');
+  if (bookModal && !bookModal.classList.contains('open')) openModal('modal-book');
 
   if (item) {
     autofill(item);
