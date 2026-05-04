@@ -31,15 +31,33 @@ function _setBodyAuthClass(session) {
   document.body.classList.add(session ? 'signed-in' : 'signed-out');
 }
 
-// Initial check — runs ASAP, before the rest of the app loads
-db.auth.getSession().then(({ data: { session } }) => {
+// Initial check — runs ASAP, before the rest of the app loads. Fetches the
+// user's books from Supabase if they're already signed in (returning visit).
+db.auth.getSession().then(async ({ data: { session } }) => {
   _setBodyAuthClass(session);
-  if (session) console.log('✓ signed in as', session.user.email);
+  if (session) {
+    console.log('✓ signed in as', session.user.email);
+    // Wait for the rest of the page to be parseable before kicking off a sync
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => { if (typeof syncBooksFromDb === 'function') syncBooksFromDb(); });
+    } else if (typeof syncBooksFromDb === 'function') {
+      syncBooksFromDb();
+    }
+  }
 });
 
 // React to OTP verifications + manual sign-outs
-db.auth.onAuthStateChange((event, session) => {
+db.auth.onAuthStateChange(async (event, session) => {
   _setBodyAuthClass(session);
+  if (event === 'SIGNED_IN' && typeof syncBooksFromDb === 'function') {
+    await syncBooksFromDb();
+  } else if (event === 'SIGNED_OUT') {
+    if (typeof books !== 'undefined') {
+      books = [];
+      try { save(); } catch (e) {}
+      try { refreshCurrentPage(); } catch (e) {}
+    }
+  }
 });
 
 // Track which email was used so verifyOtp can use the same one
@@ -2187,6 +2205,162 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
+// ─────────────────────────────────────────────────────────────
+// SUPABASE DATA LAYER — books table
+// In-memory `books` array stays as the read cache; writes go to Supabase
+// then update the cache. All other tables follow this pattern in later phases.
+// ─────────────────────────────────────────────────────────────
+async function _currentUserId() {
+  const { data: { user } } = await db.auth.getUser();
+  return user?.id || null;
+}
+
+function _dbToBook(row) {
+  return {
+    id: row.id,
+    title: row.title || '',
+    author: row.author || '',
+    published: row.published || '',
+    format: row.format || '',
+    pages: row.pages || 0,
+    length: parseFloat(row.length) || 0,
+    genre: row.genre || '',
+    started: row.started || '',
+    finished: row.finished || '',
+    rating: parseFloat(row.rating) || 0,
+    narration: parseFloat(row.narration) || 0,
+    thoughts: row.thoughts || '',
+    series: row.series || '',
+    seriesNum: row.series_num || '',
+    tags: row.tags || [],
+    nationality: row.nationality || '',
+    gender: row.gender || '',
+    race: row.race || '',
+    status: row.status || 'want',
+    progress: row.progress || 0,
+    coverUrl: row.cover_url || '',
+    readings: row.readings || [],
+    sessions: [],  // sessions live in their own table, joined in Phase 3b
+    addedAt: row.added_at,
+  };
+}
+
+function _bookToDb(book, userId) {
+  const out = {
+    title: book.title || '',
+    author: book.author || '',
+    published: book.published || '',
+    format: book.format || '',
+    pages: parseInt(book.pages) || 0,
+    length: parseFloat(book.length) || 0,
+    genre: book.genre || '',
+    started: book.started || '',
+    finished: book.finished || '',
+    rating: parseFloat(book.rating) || 0,
+    narration: parseFloat(book.narration) || 0,
+    thoughts: book.thoughts || '',
+    series: book.series || '',
+    series_num: book.seriesNum || '',
+    tags: Array.isArray(book.tags) ? book.tags : [],
+    nationality: book.nationality || '',
+    gender: book.gender || '',
+    race: book.race || '',
+    status: book.status || 'want',
+    progress: parseInt(book.progress) || 0,
+    cover_url: book.coverUrl || '',
+    readings: book.readings || [],
+  };
+  if (userId) out.user_id = userId;
+  return out;
+}
+
+const booksAPI = {
+  async fetchAll() {
+    const { data, error } = await db.from('books').select('*').order('added_at', { ascending: false });
+    if (error) { console.error('books fetch failed:', error); return []; }
+    return data.map(_dbToBook);
+  },
+  async insert(book) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const { data, error } = await db.from('books').insert(_bookToDb(book, userId)).select().single();
+    if (error) { console.error('books insert failed:', error); throw error; }
+    return _dbToBook(data);
+  },
+  async update(id, patch) {
+    const { data, error } = await db.from('books').update(_bookToDb(patch)).eq('id', id).select().single();
+    if (error) { console.error('books update failed:', error); throw error; }
+    return _dbToBook(data);
+  },
+  async delete(id) {
+    const { error } = await db.from('books').delete().eq('id', id);
+    if (error) { console.error('books delete failed:', error); throw error; }
+  },
+  async bulkInsert(bookList) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const dbBooks = bookList.map(b => _bookToDb(b, userId));
+    const out = [];
+    // Chunk to stay safely under Supabase's payload limits
+    for (let i = 0; i < dbBooks.length; i += 200) {
+      const chunk = dbBooks.slice(i, i + 200);
+      const { data, error } = await db.from('books').insert(chunk).select();
+      if (error) { console.error('bulk insert chunk failed:', error); throw error; }
+      out.push(...data);
+    }
+    return out.map(_dbToBook);
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// SUPABASE DATA LAYER — sessions table (daily reading log)
+// Sessions get joined onto books in the cache so the existing render
+// code (heatmap, dashboard "today" totals) keeps working unchanged.
+// ─────────────────────────────────────────────────────────────
+const sessionsAPI = {
+  async fetchAll() {
+    const { data, error } = await db.from('sessions').select('*').order('date', { ascending: true });
+    if (error) { console.error('sessions fetch failed:', error); return []; }
+    return data;
+  },
+  async insert({ bookId, date, minutes }) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const { data, error } = await db.from('sessions')
+      .insert({ user_id: userId, book_id: bookId, date, minutes })
+      .select().single();
+    if (error) { console.error('session insert failed:', error); throw error; }
+    return data;
+  },
+  async delete(id) {
+    const { error } = await db.from('sessions').delete().eq('id', id);
+    if (error) { console.error('session delete failed:', error); throw error; }
+  },
+};
+
+// Refresh the in-memory cache from Supabase + redraw whatever page is visible.
+// Books fetched first; sessions then grouped onto them by book_id.
+async function syncBooksFromDb() {
+  try {
+    const [bookList, sessionList] = await Promise.all([
+      booksAPI.fetchAll(),
+      sessionsAPI.fetchAll(),
+    ]);
+    // Group sessions by book_id
+    const byBook = {};
+    sessionList.forEach(s => {
+      if (!byBook[s.book_id]) byBook[s.book_id] = [];
+      byBook[s.book_id].push({ id: s.id, date: s.date, minutes: s.minutes });
+    });
+    bookList.forEach(b => { b.sessions = byBook[b.id] || []; });
+    books = bookList;
+    save();  // mirror to localStorage for offline + fast next-load
+    refreshCurrentPage();
+  } catch (e) {
+    console.error('syncBooksFromDb failed:', e);
+  }
+}
+
 // ── NAV ──────────────────────────────────────────────
 const PAGES = ['dashboard','library','stats','want','series','oracle','goals'];
 function showPage(name) {
@@ -2292,8 +2466,8 @@ function renderDayLogContent(date) {
   // Collect all sessions for this date across all books
   const sessionsToday = [];
   books.forEach(b => {
-    (b.sessions || []).forEach((s, idx) => {
-      if (s.date === date) sessionsToday.push({ bookId: b.id, title: b.title, author: b.author, minutes: s.minutes, idx });
+    (b.sessions || []).forEach(s => {
+      if (s.date === date) sessionsToday.push({ bookId: b.id, title: b.title, author: b.author, minutes: s.minutes, id: s.id });
     });
   });
   const totalMin = sessionsToday.reduce((s,x)=>s+x.minutes, 0);
@@ -2304,7 +2478,7 @@ function renderDayLogContent(date) {
     return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--paper-2);">'
       + '<div style="flex:1;"><div style="font-weight:500;font-size:13px;">'+s.title+'</div><div style="font-size:11px;color:var(--ink-3);">'+s.author+'</div></div>'
       + '<div style="font-size:12px;color:var(--accent);font-weight:500;">'+label+'</div>'
-      + '<span style="font-size:14px;color:var(--ink-3);cursor:pointer;padding:4px 8px;" onclick="deleteSessionFromDay(\''+s.bookId+'\',\''+date+'\','+s.idx+')" title="remove">×</span>'
+      + '<span style="font-size:14px;color:var(--ink-3);cursor:pointer;padding:4px 8px;" onclick="deleteSessionFromDay(\''+s.bookId+'\',\''+s.id+'\')" title="remove">×</span>'
       + '</div>';
   }).join('') : '<div style="font-size:13px;color:var(--ink-3);padding:14px 0;">Nothing logged for this day yet.</div>';
 
@@ -2339,29 +2513,45 @@ function updateDaySliderLabel() {
   document.getElementById('day-slider-value').textContent = label;
 }
 
-function addSessionForDay(date) {
+async function addSessionForDay(date) {
   const bookId = document.getElementById('day-book').value;
   const minutes = parseInt(document.getElementById('day-slider').value) || 0;
   if (!bookId) { alert('pick a book'); return; }
   if (minutes < 1) { alert('drag the slider to add time'); return; }
   const b = books.find(x=>x.id===bookId);
   if (!b) return;
-  if (!Array.isArray(b.sessions)) b.sessions = [];
-  b.sessions.push({ date, minutes });
+  try {
+    const row = await sessionsAPI.insert({ bookId, date, minutes });
+    if (!Array.isArray(b.sessions)) b.sessions = [];
+    b.sessions.push({ id: row.id, date: row.date, minutes: row.minutes });
+  } catch (e) {
+    alert('Couldn’t log session: ' + (e.message || e));
+    return;
+  }
   save();
   renderDayLogContent(date);
   renderDashboard();
 }
 
-function deleteSessionFromDay(bookId, date, sessionIdx) {
+async function deleteSessionFromDay(bookId, sessionId) {
   const b = books.find(x=>x.id===bookId);
   if (!b || !Array.isArray(b.sessions)) return;
-  if (b.sessions[sessionIdx] && b.sessions[sessionIdx].date === date) {
-    b.sessions.splice(sessionIdx, 1);
-    save();
-    renderDayLogContent(date);
-    renderDashboard();
+  const idx = b.sessions.findIndex(s => s.id === sessionId);
+  if (idx === -1) return;
+  const session = b.sessions[idx];
+  try {
+    await sessionsAPI.delete(sessionId);
+  } catch (e) {
+    alert('Couldn’t delete session: ' + (e.message || e));
+    return;
   }
+  b.sessions.splice(idx, 1);
+  save();
+  // Re-render the day modal if it's open (figure out the date from the deleted session)
+  if (document.getElementById('modal-view').classList.contains('open')) {
+    renderDayLogContent(session.date);
+  }
+  renderDashboard();
 }
 
 function markDnfInForm() {
@@ -2371,12 +2561,18 @@ function markDnfInForm() {
 }
 
 // ── DAILY READING LOG (slider + timer) ──────────────────────
-function logSession(bookId, minutes) {
+async function logSession(bookId, minutes) {
   const b = books.find(x => x.id === bookId);
   if (!b) return;
-  if (!Array.isArray(b.sessions)) b.sessions = [];
   const today = new Date().toISOString().split('T')[0];
-  b.sessions.push({ date: today, minutes });
+  try {
+    const row = await sessionsAPI.insert({ bookId, date: today, minutes });
+    if (!Array.isArray(b.sessions)) b.sessions = [];
+    b.sessions.push({ id: row.id, date: row.date, minutes: row.minutes });
+  } catch (e) {
+    alert('Couldn’t log session: ' + (e.message || e));
+    return;
+  }
   save();
 }
 
@@ -3765,17 +3961,35 @@ function viewBook(id) {
   const tmr = JSON.parse(localStorage.getItem('rj_timer') || 'null');
   if (tmr && tmr.bookId === b.id) startTimerTick();
 }
-function deleteBook(id) {
+async function deleteBook(id) {
   if (!confirm('Delete this book?')) return;
-  books = books.filter(b=>b.id!==id);
-  save(); closeModal('modal-view');
+  try {
+    await booksAPI.delete(id);
+    books = books.filter(b => b.id !== id);
+  } catch (e) {
+    alert('Delete failed: ' + (e.message || e));
+    return;
+  }
+  save();
+  closeModal('modal-view');
   refreshCurrentPage();
 }
-function markFinished(id) {
-  const b = books.find(x=>x.id===id);
+async function markFinished(id) {
+  const b = books.find(x => x.id === id);
   if (!b) return;
-  b.status='read'; b.progress=100; b.finished=new Date().toISOString().split('T')[0];
-  save(); closeModal('modal-view'); renderDashboard(); showPage('dashboard');
+  const patch = { ...b, status: 'read', progress: 100, finished: new Date().toISOString().split('T')[0] };
+  try {
+    const updated = await booksAPI.update(id, patch);
+    const i = books.findIndex(x => x.id === id);
+    if (i !== -1) books[i] = { ...books[i], ...updated };
+  } catch (e) {
+    alert('Update failed: ' + (e.message || e));
+    return;
+  }
+  save();
+  closeModal('modal-view');
+  renderDashboard();
+  showPage('dashboard');
 }
 function refreshCurrentPage() {
   const active = document.querySelector('.nav-item.active');
@@ -3876,7 +4090,7 @@ function handleStatusChange() {
   document.getElementById('f-dates-wrap').classList.toggle('hidden', s==='want');
   document.getElementById('f-rating-wrap').classList.toggle('hidden', s==='want'||s==='dnf');
 }
-function saveBook() {
+async function saveBook() {
   const title = document.getElementById('f-title').value.trim();
   if (!title) { alert('Please enter a title.'); return; }
   const book = {
@@ -3906,16 +4120,22 @@ function saveBook() {
     coverUrl: document.getElementById('f-title')._coverUrl||'',
     addedAt: new Date().toISOString(),
   };
-  if (editingId) {
-    const i=books.findIndex(b=>b.id===editingId);
-    if(i!==-1) {
-      const existingReadings = books[i].readings || [];
+  try {
+    if (editingId) {
+      const existing = books.find(b => b.id === editingId);
+      const existingReadings = existing ? (existing.readings || []) : [];
       book.readings = [...existingReadings, ...pendingReadings];
-      books[i]={...books[i],...book};
+      const updated = await booksAPI.update(editingId, book);
+      const i = books.findIndex(b => b.id === editingId);
+      if (i !== -1) books[i] = { ...books[i], ...updated };
+    } else {
+      book.readings = [];
+      const inserted = await booksAPI.insert(book);
+      books.unshift(inserted);
     }
-  } else {
-    book.readings = [];
-    books.unshift(book);
+  } catch (e) {
+    alert('Save failed: ' + (e.message || e));
+    return;
   }
   save(); closeModal('modal-book'); refreshCurrentPage();
 }
@@ -4218,22 +4438,36 @@ function parseCSV(text) {
   document.getElementById('import-preview').innerHTML=`<div style="font-size:13px;color:var(--ink-2);padding:10px;background:var(--paper-2);border-radius:var(--radius);">Found <strong>${rows.length}</strong> books · columns mapped automatically</div>`;
   document.getElementById('btn-import-confirm').classList.remove('hidden');
 }
-function confirmImport() {
+async function confirmImport() {
   if (!csvData) return;
   const colMap = document.getElementById('import-mapping')._colMap||{};
   function parseDate(s){if(!s||s.trim()in{TBR:1,DNF:1,'':1})return'';const m=s.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;const d=new Date(s);return isNaN(d)?'':d.toISOString().split('T')[0];}
   function parseLength(s){if(!s)return 0;const m=s.match(/(\d+)h\s*(?:(\d+)m)?/);if(m)return Math.round((parseInt(m[1])+(parseInt(m[2])||0)/60)*10)/10;return 0;}
-  let imported=0;
+
+  // Build the list of book objects (no DB writes yet — bulk insert at the end)
+  const newBooks = [];
   csvData.rows.forEach(row=>{
     const title=colMap.title?row[colMap.title]:''; if(!title)return;
     const finRaw=colMap.finished?row[colMap.finished]:'';
     const stRaw=colMap.started?row[colMap.started]:'';
     const csvStatus=(colMap.statusCol?row[colMap.statusCol]:'').toLowerCase().trim();
     const status=['read','want','currently','dnf'].includes(csvStatus)?csvStatus:(finRaw==='DNF'?'read':finRaw&&!['TBR',''].includes(finRaw)?'read':stRaw&&!['TBR',''].includes(stRaw)?'currently':'want');
-    const book={id:uid(),title,author:colMap.author?row[colMap.author]:'',published:colMap.published?row[colMap.published]:'',pages:parseInt(colMap.pages?row[colMap.pages]:'')||0,length:parseLength(colMap.length?row[colMap.length]:''),genre:colMap.genre?row[colMap.genre]:'',format:(colMap.format?row[colMap.format]:'').toLowerCase().replace('audiobook','audio').replace('hardcover','hardback').replace('physical','paperback').replace('kindle','ebook'),started:stRaw&&!['TBR',''].includes(stRaw)?parseDate(stRaw):'',finished:finRaw&&!['TBR','DNF',''].includes(finRaw)?parseDate(finRaw):'',rating:parseFloat(colMap.rating?row[colMap.rating]:'')||0,narration:parseFloat(colMap.narration?row[colMap.narration]:'')||0,thoughts:colMap.thoughts?row[colMap.thoughts]:'',series:colMap.series?row[colMap.series]:'',seriesNum:colMap.seriesNum?row[colMap.seriesNum]:'',tags:(colMap.tags?row[colMap.tags]:'').split(',').map(t=>t.trim()).filter(Boolean),nationality:colMap.nationality?row[colMap.nationality]:'',gender:colMap.gender?row[colMap.gender]:'',race:colMap.race?row[colMap.race]:'',status,progress:0,coverUrl:colMap.coverUrl?row[colMap.coverUrl]:'',readings:[],sessions:[],addedAt:new Date().toISOString()};
-    books.push(book); imported++;
+    newBooks.push({title,author:colMap.author?row[colMap.author]:'',published:colMap.published?row[colMap.published]:'',pages:parseInt(colMap.pages?row[colMap.pages]:'')||0,length:parseLength(colMap.length?row[colMap.length]:''),genre:colMap.genre?row[colMap.genre]:'',format:(colMap.format?row[colMap.format]:'').toLowerCase().replace('audiobook','audio').replace('hardcover','hardback').replace('physical','paperback').replace('kindle','ebook'),started:stRaw&&!['TBR',''].includes(stRaw)?parseDate(stRaw):'',finished:finRaw&&!['TBR','DNF',''].includes(finRaw)?parseDate(finRaw):'',rating:parseFloat(colMap.rating?row[colMap.rating]:'')||0,narration:parseFloat(colMap.narration?row[colMap.narration]:'')||0,thoughts:colMap.thoughts?row[colMap.thoughts]:'',series:colMap.series?row[colMap.series]:'',seriesNum:colMap.seriesNum?row[colMap.seriesNum]:'',tags:(colMap.tags?row[colMap.tags]:'').split(',').map(t=>t.trim()).filter(Boolean),nationality:colMap.nationality?row[colMap.nationality]:'',gender:colMap.gender?row[colMap.gender]:'',race:colMap.race?row[colMap.race]:'',status,progress:0,coverUrl:colMap.coverUrl?row[colMap.coverUrl]:'',readings:[]});
   });
-  save(); closeModal('modal-import'); csvData=null; alert(`Imported ${imported} books!`); renderDashboard();
+
+  if (!newBooks.length) { alert('No books found in the CSV.'); return; }
+
+  try {
+    const inserted = await booksAPI.bulkInsert(newBooks);
+    books = [...inserted, ...books];  // prepend the new ones to the cache
+    save();
+    closeModal('modal-import');
+    csvData = null;
+    alert('Imported ' + inserted.length + ' books!');
+    renderDashboard();
+  } catch (e) {
+    alert('Import failed: ' + (e.message || e));
+  }
 }
 
 // ── CSV EXPORT ──────────────────────────────────────────────

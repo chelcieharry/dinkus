@@ -1,6 +1,6 @@
 // dinkus — service worker. caches the app for offline use.
 // bump CACHE_NAME whenever you want phones to fetch fresh assets.
-const CACHE_NAME = 'dinkus-v1';
+const CACHE_NAME = 'dinkus-v2';
 const PRECACHE = [
   './',
   './reading-tracker.html',
@@ -25,9 +25,13 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Skip non-GET and skip the Anthropic API (always live)
+  // Skip non-GET and skip live API endpoints — these must always hit the network,
+  // never be cached, otherwise the app reads stale data
   if (e.request.method !== 'GET') return;
   if (e.request.url.includes('api.anthropic.com')) return;
+  if (e.request.url.includes('.supabase.co')) return;
+  if (e.request.url.includes('googleapis.com/books')) return;
+  if (e.request.url.includes('openlibrary.org')) return;
 
   // Network-first for the main HTML so updates land quickly. Cache-first for everything else.
   if (e.request.mode === 'navigate' || e.request.url.endsWith('reading-tracker.html')) {
