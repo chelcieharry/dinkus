@@ -46,11 +46,15 @@ db.auth.getSession().then(async ({ data: { session } }) => {
   }
 });
 
-// React to OTP verifications + manual sign-outs
-db.auth.onAuthStateChange(async (event, session) => {
+// React to OTP verifications + manual sign-outs.
+// IMPORTANT: this callback runs inside Supabase's auth lock. NEVER await any
+// supabase query (or call any other auth method) directly from here — your
+// query needs the same lock to read the access token, and you'll deadlock.
+// Defer with setTimeout so the lock can release before sync runs.
+db.auth.onAuthStateChange((event, session) => {
   _setBodyAuthClass(session);
   if (event === 'SIGNED_IN' && typeof syncBooksFromDb === 'function') {
-    await syncBooksFromDb();
+    setTimeout(() => syncBooksFromDb(), 0);
   } else if (event === 'SIGNED_OUT') {
     if (typeof books !== 'undefined') {
       books = [];
@@ -125,10 +129,14 @@ function resetSigninForm() {
   hint.textContent = "we'll email you a code. type it in. you're in.";
 }
 
-async function signOut() {
-  if (!confirm('sign out of dinkus?')) return;
+function signOut() {
+  // Open the on-brand sign-out modal; actual sign-out happens in confirmSignOut()
+  openModal('modal-signout');
+}
+async function confirmSignOut() {
+  closeModal('modal-signout');
   await db.auth.signOut();
-  // body class flips via the onAuthStateChange handler above
+  // body class flips via the onAuthStateChange handler
 }
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -175,6 +183,45 @@ body.signed-out #sign-in-screen { display: flex; }
 .signin-hint.success { color: var(--green); }
 .signin-hint.error { color: #b85; }
 
+/* Top-of-page sync bar — animated stripe while syncBooksFromDb is in flight */
+#sync-bar { position: fixed; top: 0; left: 0; right: 0; height: 2px; background: transparent; z-index: 600; pointer-events: none; }
+body.syncing #sync-bar { background: linear-gradient(90deg, transparent, var(--accent-2), var(--accent), var(--accent-2), transparent); background-size: 50% 100%; animation: sync-slide 1.4s linear infinite; }
+@keyframes sync-slide { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+
+/* Sync error banner — appears at top when syncBooksFromDb fails */
+#sync-error { display: none; position: fixed; top: 0; left: 0; right: 0; background: #f5e8e8; color: #8b3a3a; font-size: 13px; padding: 10px 16px; z-index: 590; align-items: center; justify-content: center; gap: 14px; border-bottom: 1px solid #e8c4c4; padding-bottom: max(10px, env(safe-area-inset-bottom, 0)); }
+body.sync-error #sync-error { display: flex; }
+#sync-error button { font-family: var(--font-body); font-size: 12px; padding: 5px 12px; background: #b85; color: var(--paper); border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; }
+#sync-error button:hover { background: #a64; }
+body.sync-error .main { padding-top: 36px; }
+
+/* Onboarding / welcome screen — shown to first-time users */
+body.onboarding .app, body.onboarding .modal-backdrop { display: none; }
+body.onboarding #welcome-screen { display: flex; }
+#welcome-screen { display: none; position: fixed; inset: 0; background: var(--paper); z-index: 400; align-items: center; justify-content: center; padding: 24px; }
+.welcome-card { width: 100%; max-width: 460px; text-align: center; }
+.welcome-title { font-family: var(--font-display); font-style: italic; font-size: 38px; font-weight: 500; color: var(--ink); margin-bottom: 6px; line-height: 1; }
+.welcome-asterisks { font-family: var(--font-display); letter-spacing: 0.4em; color: var(--accent-2); font-size: 16px; margin-bottom: 22px; }
+.welcome-blurb { font-family: var(--font-display); font-style: italic; color: var(--ink-2); font-size: 15px; line-height: 1.6; margin-bottom: 6px; }
+.welcome-paths-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--ink-3); margin-top: 28px; margin-bottom: 14px; }
+.welcome-paths { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.welcome-btn { font-family: var(--font-body); font-size: 14px; padding: 12px 16px; border-radius: var(--radius); cursor: pointer; transition: background 0.15s; }
+.welcome-btn-primary { background: var(--accent); color: var(--paper); border: none; font-weight: 500; }
+.welcome-btn-primary:hover { background: var(--accent-2); }
+.welcome-btn-ghost { background: none; border: 1px solid var(--paper-3); color: var(--ink-3); }
+.welcome-btn-ghost:hover { background: var(--paper-2); color: var(--ink-2); }
+.welcome-footer { font-family: var(--font-display); font-style: italic; color: var(--ink-3); font-size: 12px; opacity: 0.7; }
+.welcome-source { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 18px; background: var(--paper-2); border: 1px solid var(--paper-3); border-radius: var(--radius); cursor: pointer; transition: all 0.15s; text-align: left; font-family: var(--font-body); width: 100%; }
+.welcome-source:hover { background: var(--paper); border-color: var(--accent-2); }
+.welcome-source-name { font-weight: 500; font-size: 14px; color: var(--ink); }
+.welcome-source-tagline { font-size: 12px; color: var(--ink-3); font-style: italic; }
+.welcome-back { background: none; border: none; color: var(--ink-3); font-size: 12px; cursor: pointer; margin-top: 12px; font-family: var(--font-body); }
+.welcome-back:hover { color: var(--ink-2); }
+.welcome-instructions { text-align: left; font-size: 14px; color: var(--ink-2); line-height: 1.7; margin-bottom: 22px; }
+.welcome-instructions ol { padding-left: 22px; }
+.welcome-instructions li { margin-bottom: 6px; }
+.welcome-instructions a { color: var(--accent); text-decoration: underline; }
+
 /* Layout */
 .sidebar { width: 220px; min-height: 100vh; background: var(--ink); padding: 28px 0; flex-shrink: 0; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
 .sidebar-logo { padding: 0 24px 28px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px; }
@@ -186,6 +233,8 @@ body.signed-out #sign-in-screen { display: flex; }
 .nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
 .nav-item.active .nav-icon { opacity: 1; }
 .sidebar-footer { margin-top: auto; padding: 16px 24px 0; border-top: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 8px; }
+.sidebar-link { font-family: var(--font-body); font-size: 11px; color: rgba(255,255,255,0.4); text-align: center; text-decoration: none; padding: 8px 0 0; transition: color 0.15s; }
+.sidebar-link:hover { color: rgba(255,255,255,0.8); }
 .sidebar-btn { font-family: var(--font-body); font-size: 12px; padding: 7px 12px; border-radius: var(--radius); cursor: pointer; font-weight: 500; transition: all 0.15s; text-align: center; border: none; }
 .btn-import { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
 .btn-import:hover { background: rgba(255,255,255,0.14); color: var(--paper); }
@@ -731,6 +780,34 @@ body.signed-out #sign-in-screen { display: flex; }
 </head>
 <body>
 
+<!-- Phase 6: top-of-page sync bar + error banner. JS toggles classes on body. -->
+<div id="sync-bar"></div>
+<div id="sync-error">
+  <span>couldn’t reach the database · check your connection</span>
+  <button onclick="syncBooksFromDb()">retry</button>
+</div>
+
+<!-- Sign-out confirm modal (replaces the native browser confirm) -->
+<div class="modal-backdrop" id="modal-signout">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <h3 class="modal-title">sign out?</h3>
+      <button class="modal-close" onclick="closeModal('modal-signout')">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:18px;">you’ll need to sign back in next time. your data is safe.</p>
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button onclick="closeModal('modal-signout')" style="font-family:var(--font-body);padding:9px 18px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">stay</button>
+      <button onclick="confirmSignOut()" style="font-family:var(--font-body);padding:9px 20px;background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">sign out</button>
+    </div>
+  </div>
+</div>
+
+<!-- Phase 4: welcome screen for first-time users. Multi-step flow lives inside
+     the same overlay; JS swaps the card content per step. -->
+<div id="welcome-screen">
+  <div class="welcome-card" id="welcome-card"><!-- populated by showOnboardingStep() --></div>
+</div>
+
 <!-- Phase 1: sign-in gate. Fullscreen overlay, hidden by default. JS shows it
      when there's no Supabase session, hides it once you're signed in. -->
 <div id="sign-in-screen">
@@ -794,6 +871,7 @@ body.signed-out #sign-in-screen { display: flex; }
     <button class="sidebar-btn btn-import" onclick="openImport()">Import CSV</button>
     <button class="sidebar-btn btn-export" onclick="exportCSV()">Export CSV</button>
     <button class="sidebar-btn btn-import" onclick="signOut()" style="margin-top:6px;">sign out</button>
+    <a href="#" class="sidebar-link" onclick="event.preventDefault(); showSettings();">settings</a>
   </div>
 </aside>
 
@@ -859,6 +937,15 @@ body.signed-out #sign-in-screen { display: flex; }
       <select id="lib-genre" onchange="renderVisualLibrary()">
         <option value="">all genres</option>
       </select>
+      <select id="lib-sort" onchange="setLibrarySort(this.value)">
+        <option value="author">by author (a–z)</option>
+        <option value="title">title (a–z)</option>
+        <option value="recent">recently finished</option>
+        <option value="rating-high">highest rated</option>
+        <option value="rating-low">lowest rated</option>
+        <option value="longest">longest first</option>
+        <option value="shortest">shortest first</option>
+      </select>
       <div class="lib-view-toggle">
         <button class="lib-view-btn" data-view="spines" onclick="setLibraryView('spines')">📚 spines</button>
         <button class="lib-view-btn" data-view="covers" onclick="setLibraryView('covers')">🖼 covers</button>
@@ -913,6 +1000,36 @@ body.signed-out #sign-in-screen { display: flex; }
 
 <!-- Diversity -->
 <!-- Goals -->
+<!-- Settings page — accessed via the small "settings" link in the sidebar footer -->
+<div id="page-settings" class="hidden">
+  <div class="topbar">
+    <div><h2 class="page-title">settings</h2><p class="page-subtitle">your account, your data, the small print.</p></div>
+  </div>
+  <div class="content">
+    <div id="settings-content"></div>
+  </div>
+</div>
+
+<!-- Account deletion confirm modal -->
+<div class="modal-backdrop" id="modal-delete-account">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <h3 class="modal-title">delete your account</h3>
+      <button class="modal-close" onclick="closeModal('modal-delete-account')">×</button>
+    </div>
+    <div style="font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:16px;">
+      this wipes every book, session, goal, journal entry, BOTY pick, tarot draw, and your auth record. it cannot be undone.
+      <div style="margin-top:10px;font-size:12px;color:var(--ink-3);">if you just want to take a break, sign out instead. your data stays.</div>
+    </div>
+    <div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-weight:500;">to confirm, type <strong style="color:#b85;">DELETE</strong></div>
+    <input type="text" id="delete-confirm-input" autocomplete="off" placeholder="DELETE" style="font-family:var(--font-body);font-size:14px;padding:10px 12px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;width:100%;text-align:center;letter-spacing:0.2em;">
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;">
+      <button onclick="closeModal('modal-delete-account')" style="font-family:var(--font-body);padding:9px 18px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">cancel</button>
+      <button onclick="confirmDeleteAccount()" style="font-family:var(--font-body);padding:9px 20px;background:#b85;color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">delete forever</button>
+    </div>
+  </div>
+</div>
+
 <div id="page-goals" class="hidden">
   <div class="topbar">
     <div><h2 class="page-title">goals</h2><p class="page-subtitle">goals: because vague intentions are for people who haven't read enough dystopias</p></div>
@@ -1270,12 +1387,12 @@ function getYearVibe(yb, year) {
 function buildMonthPicker(yb, year) {
   const monthNames = ['January','February','March','April','May','June',
                       'July','August','September','October','November','December'];
-  const pickerKey = 'rj_boty_'+year;
-  const saved = JSON.parse(localStorage.getItem(pickerKey)||'{}');
+  const saved = (botyPicks && botyPicks[year]) || {};  // keyed by month integer (1-12)
   let hasAnyBooks = false;
 
   const cards = monthNames.map(function(mName, mi) {
-    const pad = String(mi+1).padStart(2,'0');
+    const monthInt = mi + 1;
+    const pad = String(monthInt).padStart(2,'0');
     const ym  = year+'-'+pad;
     const monthBooks = yb
       .filter(function(b){ return (b.finished||'').startsWith(ym) && b.rating > 0; })
@@ -1286,7 +1403,7 @@ function buildMonthPicker(yb, year) {
            + '<div class="boty-none">no rated books</div></div>';
     }
     hasAnyBooks = true;
-    const chosenId = saved[pad];
+    const chosenId = saved[monthInt];
     const chosen = monthBooks.find(function(b){ return b.id===chosenId; }) || null;
 
     const options = monthBooks.map(function(b){
@@ -1305,7 +1422,7 @@ function buildMonthPicker(yb, year) {
     return '<div class="boty-card">'
       + '<div class="boty-month">'+mName+'</div>'
       + winnerHtml
-      + '<select class="boty-select" onchange="setBotyWinner(\''+pickerKey+'\',\''+pad+'\',this.value,\''+year+'\')">'
+      + '<select class="boty-select" onchange="setBotyWinner('+year+','+monthInt+',this.value)">'
       + '<option value="">— choose —</option>'
       + options
       + '</select>'
@@ -1329,15 +1446,25 @@ function buildMonthPicker(yb, year) {
     + '</div>';
 }
 
-function setBotyWinner(key, month, bookId, year) {
-  const saved = JSON.parse(localStorage.getItem(key)||'{}');
-  if (bookId) saved[month] = bookId; else delete saved[month];
-  localStorage.setItem(key, JSON.stringify(saved));
-  renderYearStats(year);
+async function setBotyWinner(year, month, bookId) {
+  try {
+    if (bookId) {
+      await botyAPI.upsert(year, month, bookId);
+      if (!botyPicks[year]) botyPicks[year] = {};
+      botyPicks[year][month] = bookId;
+    } else {
+      await botyAPI.delete(year, month);
+      if (botyPicks[year]) delete botyPicks[year][month];
+    }
+  } catch (e) {
+    alert('Couldn’t save pick: ' + (e.message || e));
+    return;
+  }
+  renderYearStats(String(year));
 }
 
-function buildYearJournal(year, key) {
-  const saved = JSON.parse(localStorage.getItem(key)||'{}');
+function buildYearJournal(year) {
+  const saved = (journal && journal[year]) || {};
   const prompts = [
     {id:'cry', q:'book that made me cry the most'},
     {id:'laugh', q:'book that made me laugh the most'},
@@ -1347,8 +1474,9 @@ function buildYearJournal(year, key) {
     {id:'notes', q:'anything else worth remembering about this reading year'},
   ];
   const fields = prompts.map(function(p){
+    const safe = (saved[p.id] || '').replace(/"/g,'&quot;');
     return '<div class="journal-field"><label class="journal-label">'+p.q+'</label>'
-      +'<input type="text" class="journal-input" id="journal-'+year+'-'+p.id+'" value="'+(saved[p.id]||'')+'" placeholder="type something…" onchange="saveJournalField(\''+key+'\',\''+p.id+'\',this.value)"></div>';
+      +'<input type="text" class="journal-input" id="journal-'+year+'-'+p.id+'" value="'+safe+'" placeholder="type something…" onchange="saveJournalField('+year+',\''+p.id+'\',this.value)"></div>';
   }).join('');
   return '<div class="stat-block" style="margin-top:24px;">'
     +'<div class="stat-block-title">'+year+' year in review ✍️</div>'
@@ -1357,10 +1485,14 @@ function buildYearJournal(year, key) {
     +'</div>';
 }
 
-function saveJournalField(key, field, value) {
-  const saved = JSON.parse(localStorage.getItem(key)||'{}');
-  saved[field] = value;
-  localStorage.setItem(key, JSON.stringify(saved));
+async function saveJournalField(year, field, value) {
+  try {
+    await journalAPI.upsert(year, field, value);
+    if (!journal[year]) journal[year] = {};
+    journal[year][field] = value;
+  } catch (e) {
+    alert('Couldn’t save: ' + (e.message || e));
+  }
 }
 
 function onStatsModeChange() {
@@ -1508,7 +1640,7 @@ function renderYearStats(year) {
   const now2 = new Date();
   const isYearDone = parseInt(year) < now2.getFullYear()
     || (parseInt(year)===now2.getFullYear() && now2.getMonth()===11);
-  const journalHtml = isYearDone ? buildYearJournal(year, 'rj_journal_'+year) : '';
+  const journalHtml = isYearDone ? buildYearJournal(year) : '';
   const bracketHtml = buildMonthPicker(yb, year);
 
   // Assemble — single assignment
@@ -2065,6 +2197,18 @@ function setLibraryView(v) {
   renderVisualLibrary();
 }
 
+let librarySort = localStorage.getItem('rj_lib_sort') || 'author';
+function setLibrarySort(v) {
+  librarySort = v;
+  localStorage.setItem('rj_lib_sort', v);
+  renderVisualLibrary();
+}
+
+// Width = thickness = page count. Audio-only: estimate ~27pp per hour.
+function libBookPages(b) {
+  return (b.pages > 0 ? b.pages : Math.round((b.length || 0) * 27)) || 0;
+}
+
 function renderVisualLibrary() {
   const search = (document.getElementById('lib-search')?.value || '').toLowerCase();
   const filterGenre = document.getElementById('lib-genre')?.value || '';
@@ -2102,11 +2246,38 @@ function renderVisualLibrary() {
     return;
   }
 
-  // Full A–Z, sorted by author surname (then by title within an author)
-  const sorted = [...filtered].sort((a,b) => {
-    const cmp = authorSurname(a.author).localeCompare(authorSurname(b.author));
-    return cmp !== 0 ? cmp : a.title.localeCompare(b.title);
-  });
+  // Reflect persisted sort in the dropdown if the user just landed on the page
+  const sortSel = document.getElementById('lib-sort');
+  if (sortSel && sortSel.value !== librarySort) sortSel.value = librarySort;
+
+  // Apply the chosen sort
+  const sorted = [...filtered];
+  if (librarySort === 'title') {
+    sorted.sort((a,b) => a.title.localeCompare(b.title));
+  } else if (librarySort === 'recent') {
+    sorted.sort((a,b) => (b.finished||'0').localeCompare(a.finished||'0') || a.title.localeCompare(b.title));
+  } else if (librarySort === 'rating-high') {
+    sorted.sort((a,b) => (b.rating||0)-(a.rating||0) || (b.finished||'0').localeCompare(a.finished||'0'));
+  } else if (librarySort === 'rating-low') {
+    // unrated books at the bottom — they're not "lowest rated", they're unrated
+    sorted.sort((a,b) => {
+      const ar = a.rating||999, br = b.rating||999;
+      return ar - br || (b.finished||'0').localeCompare(a.finished||'0');
+    });
+  } else if (librarySort === 'longest') {
+    sorted.sort((a,b) => libBookPages(b) - libBookPages(a) || a.title.localeCompare(b.title));
+  } else if (librarySort === 'shortest') {
+    sorted.sort((a,b) => {
+      const ap = libBookPages(a) || 99999, bp = libBookPages(b) || 99999;
+      return ap - bp || a.title.localeCompare(b.title);
+    });
+  } else {
+    // default: author surname, then title within author
+    sorted.sort((a,b) => {
+      const cmp = authorSurname(a.author).localeCompare(authorSurname(b.author));
+      return cmp !== 0 ? cmp : a.title.localeCompare(b.title);
+    });
+  }
 
   // Cover grid view — flat alphabetical grid of cover images, no shelf groupings
   if (libraryView === 'covers') {
@@ -2134,14 +2305,35 @@ function renderVisualLibrary() {
     return { book: b, color: palette[idx % palette.length] };
   });
 
-  // Break into rows of ~40 books, labelled by surname initial range
+  // Break into rows of ~40 books, labelled depending on the sort
   const ROW_SIZE = 40;
   let shelves = '';
   for (let i = 0; i < coloured.length; i += ROW_SIZE) {
     const row = coloured.slice(i, i + ROW_SIZE);
-    const startLetter = (authorSurname(row[0].book.author)[0] || '?').toUpperCase();
-    const endLetter = (authorSurname(row[row.length-1].book.author)[0] || '?').toUpperCase();
-    const label = startLetter === endLetter ? startLetter : startLetter + ' — ' + endLetter;
+    const first = row[0].book, last = row[row.length-1].book;
+    let label;
+    if (librarySort === 'title') {
+      const s = (first.title[0]||'?').toUpperCase();
+      const e = (last.title[0]||'?').toUpperCase();
+      label = s === e ? s : s + ' — ' + e;
+    } else if (librarySort === 'recent') {
+      const sy = (first.finished||'').slice(0,4), ey = (last.finished||'').slice(0,4);
+      if (sy && ey) label = sy === ey ? sy : sy + ' — ' + ey;
+      else label = 'recently finished';
+    } else if (librarySort === 'rating-high' || librarySort === 'rating-low') {
+      const sr = first.rating||0, er = last.rating||0;
+      const stars = n => n ? '★'.repeat(Math.round(n)) : 'unrated';
+      label = sr === er ? stars(sr) : stars(sr) + ' — ' + stars(er);
+    } else if (librarySort === 'longest' || librarySort === 'shortest') {
+      const sp = libBookPages(first), ep = libBookPages(last);
+      const fmt = n => n ? n + 'pp' : '?';
+      label = fmt(sp) + ' — ' + fmt(ep);
+    } else {
+      // author (default)
+      const s = (authorSurname(first.author)[0] || '?').toUpperCase();
+      const e = (authorSurname(last.author)[0] || '?').toUpperCase();
+      label = s === e ? s : s + ' — ' + e;
+    }
     shelves += '<div class="shelf-section">'
       + '<div class="shelf-label">' + label
       + ' <span class="shelf-count">(' + row.length + ' books)</span></div>'
@@ -2192,6 +2384,10 @@ function isLightColor(hex) {
 // ── DATA ──────────────────────────────────────────────
 let books = JSON.parse(localStorage.getItem('rj_books') || 'null');
 let goals = JSON.parse(localStorage.getItem('rj_goals') || '[]');
+let journal = {};  // populated on sign-in by syncBooksFromDb
+let botyPicks = {};  // botyPicks[year][month] = bookId, populated on sign-in
+let tarotState = null;  // {date, cardId} or null, populated on sign-in
+let profile = {};  // {handle, anthropic_api_key, preferences} populated on sign-in
 let editingId = null;
 let libFilter = 'all';
 let csvData = null;
@@ -2338,26 +2534,546 @@ const sessionsAPI = {
   },
 };
 
-// Refresh the in-memory cache from Supabase + redraw whatever page is visible.
-// Books fetched first; sessions then grouped onto them by book_id.
-async function syncBooksFromDb() {
+// ─────────────────────────────────────────────────────────────
+// SUPABASE DATA LAYER — goals table
+// ─────────────────────────────────────────────────────────────
+function _dbToGoal(row) {
+  return {
+    id: row.id,
+    name: row.name || '',
+    target: row.target || 0,
+    year: row.year,
+    type: row.type || 'books_read',
+    customCurrent: row.custom_current || 0,
+  };
+}
+
+function _goalToDb(goal, userId) {
+  const out = {
+    name: goal.name || '',
+    target: parseInt(goal.target) || 0,
+    year: parseInt(goal.year) || new Date().getFullYear(),
+    type: goal.type || 'books_read',
+    custom_current: parseInt(goal.customCurrent) || 0,
+  };
+  if (userId) out.user_id = userId;
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────
+// SUPABASE DATA LAYER — journal_entries (year-end review prompts)
+// One row per (user, year, field). Upserts by (user_id, year, field).
+// In-memory cache shape: journal[year][field] = "value text"
+// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// SUPABASE DATA LAYER — tarot_state (one row per user, last drawn card)
+// pickTarot stays synchronous; reads from in-memory tarotState. Writes to
+// Supabase fire-and-forget (don't await) so the UI never blocks on a draw.
+// ─────────────────────────────────────────────────────────────
+const tarotAPI = {
+  async fetchOne() {
+    const { data, error } = await db.from('tarot_state').select('*').maybeSingle();
+    if (error) { console.error('tarot fetch failed:', error); return null; }
+    return data;
+  },
+  async upsert(cardId, date) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const { error } = await db.from('tarot_state')
+      .upsert({ user_id: userId, card_id: cardId, drawn_date: date });
+    if (error) { console.error('tarot upsert failed:', error); throw error; }
+  },
+  async clear() {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const { error } = await db.from('tarot_state').delete().eq('user_id', userId);
+    if (error) { console.error('tarot clear failed:', error); throw error; }
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// SUPABASE DATA LAYER — profiles (one row per user, settings + Anthropic key)
+// ─────────────────────────────────────────────────────────────
+const profileAPI = {
+  async fetchMine() {
+    const { data, error } = await db.from('profiles').select('*').maybeSingle();
+    if (error) { console.error('profile fetch failed:', error); return null; }
+    return data;
+  },
+  async update(patch) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const { data, error } = await db.from('profiles')
+      .update({ ...patch, updated_at: new Date().toISOString() })
+      .eq('id', userId)
+      .select().single();
+    if (error) { console.error('profile update failed:', error); throw error; }
+    return data;
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// SUPABASE DATA LAYER — boty_picks (book of the year monthly picks)
+// One row per (user, year, month). In-memory: botyPicks[year][month] = bookId
+// ─────────────────────────────────────────────────────────────
+const botyAPI = {
+  async fetchAll() {
+    const { data, error } = await db.from('boty_picks').select('*');
+    if (error) { console.error('boty fetch failed:', error); return []; }
+    return data;
+  },
+  async upsert(year, month, bookId) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const { error } = await db.from('boty_picks')
+      .upsert(
+        { user_id: userId, year: parseInt(year), month: parseInt(month), book_id: bookId },
+        { onConflict: 'user_id,year,month' }
+      );
+    if (error) { console.error('boty upsert failed:', error); throw error; }
+  },
+  async delete(year, month) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const { error } = await db.from('boty_picks')
+      .delete()
+      .eq('user_id', userId)
+      .eq('year', parseInt(year))
+      .eq('month', parseInt(month));
+    if (error) { console.error('boty delete failed:', error); throw error; }
+  },
+};
+
+const journalAPI = {
+  async fetchAll() {
+    const { data, error } = await db.from('journal_entries').select('*');
+    if (error) { console.error('journal fetch failed:', error); return []; }
+    return data;
+  },
+  async upsert(year, field, value) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const { data, error } = await db.from('journal_entries')
+      .upsert(
+        { user_id: userId, year: parseInt(year), field, value, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id,year,field' }
+      )
+      .select().single();
+    if (error) { console.error('journal upsert failed:', error); throw error; }
+    return data;
+  },
+};
+
+const goalsAPI = {
+  async fetchAll() {
+    const { data, error } = await db.from('goals').select('*').order('created_at', { ascending: false });
+    if (error) { console.error('goals fetch failed:', error); return []; }
+    return data.map(_dbToGoal);
+  },
+  async insert(goal) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const { data, error } = await db.from('goals').insert(_goalToDb(goal, userId)).select().single();
+    if (error) { console.error('goal insert failed:', error); throw error; }
+    return _dbToGoal(data);
+  },
+  async delete(id) {
+    const { error } = await db.from('goals').delete().eq('id', id);
+    if (error) { console.error('goal delete failed:', error); throw error; }
+  },
+};
+
+// Refresh the in-memory caches from Supabase + redraw whatever page is visible.
+// Books fetched first; sessions grouped onto them by book_id; goals separately.
+// Show the welcome screen if this is a brand-new user (no books yet AND not yet
+// flagged as onboarded). Hidden as soon as they pick a path.
+function maybeShowOnboarding() {
+  const onboarded = profile && profile.preferences && profile.preferences.onboarded === true;
+  const isEmpty = (!books || books.length === 0) && (!goals || goals.length === 0);
+  if (!onboarded && isEmpty) {
+    document.body.classList.add('onboarding');
+    showOnboardingStep('home');
+  } else {
+    document.body.classList.remove('onboarding');
+  }
+}
+
+const ONBOARDING_STEPS = {
+  home: () => `
+    <h1 class="welcome-title">welcome to dinkus</h1>
+    <div class="welcome-asterisks">* * *</div>
+    <p class="welcome-blurb">the shelves are empty. the deck doesn’t know you yet.<br>soon, the patterns will speak.</p>
+    <p class="welcome-paths-label">three paths</p>
+    <div class="welcome-paths">
+      <button class="welcome-btn welcome-btn-primary" onclick="onboardingChose('book')">+ log your first book</button>
+      <button class="welcome-btn welcome-btn-primary" onclick="showOnboardingStep('sources')">transfer your reads &middot; we know there’s a history</button>
+      <button class="welcome-btn welcome-btn-ghost" onclick="onboardingChose('skip')">skip &middot; I’ll figure it out</button>
+    </div>
+    <p class="welcome-footer">per aspera ad libros.</p>`,
+
+  sources: () => `
+    <h1 class="welcome-title">transfer your reads</h1>
+    <div class="welcome-asterisks">* * *</div>
+    <p class="welcome-blurb">think we’d make you start from scratch?<br>where are they coming from?</p>
+    <div class="welcome-paths" style="margin-top:24px;">
+      <button class="welcome-source" onclick="showOnboardingStep('goodreads')">
+        <span class="welcome-source-name">Goodreads</span>
+        <span class="welcome-source-tagline">the giant. csv export. small dance.</span>
+      </button>
+      <button class="welcome-source" onclick="showOnboardingStep('storygraph')">
+        <span class="welcome-source-name">The StoryGraph</span>
+        <span class="welcome-source-tagline">the chic one. csv export, by email.</span>
+      </button>
+      <button class="welcome-source" onclick="showOnboardingStep('hardcover')">
+        <span class="welcome-source-name">Hardcover</span>
+        <span class="welcome-source-tagline">the upstart. instant csv.</span>
+      </button>
+      <button class="welcome-source" onclick="showOnboardingStep('other')">
+        <span class="welcome-source-name">a plain CSV</span>
+        <span class="welcome-source-tagline">if it’s tabular, we’ll have a go.</span>
+      </button>
+    </div>
+    <button class="welcome-back" onclick="showOnboardingStep('home')">&larr; back</button>`,
+
+  goodreads: () => `
+    <h1 class="welcome-title" style="font-size:28px;">from goodreads</h1>
+    <div class="welcome-instructions">
+      <ol>
+        <li>on goodreads, head to <a href="https://www.goodreads.com/review/import" target="_blank" rel="noopener">my books → import and export</a></li>
+        <li>scroll down, click <strong>Export Library</strong></li>
+        <li>wait a few seconds, then click the <em>"Your export from..."</em> link that appears</li>
+        <li>save the CSV somewhere you can find it</li>
+        <li>come back here and drop it in</li>
+      </ol>
+    </div>
+    <button class="welcome-btn welcome-btn-primary" onclick="onboardingChose('import')">I have my CSV →</button>
+    <button class="welcome-back" onclick="showOnboardingStep('sources')">&larr; back</button>`,
+
+  storygraph: () => `
+    <h1 class="welcome-title" style="font-size:28px;">from the storygraph</h1>
+    <div class="welcome-instructions">
+      <ol>
+        <li>on the storygraph, click your profile picture → <strong>Manage Account</strong></li>
+        <li>scroll to the bottom, find <strong>Export StoryGraph Library</strong></li>
+        <li>they’ll email you a download link (takes a few minutes)</li>
+        <li>download the CSV from that email</li>
+        <li>come back here, drop it in</li>
+      </ol>
+    </div>
+    <button class="welcome-btn welcome-btn-primary" onclick="onboardingChose('import')">I have my CSV →</button>
+    <button class="welcome-back" onclick="showOnboardingStep('sources')">&larr; back</button>`,
+
+  hardcover: () => `
+    <h1 class="welcome-title" style="font-size:28px;">from hardcover</h1>
+    <div class="welcome-instructions">
+      <ol>
+        <li>on hardcover, click your avatar → <strong>Account Settings</strong></li>
+        <li>find the <strong>Export</strong> section</li>
+        <li>click <strong>Export Library as CSV</strong> — downloads instantly</li>
+        <li>come back here, drop it in</li>
+      </ol>
+    </div>
+    <button class="welcome-btn welcome-btn-primary" onclick="onboardingChose('import')">I have my CSV →</button>
+    <button class="welcome-back" onclick="showOnboardingStep('sources')">&larr; back</button>`,
+
+  other: () => `
+    <h1 class="welcome-title" style="font-size:28px;">any tabular data</h1>
+    <div class="welcome-instructions">
+      <p>if it’s a CSV with at least <strong>title</strong> and <strong>author</strong> columns, we’ll do our best to map everything else.</p>
+      <p style="margin-top:10px;font-size:12px;color:var(--ink-3);">column names we recognise:<br>title, author/authors, rating/my rating/star rating, status/exclusive shelf/read status, date read/last date read/finished, tags/bookshelves/moods, pages/number of pages, format/binding, year/published/year published.</p>
+    </div>
+    <button class="welcome-btn welcome-btn-primary" onclick="onboardingChose('import')">I have my CSV →</button>
+    <button class="welcome-back" onclick="showOnboardingStep('sources')">&larr; back</button>`,
+};
+
+function showOnboardingStep(step) {
+  const card = document.getElementById('welcome-card');
+  if (!card) return;
+  const renderer = ONBOARDING_STEPS[step] || ONBOARDING_STEPS.home;
+  card.innerHTML = renderer();
+}
+
+// ─────────────────────────────────────────────────────────────
+// SETTINGS PAGE — privacy/ToS, profile, danger zone
+// ─────────────────────────────────────────────────────────────
+function showSettings() {
+  PAGES.forEach(p => document.getElementById('page-'+p).classList.add('hidden'));
+  document.getElementById('page-settings').classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  renderSettings();
+}
+
+async function renderSettings() {
+  const userEmail = (await db.auth.getUser()).data.user?.email || '';
+  const apiKey = (profile && profile.anthropic_api_key) || '';
+  const masked = apiKey ? apiKey.slice(0,8) + '…' + apiKey.slice(-4) : '';
+  document.getElementById('settings-content').innerHTML = `
+    <div class="stat-block" style="margin-bottom:18px;">
+      <div class="stat-block-title">your account</div>
+      <div style="font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:14px;">
+        signed in as <strong>${userEmail}</strong>
+      </div>
+      <div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-weight:500;">what should we call you?</div>
+      <input type="text" id="profile-handle-input" value="${(profile && profile.handle || '').replace(/"/g,'&quot;')}" placeholder="your name" maxlength="40" onblur="saveProfileName()" style="font-family:var(--font-body);font-size:14px;padding:8px 12px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;width:100%;max-width:280px;">
+      <div style="font-size:11px;color:var(--ink-3);margin-top:6px;font-style:italic;">we’ll use this in the dashboard greeting and the occasional prophecy. blank is fine.</div>
+    </div>
+
+    <div class="stat-block" style="margin-bottom:18px;">
+      <div class="stat-block-title">the matchmaker (Claude API)</div>
+      <div style="font-size:12px;color:var(--ink-3);margin-bottom:10px;line-height:1.5;">
+        an optional Claude API key powers the personalised book recommendations on your reading horoscope page. without one, the matchmaker falls back to local TBR-overlap suggestions. stored securely in your profile and synced across devices.
+      </div>
+      <div style="font-size:13px;color:var(--ink-2);margin-bottom:8px;">${apiKey ? 'current key: <code style="font-family:monospace;background:var(--paper-2);padding:2px 6px;border-radius:4px;">'+masked+'</code>' : '<em>no key set</em>'}</div>
+      <button onclick="openOracleSettings()" style="font-family:var(--font-body);font-size:12px;padding:7px 14px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;">${apiKey ? 'change key' : 'add key'}</button>
+    </div>
+
+    <div class="stat-block" style="margin-bottom:18px;">
+      <div class="stat-block-title">your data</div>
+      <div style="font-size:12px;color:var(--ink-3);margin-bottom:10px;line-height:1.5;">
+        export everything as a CSV. you keep the file forever, importable into any other tracker.
+      </div>
+      <button onclick="exportCSV()" style="font-family:var(--font-body);font-size:12px;padding:7px 14px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;">export csv</button>
+    </div>
+
+    <div class="stat-block" style="margin-bottom:18px;">
+      <div class="stat-block-title">the small print</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+        <a href="#" onclick="event.preventDefault(); openPolicy('privacy')" style="color:var(--accent);text-decoration:none;">privacy policy →</a>
+        <a href="#" onclick="event.preventDefault(); openPolicy('terms')" style="color:var(--accent);text-decoration:none;">terms of service →</a>
+      </div>
+    </div>
+
+    <div class="stat-block" style="margin-bottom:18px;border:1px solid #e8c4c4;">
+      <div class="stat-block-title" style="color:#b85;">danger zone</div>
+      <div style="font-size:12px;color:var(--ink-3);margin-bottom:10px;line-height:1.5;">
+        delete your account and everything in it. cannot be undone.
+      </div>
+      <button onclick="openDeleteAccount()" style="font-family:var(--font-body);font-size:12px;padding:7px 14px;background:#f5e8e8;border:1px solid #e8c4c4;color:#8b3a3a;border-radius:var(--radius);cursor:pointer;">delete account</button>
+    </div>
+  `;
+}
+
+const POLICY_PRIVACY = `
+  <h2 style="font-family:var(--font-display);font-style:italic;font-size:24px;margin-bottom:6px;">privacy policy</h2>
+  <p style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px;">last updated · ${new Date().toLocaleDateString('en-GB', {year:'numeric',month:'long',day:'numeric'})}</p>
+  <div style="font-size:13px;color:var(--ink-2);line-height:1.7;">
+    <p style="margin-bottom:14px;">dinkus is a small reading-tracker app run by chelcie harry as a personal project. it's not a business — no investors, no analytics, no marketing emails. but you're trusting it with your reading data, so here's what happens to it.</p>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">who's responsible</h3>
+    <p>chelcie harry, sole operator of dinkus.app. for any privacy questions, contact <a href="mailto:hello@dinkus.app" style="color:var(--accent);">hello@dinkus.app</a>.</p>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">what we collect</h3>
+    <ul style="padding-left:22px;margin-bottom:8px;">
+      <li>the email address you sign in with (so we know it's you next time)</li>
+      <li>the reading data you create: book titles, authors, ratings, dates, thoughts, reading sessions, tags, goals, journal entries, BOTY picks, and tarot draws</li>
+      <li>if you opt in, an Anthropic API key for the matchmaker feature</li>
+    </ul>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">what we don't collect</h3>
+    <p>no tracking, no analytics, no third-party advertising, no cookies beyond what's needed to keep you signed in, no fingerprinting. we don't access other tabs or your camera unless you explicitly use the ISBN scanner (which only reads the barcode in front of it).</p>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">where it lives</h3>
+    <p>your data sits in a Postgres database hosted by Supabase in the EU (London region). sign-in code emails are sent through Resend.</p>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">who else sees it</h3>
+    <p>nobody but you. row-level security in the database means each user's authenticated session can only read their own rows. the operator (chelcie) has admin access to the database for maintenance, but does not read individual users' data.</p>
+    <p style="margin-top:8px;">if you opt into the matchmaker with a Claude API key, your recent reading data is sent to Anthropic to generate recommendations. that's the only third-party data sharing, and it's entirely opt-in.</p>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">your rights (GDPR)</h3>
+    <ul style="padding-left:22px;margin-bottom:8px;">
+      <li><strong>access</strong> — you can see all your data inside the app at any time</li>
+      <li><strong>export</strong> — settings → export csv gives you everything in a portable file</li>
+      <li><strong>correction</strong> — edit any entry directly in the app</li>
+      <li><strong>deletion</strong> — settings → danger zone wipes your auth record and all your data, immediately and irreversibly</li>
+      <li><strong>complain</strong> — you can complain to the ICO (<a href="https://ico.org.uk" target="_blank" style="color:var(--accent);">ico.org.uk</a>) if you think your data has been mishandled</li>
+    </ul>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">how long we keep it</h3>
+    <p>until you delete your account. there are no automated retention policies; if you stop using dinkus we don't auto-delete your data. you can wipe everything anytime via the danger zone.</p>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">changes to this policy</h3>
+    <p>if this policy changes we'll update the "last updated" date and notify you in-app. material changes (new third parties, new data collection) will be announced before they take effect.</p>
+
+    <p style="margin-top:24px;font-style:italic;color:var(--ink-3);">per aspera ad libros.</p>
+  </div>
+`;
+
+const POLICY_TERMS = `
+  <h2 style="font-family:var(--font-display);font-style:italic;font-size:24px;margin-bottom:6px;">terms of service</h2>
+  <p style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px;">last updated · ${new Date().toLocaleDateString('en-GB', {year:'numeric',month:'long',day:'numeric'})}</p>
+  <div style="font-size:13px;color:var(--ink-2);line-height:1.7;">
+    <p style="margin-bottom:14px;">dinkus is a personal reading-tracker app, made and maintained by chelcie harry as a hobby project. by using it, you agree to the following.</p>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">what dinkus is</h3>
+    <p>a hobby project, provided as-is. no warranties about availability, accuracy, or fitness for any particular purpose. use it because you want to, not because you've been promised something.</p>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">your account</h3>
+    <p>sign in with an email address you control. don't share your account, don't impersonate someone else, don't try to access other people's accounts.</p>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">acceptable use</h3>
+    <p>log books, write reviews, track your reading. don't store anything illegal, don't use the app to harass anyone, don't try to overload or exploit the system. accounts that abuse the app may be suspended or removed (we'd tell you why).</p>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">your data, your responsibility</h3>
+    <p>you own what you write. don't include things you wouldn't be comfortable being in a database — we don't read it, but databases get backed up, hacked, copied (generally true of all online services). the export csv button is your friend.</p>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">changes & shutdown</h3>
+    <p>features may change, the app may look different, or it may disappear entirely if real life takes over. if dinkus is being shut down we'll give at least 30 days' notice and make sure you can export your data first.</p>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">liability</h3>
+    <p>we're not liable for lost data, lost time, or any consequential damages. back up anything you'd be sad to lose.</p>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">law</h3>
+    <p>these terms are governed by the laws of England and Wales. any disputes will be handled in courts there.</p>
+
+    <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">contact</h3>
+    <p><a href="mailto:hello@dinkus.app" style="color:var(--accent);">hello@dinkus.app</a></p>
+
+    <p style="margin-top:24px;font-style:italic;color:var(--ink-3);">per aspera ad libros.</p>
+  </div>
+`;
+
+async function saveProfileName() {
+  const handle = (document.getElementById('profile-handle-input').value || '').trim().slice(0, 40);
+  if (handle === (profile.handle || '')) return;  // no change
   try {
-    const [bookList, sessionList] = await Promise.all([
-      booksAPI.fetchAll(),
-      sessionsAPI.fetchAll(),
+    const updated = await profileAPI.update({ handle: handle || null });
+    profile = updated || { ...profile, handle: handle || null };
+    if (typeof setGreeting === 'function') setGreeting();
+  } catch (e) {
+    console.warn('profile name save failed:', e);
+  }
+}
+
+function openPolicy(kind) {
+  const html = kind === 'terms' ? POLICY_TERMS : POLICY_PRIVACY;
+  document.getElementById('settings-content').innerHTML =
+    html
+    + '<button onclick="renderSettings()" style="font-family:var(--font-body);font-size:13px;padding:9px 18px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;margin-top:24px;">← back to settings</button>';
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+}
+
+function openDeleteAccount() {
+  document.getElementById('delete-confirm-input').value = '';
+  openModal('modal-delete-account');
+  setTimeout(() => document.getElementById('delete-confirm-input').focus(), 100);
+}
+
+async function confirmDeleteAccount() {
+  const typed = document.getElementById('delete-confirm-input').value.trim();
+  if (typed !== 'DELETE') {
+    alert('Please type DELETE exactly to confirm.');
+    return;
+  }
+  try {
+    // Calls the SECURITY DEFINER Postgres function `delete_my_account()` which deletes
+    // the row from auth.users; CASCADE foreign keys clear all user data automatically.
+    const { error } = await db.rpc('delete_my_account');
+    if (error) throw error;
+  } catch (e) {
+    alert('Couldn’t delete account: ' + (e.message || e) + '. If this keeps happening, email hello@dinkus.app.');
+    return;
+  }
+  // Sign out locally and reset state
+  try { await db.auth.signOut(); } catch (e) {}
+  Object.keys(localStorage).filter(k => k.startsWith('sb-') || k.startsWith('rj_')).forEach(k => localStorage.removeItem(k));
+  closeModal('modal-delete-account');
+  alert('your dinkus account has been deleted. all your data is gone. take care.');
+  location.reload();
+}
+
+async function onboardingChose(path) {
+  try {
+    const newPrefs = { ...((profile && profile.preferences) || {}), onboarded: true };
+    const updated = await profileAPI.update({ preferences: newPrefs });
+    profile = updated || { ...(profile || {}), preferences: newPrefs };
+  } catch (e) {
+    console.warn('onboarding flag save failed (continuing anyway):', e);
+  }
+  document.body.classList.remove('onboarding');
+  if (path === 'book') {
+    showPage('dashboard');
+    setTimeout(() => openAddBook('want'), 50);
+  } else if (path === 'import') {
+    showPage('dashboard');
+    setTimeout(() => openImport && openImport(), 50);
+  } else {
+    showPage('dashboard');
+  }
+}
+
+// Race a promise against a timeout so one wedged endpoint can't freeze the UI.
+// Returns the resolved value, or throws Error('<label> timed out').
+function _withTimeout(p, label, ms = 15000) {
+  return Promise.race([
+    p,
+    new Promise((_, rej) => setTimeout(() => rej(new Error(label + ' timed out')), ms))
+  ]);
+}
+
+async function syncBooksFromDb() {
+  document.body.classList.add('syncing');
+  document.body.classList.remove('sync-error');
+  try {
+    // allSettled + per-call timeout — a single hung endpoint won't take the whole sync down
+    const results = await Promise.allSettled([
+      _withTimeout(booksAPI.fetchAll(),    'books'),
+      _withTimeout(sessionsAPI.fetchAll(), 'sessions'),
+      _withTimeout(goalsAPI.fetchAll(),    'goals'),
+      _withTimeout(journalAPI.fetchAll(),  'journal'),
+      _withTimeout(botyAPI.fetchAll(),     'boty'),
+      _withTimeout(tarotAPI.fetchOne(),    'tarot'),
+      _withTimeout(profileAPI.fetchMine(), 'profile'),
     ]);
-    // Group sessions by book_id
+    const [bookR, sessionR, goalR, journalR, botyR, tarotR, profileR] = results;
+    const failed = results.map((r, i) => r.status === 'rejected' ? ['books','sessions','goals','journal','boty','tarot','profile'][i] : null).filter(Boolean);
+    if (failed.length) console.warn('syncBooksFromDb partial failure:', failed, results.filter(r=>r.status==='rejected').map(r=>r.reason?.message||r.reason));
+
+    // Sessions → attach to books (only if both succeeded)
+    const sessionList = sessionR.status === 'fulfilled' ? sessionR.value : [];
     const byBook = {};
     sessionList.forEach(s => {
       if (!byBook[s.book_id]) byBook[s.book_id] = [];
       byBook[s.book_id].push({ id: s.id, date: s.date, minutes: s.minutes });
     });
-    bookList.forEach(b => { b.sessions = byBook[b.id] || []; });
-    books = bookList;
+    if (bookR.status === 'fulfilled') {
+      bookR.value.forEach(b => { b.sessions = byBook[b.id] || []; });
+      books = bookR.value;
+    }
+    if (goalR.status === 'fulfilled') goals = goalR.value;
+    if (journalR.status === 'fulfilled') {
+      journal = {};
+      journalR.value.forEach(j => {
+        if (!journal[j.year]) journal[j.year] = {};
+        journal[j.year][j.field] = j.value || '';
+      });
+    }
+    if (botyR.status === 'fulfilled') {
+      botyPicks = {};
+      botyR.value.forEach(p => {
+        if (!botyPicks[p.year]) botyPicks[p.year] = {};
+        botyPicks[p.year][p.month] = p.book_id;
+      });
+    }
+    if (tarotR.status === 'fulfilled') {
+      const tarotRow = tarotR.value;
+      tarotState = tarotRow ? { date: tarotRow.drawn_date, cardId: tarotRow.card_id } : null;
+    }
+    if (profileR.status === 'fulfilled') profile = profileR.value || {};
+
+    // First-time user? Show welcome screen instead of dashboard
+    maybeShowOnboarding();
     save();  // mirror to localStorage for offline + fast next-load
+    if (typeof setGreeting === 'function') setGreeting();
     refreshCurrentPage();
+
+    // Surface a soft error banner if any endpoint timed out, so the user knows data is partial
+    if (failed.length) document.body.classList.add('sync-error');
   } catch (e) {
     console.error('syncBooksFromDb failed:', e);
+    document.body.classList.add('sync-error');
+  } finally {
+    document.body.classList.remove('syncing');
   }
 }
 
@@ -2365,6 +3081,9 @@ async function syncBooksFromDb() {
 const PAGES = ['dashboard','library','stats','want','series','oracle','goals'];
 function showPage(name) {
   PAGES.forEach(p => document.getElementById('page-'+p).classList.toggle('hidden', p !== name));
+  // Settings page lives outside the PAGES array, so hide it explicitly when nav'ing to a regular page
+  const settingsPage = document.getElementById('page-settings');
+  if (settingsPage) settingsPage.classList.add('hidden');
   document.querySelectorAll('.nav-item').forEach((el,i) => el.classList.toggle('active', PAGES[i] === name));
   // Always start a fresh page at the top
   window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -3212,8 +3931,9 @@ const VOCABULARY_PHRASES = [
 ];
 
 function pickTarot(today) {
-  const stash = JSON.parse(localStorage.getItem('rj_tarot') || 'null');
-  if (stash && stash.date === today) return TAROT_DECK.find(c => c.id === stash.cardId) || TAROT_DECK[TAROT_DECK.length-1];
+  if (tarotState && tarotState.date === today) {
+    return TAROT_DECK.find(c => c.id === tarotState.cardId) || TAROT_DECK[TAROT_DECK.length-1];
+  }
   return shuffleTarot(today);
 }
 
@@ -3228,11 +3948,13 @@ function shuffleTarot(today) {
     if (!recent.length) return 0;
     return recent.filter(b => b.status==='dnf' || (!b.finished && /dnf/i.test(b.thoughts||''))).length / recent.length;
   })();
-  // Score every card; weight randomly for tie-breaking + variety
   const scored = TAROT_DECK.map(c => ({ card: c, s: c.score(ctx) + Math.random() * 5 }));
   scored.sort((a,b) => b.s - a.s);
   const winner = scored[0].card;
-  localStorage.setItem('rj_tarot', JSON.stringify({ date: today, cardId: winner.id }));
+  // Update cache synchronously (so pickTarot returning to renderOracle gets fresh data)
+  tarotState = { date: today, cardId: winner.id };
+  // Fire-and-forget DB write — don't block UI
+  tarotAPI.upsert(winner.id, today).catch(e => console.warn('tarot save failed:', e));
   return winner;
 }
 
@@ -3260,9 +3982,8 @@ function flipTarot() {
 
 function reshuffleTarot() {
   const today = new Date().toISOString().split('T')[0];
-  // Force re-roll by clearing cached pick + reveal flag
-  localStorage.removeItem('rj_tarot');
-  localStorage.removeItem('rj_tarot_revealed');
+  // Clear in-memory state to force a fresh draw (DB will be overwritten on shuffle)
+  tarotState = null;
   shuffleTarot(today);
   renderOracle();
 }
@@ -3401,19 +4122,24 @@ function buildLocalRecs(all) {
 }
 
 function openOracleSettings() {
-  document.getElementById('oracle-api-key').value = localStorage.getItem('rj_anthropic_key') || '';
+  document.getElementById('oracle-api-key').value = (profile && profile.anthropic_api_key) || '';
   openModal('modal-oracle-settings');
 }
-function saveOracleSettings() {
+async function saveOracleSettings() {
   const key = document.getElementById('oracle-api-key').value.trim();
-  if (key) localStorage.setItem('rj_anthropic_key', key);
-  else localStorage.removeItem('rj_anthropic_key');
+  try {
+    const updated = await profileAPI.update({ anthropic_api_key: key || null });
+    profile = updated || profile;
+  } catch (e) {
+    alert('Couldn’t save: ' + (e.message || e));
+    return;
+  }
   closeModal('modal-oracle-settings');
   if (document.getElementById('oracle-content')) renderOracle();
 }
 
 async function callClaudeForRecs(seedBooks) {
-  const apiKey = localStorage.getItem('rj_anthropic_key');
+  const apiKey = (profile && profile.anthropic_api_key) || '';
   if (!apiKey) return null;
   const inLibrary = books.map(b => b.title).slice(0, 250);
   const seed = seedBooks.map(b => ({
@@ -3505,7 +4231,7 @@ async function renderOracle() {
     : '<div style="font-size:12px;color:var(--ink-3);">no recurring vocabulary detected. either the reviews are too short or the vibe is genuinely chaotic.</div>';
   const obsHtml = tropes.observations.map(o => '<div class="trope-observation">' + o + '</div>').join('');
 
-  const apiKey = localStorage.getItem('rj_anthropic_key');
+  const apiKey = (profile && profile.anthropic_api_key) || '';
   const matchmakerPlaceholder = apiKey
     ? '<div style="font-size:12px;color:var(--ink-3);font-style:italic;">consulting the oracle\u2026</div>'
     : (() => {
@@ -3912,13 +4638,38 @@ function openAddGoal() {
 document.getElementById('g-type').addEventListener('change',function(){
   document.getElementById('g-custom-wrap').classList.toggle('hidden',this.value!=='custom');
 });
-function saveGoal() {
+async function saveGoal() {
   const name = document.getElementById('g-name').value.trim();
   if (!name) { alert('Please enter a goal name.'); return; }
-  goals.push({ id:uid(), name, target:parseInt(document.getElementById('g-target').value)||0, year:parseInt(document.getElementById('g-year').value)||new Date().getFullYear(), type:document.getElementById('g-type').value, customCurrent:parseInt(document.getElementById('g-current').value)||0 });
-  save(); closeModal('modal-goal'); renderGoals();
+  const goal = {
+    name,
+    target: parseInt(document.getElementById('g-target').value) || 0,
+    year: parseInt(document.getElementById('g-year').value) || new Date().getFullYear(),
+    type: document.getElementById('g-type').value,
+    customCurrent: parseInt(document.getElementById('g-current').value) || 0,
+  };
+  try {
+    const inserted = await goalsAPI.insert(goal);
+    goals.unshift(inserted);
+  } catch (e) {
+    alert('Save failed: ' + (e.message || e));
+    return;
+  }
+  save();
+  closeModal('modal-goal');
+  renderGoals();
 }
-function deleteGoal(id) { goals=goals.filter(g=>g.id!==id); save(); renderGoals(); }
+async function deleteGoal(id) {
+  try {
+    await goalsAPI.delete(id);
+    goals = goals.filter(g => g.id !== id);
+  } catch (e) {
+    alert('Delete failed: ' + (e.message || e));
+    return;
+  }
+  save();
+  renderGoals();
+}
 
 // ── VIEW BOOK ──────────────────────────────────────────────
 function viewBook(id) {
@@ -4125,16 +4876,21 @@ async function saveBook() {
       const existing = books.find(b => b.id === editingId);
       const existingReadings = existing ? (existing.readings || []) : [];
       book.readings = [...existingReadings, ...pendingReadings];
-      const updated = await booksAPI.update(editingId, book);
+      const updated = await _withTimeout(booksAPI.update(editingId, book), 'update', 15000);
       const i = books.findIndex(b => b.id === editingId);
       if (i !== -1) books[i] = { ...books[i], ...updated };
     } else {
       book.readings = [];
-      const inserted = await booksAPI.insert(book);
+      const inserted = await _withTimeout(booksAPI.insert(book), 'insert', 15000);
       books.unshift(inserted);
     }
   } catch (e) {
-    alert('Save failed: ' + (e.message || e));
+    const msg = (e && e.message) ? e.message : String(e);
+    if (msg.includes('timed out')) {
+      alert('save timed out — supabase isn\'t responding. try toggling "bypass for network" in devtools → application → service workers, or hard-reload.');
+    } else {
+      alert('Save failed: ' + msg);
+    }
     return;
   }
   save(); closeModal('modal-book'); refreshCurrentPage();
@@ -4433,7 +5189,31 @@ function parseCSV(text) {
   const rows = lines.slice(1).map(l=>{const vals=parseCSVLine(l);const o={};headers.forEach((h,i)=>o[h.trim()]=(vals[i]||'').trim());return o;}).filter(r=>Object.values(r).some(v=>v));
   csvData={headers,rows};
   const findCol=(names)=>{for(const n of names){const f=headers.find(h=>h.toLowerCase().trim()===n.toLowerCase());if(f)return f;}return null;};
-  const colMap={title:findCol(['title']),author:findCol(['author']),published:findCol(['published','year']),format:findCol(['format']),pages:findCol(['pages']),length:findCol(['length','hours']),genre:findCol(['genre']),started:findCol(['started','start date']),finished:findCol(['finished','finish date','date finished','date read']),rating:findCol(['rating']),narration:findCol(['narration']),thoughts:findCol(['thoughts','review','notes']),series:findCol(['series']),seriesNum:findCol(['# in series','series number','series #']),tags:findCol(['tags','stats / vibes']),nationality:findCol(['author: nationality','nationality']),gender:findCol(['author: gender','gender']),race:findCol(['author: ethnicity','author: race','race','ethnicity']),coverUrl:findCol(['cover url','cover','image']),statusCol:findCol(['status'])};
+  // Column auto-mapping. Names listed in priority order — first match wins. Goodreads
+  // export columns are included so users can drag their goodreads_library_export.csv
+  // straight in.
+  const colMap={
+    title:findCol(['title']),
+    author:findCol(['author']),
+    published:findCol(['published','year','original publication year','year published']),
+    format:findCol(['format','binding']),
+    pages:findCol(['pages','number of pages']),
+    length:findCol(['length','hours']),
+    genre:findCol(['genre']),
+    started:findCol(['started','start date','date added']),
+    finished:findCol(['finished','finish date','date finished','date read']),
+    rating:findCol(['rating','my rating']),
+    narration:findCol(['narration']),
+    thoughts:findCol(['thoughts','review','notes','my review','private notes']),
+    series:findCol(['series']),
+    seriesNum:findCol(['# in series','series number','series #']),
+    tags:findCol(['tags','stats / vibes','bookshelves']),
+    nationality:findCol(['author: nationality','nationality']),
+    gender:findCol(['author: gender','gender']),
+    race:findCol(['author: ethnicity','author: race','race','ethnicity']),
+    coverUrl:findCol(['cover url','cover','image']),
+    statusCol:findCol(['status','exclusive shelf']),
+  };
   document.getElementById('import-mapping')._colMap=colMap;
   document.getElementById('import-preview').innerHTML=`<div style="font-size:13px;color:var(--ink-2);padding:10px;background:var(--paper-2);border-radius:var(--radius);">Found <strong>${rows.length}</strong> books · columns mapped automatically</div>`;
   document.getElementById('btn-import-confirm').classList.remove('hidden');
@@ -4450,9 +5230,25 @@ async function confirmImport() {
     const title=colMap.title?row[colMap.title]:''; if(!title)return;
     const finRaw=colMap.finished?row[colMap.finished]:'';
     const stRaw=colMap.started?row[colMap.started]:'';
-    const csvStatus=(colMap.statusCol?row[colMap.statusCol]:'').toLowerCase().trim();
-    const status=['read','want','currently','dnf'].includes(csvStatus)?csvStatus:(finRaw==='DNF'?'read':finRaw&&!['TBR',''].includes(finRaw)?'read':stRaw&&!['TBR',''].includes(stRaw)?'currently':'want');
-    newBooks.push({title,author:colMap.author?row[colMap.author]:'',published:colMap.published?row[colMap.published]:'',pages:parseInt(colMap.pages?row[colMap.pages]:'')||0,length:parseLength(colMap.length?row[colMap.length]:''),genre:colMap.genre?row[colMap.genre]:'',format:(colMap.format?row[colMap.format]:'').toLowerCase().replace('audiobook','audio').replace('hardcover','hardback').replace('physical','paperback').replace('kindle','ebook'),started:stRaw&&!['TBR',''].includes(stRaw)?parseDate(stRaw):'',finished:finRaw&&!['TBR','DNF',''].includes(finRaw)?parseDate(finRaw):'',rating:parseFloat(colMap.rating?row[colMap.rating]:'')||0,narration:parseFloat(colMap.narration?row[colMap.narration]:'')||0,thoughts:colMap.thoughts?row[colMap.thoughts]:'',series:colMap.series?row[colMap.series]:'',seriesNum:colMap.seriesNum?row[colMap.seriesNum]:'',tags:(colMap.tags?row[colMap.tags]:'').split(',').map(t=>t.trim()).filter(Boolean),nationality:colMap.nationality?row[colMap.nationality]:'',gender:colMap.gender?row[colMap.gender]:'',race:colMap.race?row[colMap.race]:'',status,progress:0,coverUrl:colMap.coverUrl?row[colMap.coverUrl]:'',readings:[]});
+    // Normalise status (Goodreads uses "to-read" / "currently-reading", we use "want" / "currently")
+    const csvStatusRaw = (colMap.statusCol?row[colMap.statusCol]:'').toLowerCase().trim();
+    let csvStatus = csvStatusRaw;
+    if (csvStatus === 'to-read' || csvStatus === 'to read' || csvStatus === 'tbr') csvStatus = 'want';
+    if (csvStatus === 'currently-reading' || csvStatus === 'currently reading') csvStatus = 'currently';
+    if (csvStatus === 'did-not-finish' || csvStatus === 'did not finish') csvStatus = 'dnf';
+    const status = ['read','want','currently','dnf'].includes(csvStatus)
+      ? csvStatus
+      : (finRaw==='DNF'?'read':finRaw&&!['TBR',''].includes(finRaw)?'read':stRaw&&!['TBR',''].includes(stRaw)?'currently':'want');
+
+    // Normalise format (Goodreads "Binding" can be "Kindle Edition", "Mass Market Paperback", etc.)
+    const fmtRaw = (colMap.format?row[colMap.format]:'').toLowerCase();
+    let format = '';
+    if (fmtRaw.includes('audio') || fmtRaw.includes('audible')) format = 'audio';
+    else if (fmtRaw.includes('hardcover') || fmtRaw.includes('hardback')) format = 'hardback';
+    else if (fmtRaw.includes('paperback') || fmtRaw.includes('mass market') || fmtRaw === 'physical') format = 'paperback';
+    else if (fmtRaw.includes('kindle') || fmtRaw.includes('ebook') || fmtRaw.includes('e-book')) format = 'ebook';
+
+    newBooks.push({title,author:colMap.author?row[colMap.author]:'',published:colMap.published?row[colMap.published]:'',pages:parseInt(colMap.pages?row[colMap.pages]:'')||0,length:parseLength(colMap.length?row[colMap.length]:''),genre:colMap.genre?row[colMap.genre]:'',format,started:stRaw&&!['TBR',''].includes(stRaw)?parseDate(stRaw):'',finished:finRaw&&!['TBR','DNF',''].includes(finRaw)?parseDate(finRaw):'',rating:parseFloat(colMap.rating?row[colMap.rating]:'')||0,narration:parseFloat(colMap.narration?row[colMap.narration]:'')||0,thoughts:colMap.thoughts?row[colMap.thoughts]:'',series:colMap.series?row[colMap.series]:'',seriesNum:colMap.seriesNum?row[colMap.seriesNum]:'',tags:(colMap.tags?row[colMap.tags]:'').split(',').map(t=>t.trim()).filter(Boolean),nationality:colMap.nationality?row[colMap.nationality]:'',gender:colMap.gender?row[colMap.gender]:'',race:colMap.race?row[colMap.race]:'',status,progress:0,coverUrl:colMap.coverUrl?row[colMap.coverUrl]:'',readings:[]});
   });
 
   if (!newBooks.length) { alert('No books found in the CSV.'); return; }
@@ -4568,13 +5364,19 @@ books.forEach(b=>{ if (!Array.isArray(b.sessions)) b.sessions = []; });
 save();
 renderDashboard();
 document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-const allReadCount = books.filter(b=>b.status==='read').length;
-const greeting = allReadCount > 150 ? "legendary. truly." :
-  allReadCount > 100 ? "three figures. we love to see it." :
-  allReadCount > 50 ? "over fifty. she's built different." :
-  allReadCount > 20 ? "getting serious now." :
-  randomFrom(GREETINGS);
-document.getElementById('dash-greeting').textContent = greeting;
+
+function setGreeting() {
+  const allReadCount = books.filter(b=>b.status==='read').length;
+  const greeting = allReadCount > 150 ? "legendary. truly." :
+    allReadCount > 100 ? "three figures. we love to see it." :
+    allReadCount > 50 ? "over fifty. she's built different." :
+    allReadCount > 20 ? "getting serious now." :
+    randomFrom(GREETINGS);
+  const name = (profile && profile.handle || '').trim();
+  const prefix = name ? name + ', ' : '';
+  document.getElementById('dash-greeting').textContent = prefix + greeting;
+}
+setGreeting();
 
 function markDNFPrompt(id) {
   const b = books.find(x=>x.id===id);
@@ -4587,10 +5389,14 @@ function markDNFPrompt(id) {
     showPage('dashboard');
   }
 }
-// PWA: register service worker for offline / home-screen install
+// PWA: service worker re-enabled (Phase 6). Bypasses for live API endpoints
+// (Supabase, Anthropic, Google Books, Open Library) live in sw.js so writes/reads
+// always hit the network. Static assets (HTML, icons, tarot art) cached for offline.
+// CACHE_NAME is bumped in sw.js when caching behaviour changes — that auto-evicts
+// old caches via the activate handler.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW register failed:', e));
   });
 }
 </script>
