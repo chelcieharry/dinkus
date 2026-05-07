@@ -336,6 +336,32 @@ body.onboarding #welcome-screen { display: flex; }
 .trope-row-name { color: var(--ink-2); }
 .trope-row-count { font-family: var(--font-display); color: var(--accent); font-weight: 500; }
 .trope-observation { font-family: var(--font-display); font-style: italic; font-size: 14px; color: var(--ink-2); line-height: 1.55; padding: 14px 16px; background: var(--paper-2); border-left: 3px solid var(--accent-2); border-radius: 0 var(--radius) var(--radius) 0; margin-top: 10px; }
+
+/* Oracle / "your reading" — dinkus divider between sections */
+.oracle-dinkus { font-family: var(--font-display); letter-spacing: 0.55em; color: var(--accent-2); text-align: center; margin: 38px 0 30px; font-size: 14px; opacity: 0.65; user-select: none; }
+
+/* Patterns — observations as flowing italic prose, no lists */
+.patterns-prose { display: flex; flex-direction: column; gap: 14px; }
+.patterns-prose .observation { font-family: var(--font-display); font-style: italic; font-size: 15px; color: var(--ink-2); line-height: 1.65; padding-left: 18px; border-left: 2px solid var(--accent-2); }
+
+/* Misty prophecy card — tap to clear the mist, stays revealed for the day */
+.prophecy-mist { position: relative; background: linear-gradient(135deg, var(--paper-2), var(--paper-3) 75%); border-radius: var(--radius-lg); padding: 44px 28px; text-align: center; cursor: pointer; overflow: hidden; min-height: 140px; display: flex; align-items: center; justify-content: center; transition: box-shadow 0.3s; }
+.prophecy-mist:hover { box-shadow: var(--shadow-lg); }
+.prophecy-mist.revealed { cursor: default; }
+.prophecy-mist-veil { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; font-family: var(--font-display); font-style: italic; font-size: 14px; color: var(--ink-2); background: linear-gradient(135deg, rgba(245,237,228,0.92), rgba(214,197,177,0.88)); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: opacity 0.9s ease; border-radius: var(--radius-lg); letter-spacing: 0.04em; padding: 20px; }
+.prophecy-mist-veil-hint { font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--ink-3); font-style: normal; opacity: 0.75; }
+.prophecy-mist.revealed .prophecy-mist-veil { opacity: 0; pointer-events: none; }
+.prophecy-text { font-family: var(--font-display); font-style: italic; font-size: 17px; color: var(--ink); line-height: 1.6; max-width: 460px; letter-spacing: 0.01em; }
+
+/* Re-read tiles — matchmaker no-key fallback */
+.reread-tiles { display: flex; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
+.reread-tile { display: flex; gap: 12px; align-items: center; background: var(--paper-2); padding: 12px; border-radius: var(--radius); cursor: pointer; flex: 1 1 240px; min-width: 220px; transition: background 0.15s; }
+.reread-tile:hover { background: var(--paper-3); }
+.reread-tile-cover { width: 48px; height: 72px; border-radius: 4px; background-size: cover; background-position: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; color: white; font-size: 9px; text-align: center; padding: 4px; font-weight: 500; line-height: 1.15; }
+.reread-tile-meta { flex: 1; min-width: 0; }
+.reread-tile-title { font-weight: 500; font-size: 13px; color: var(--ink); margin-bottom: 2px; line-height: 1.3; }
+.reread-tile-author { font-size: 11px; color: var(--ink-3); margin-bottom: 4px; }
+.reread-tile-rating { font-size: 11px; color: var(--accent); }
 .matchmaker-card { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--paper-3); }
 .matchmaker-card:last-child { border-bottom: none; }
 .matchmaker-cover { width: 50px; height: 75px; border-radius: 4px; flex-shrink: 0; background-size: cover; background-position: center; box-shadow: var(--shadow); }
@@ -859,8 +885,8 @@ body.onboarding #welcome-screen { display: flex; }
       series
     </div>
     <div class="nav-item" onclick="showPage('oracle')">
-      <span class="nav-icon" style="display:inline-flex;align-items:center;justify-content:center;font-size:14px;">🔮</span>
-      your reading horoscope
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="3" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="13" cy="8" r="1.2" fill="currentColor"/></svg>
+      your reading
     </div>
     <div class="nav-item" onclick="showPage('goals')">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.3"/></svg>
@@ -1043,7 +1069,7 @@ body.onboarding #welcome-screen { display: flex; }
 <!-- The oracle -->
 <div id="page-oracle" class="hidden">
   <div class="topbar">
-    <div><h2 class="page-title">your reading horoscope</h2><p class="page-subtitle">data dressed as divination. the shelves are reading you back.</p></div>
+    <div><h2 class="page-title">your reading</h2><p class="page-subtitle">data dressed as divination. the shelves are reading you back.</p></div>
   </div>
   <div class="content">
     <div id="oracle-content"></div>
@@ -4100,6 +4126,29 @@ function buildProphecies(all) {
   return out.slice(0, 4);
 }
 
+// Pick one prophecy per day, deterministic from the date so it stays the same
+// all day and rotates tomorrow. Keeps the daily-ritual feel of the tarot.
+function dailyProphecy(all) {
+  const list = buildProphecies(all);
+  if (!list.length) return null;
+  const today = new Date().toISOString().split('T')[0];
+  let h = 0;
+  for (let i = 0; i < today.length; i++) h = (h * 31 + today.charCodeAt(i)) >>> 0;
+  return list[h % list.length];
+}
+
+function isProphecyRevealedToday() {
+  const today = new Date().toISOString().split('T')[0];
+  return localStorage.getItem('rj_prophecy_revealed') === today;
+}
+
+function revealProphecy() {
+  const today = new Date().toISOString().split('T')[0];
+  localStorage.setItem('rj_prophecy_revealed', today);
+  const card = document.getElementById('prophecy-mist');
+  if (card) card.classList.add('revealed');
+}
+
 function buildLocalRecs(all) {
   // Fallback when no Claude key — recommend from the user's own TBR/library based on overlap with last 5★ reads
   const top = all.filter(b => b.rating >= 4.5 && b.finished).sort((a,b) => (b.finished||'').localeCompare(a.finished||'')).slice(0, 5);
@@ -4205,6 +4254,25 @@ function renderMatchmakerCard(rec, withCover) {
     + '</div></div>';
 }
 
+// Small helper for the dinkus divider between sections
+function _oracleDinkus() { return '<div class="oracle-dinkus">* * *</div>'; }
+
+// Render a re-read tile for the no-key matchmaker fallback
+function _rereadTile(b) {
+  const bg = b.coverUrl
+    ? 'background-image:url(\'' + b.coverUrl + '\');'
+    : 'background:' + bookColor(b.title) + ';';
+  const fallback = b.coverUrl ? '' : (b.title || '');
+  return '<div class="reread-tile" onclick="viewBook(\'' + b.id + '\')">'
+    + '<div class="reread-tile-cover" style="' + bg + '">' + fallback + '</div>'
+    + '<div class="reread-tile-meta">'
+      + '<div class="reread-tile-title">' + (b.title || '') + '</div>'
+      + '<div class="reread-tile-author">' + (b.author || '') + '</div>'
+      + '<div class="reread-tile-rating">' + (b.rating || '') + '\u2605 \u00b7 the deck remembers</div>'
+    + '</div>'
+  + '</div>';
+}
+
 async function renderOracle() {
   const wrap = document.getElementById('oracle-content');
   if (!wrap) return;
@@ -4218,101 +4286,99 @@ async function renderOracle() {
   const today = new Date().toISOString().split('T')[0];
   const card = pickTarot(today);
   const arch = pickArchetype(all);
-  const saints = archetypePatronSaints(arch, all);
   const tropes = extractTropes(all);
-  const prophecies = buildProphecies(all);
-
-  // Build the page synchronously (matchmaker fills in async)
-  const tagPills = tropes.topTags.length
-    ? tropes.topTags.map(([t, c]) => '<div class="trope-row"><span class="trope-row-name">' + t + '</span><span class="trope-row-count">' + c + '</span></div>').join('')
-    : '<div style="font-size:12px;color:var(--ink-3);">no tags yet \u2014 we\u2019re inferring purely from reviews. it\u2019s atmospheric.</div>';
-  const vocabPills = tropes.topVocab.length
-    ? tropes.topVocab.map(([w, c]) => '<div class="trope-row"><span class="trope-row-name">' + w + '</span><span class="trope-row-count">' + c + '</span></div>').join('')
-    : '<div style="font-size:12px;color:var(--ink-3);">no recurring vocabulary detected. either the reviews are too short or the vibe is genuinely chaotic.</div>';
-  const obsHtml = tropes.observations.map(o => '<div class="trope-observation">' + o + '</div>').join('');
+  const prophecy = dailyProphecy(all);
+  const prophecyRevealed = isProphecyRevealedToday();
 
   const apiKey = (profile && profile.anthropic_api_key) || '';
+
+  // Patterns: just the witty observations as flowing italic prose. No lists.
+  const obsHtml = tropes.observations.length
+    ? tropes.observations.map(o => '<div class="observation">' + o + '</div>').join('')
+    : '<div class="observation" style="opacity:0.7;">the patterns are still forming. log a few more reviews and the deck will have things to say.</div>';
+
+  // Matchmaker placeholder \u2014 Claude path async, no-key path is option C copy + 2 re-reads
   const matchmakerPlaceholder = apiKey
     ? '<div style="font-size:12px;color:var(--ink-3);font-style:italic;">consulting the oracle\u2026</div>'
     : (() => {
         const local = buildLocalRecs(all);
-        if (!local) return '<div style="font-size:12px;color:var(--ink-3);">need a few 4.5+ ratings before recommendations make sense. read on, oracle later.</div>';
-        let html = '';
-        if (local.tbr.length) {
-          html += '<div class="archetype-saints-label">on the shelf, awaiting your favour</div>';
-          html += local.tbr.map(b => renderMatchmakerCard({title:b.title, author:b.author, why:'shares ' + ((b.genre||'').split(',')[0]||'genre').toLowerCase().trim() + ' bones with your recent favourites. you know the drill.'}, b.coverUrl)).join('');
-        }
-        if (local.reReads.length) {
-          html += '<div class="archetype-saints-label" style="margin-top:14px;">re-read material \u2014 for when you need a sure thing</div>';
-          html += local.reReads.map(b => renderMatchmakerCard({title:b.title, author:b.author, why:b.rating + '\u2605, hugely satisfying. it\u2019ll be there.'}, b.coverUrl)).join('');
-        }
-        if (!html) html = '<div style="font-size:12px;color:var(--ink-3);">the tbr is empty. either you\u2019re enlightened or you\u2019ve forgotten to log. either way, here are some old loves.</div>';
-        const note = '<div style="font-size:11px;color:var(--ink-3);margin-top:14px;font-style:italic;">add a Claude api key in <span style="color:var(--accent);cursor:pointer;" onclick="openOracleSettings()">settings</span> to get sharper recs from the wider world.</div>';
-        return html + note;
+        const reReads = (local && local.reReads) ? local.reReads.slice(0, 2) : [];
+        const tiles = reReads.length
+          ? '<div class="reread-tiles">' + reReads.map(_rereadTile).join('') + '</div>'
+          : '<div style="font-size:12px;color:var(--ink-3);font-style:italic;margin-top:10px;">need a few 4.5+ ratings before the deck can suggest a re-read. read on.</div>';
+        return '<div style="font-family:var(--font-display);font-style:italic;font-size:15px;color:var(--ink-2);line-height:1.65;">'
+          + 'the matchmaker is napping. add an Anthropic key in <span style="color:var(--accent);cursor:pointer;" onclick="openOracleSettings()">settings</span>, or revisit one of these old loves?'
+          + '</div>'
+          + tiles;
       })();
 
-  wrap.innerHTML =
-    // Tarot section — card on the left (flippable, art placeholder for now), text on the right
-    (() => {
-      const cardArt = card.image
-        ? '<div class="tarot-back-image" style="background-image:url(\'' + card.image + '\');"></div>'
-        : '<div class="tarot-back-placeholder">'
-            + '<div class="tarot-back-placeholder-emoji">' + card.emoji + '</div>'
-            + '<div class="tarot-back-placeholder-name">' + card.name + '</div>'
-            + '<div class="tarot-back-placeholder-note">art incoming</div>'
-          + '</div>';
-      return '<div class="oracle-section">'
-        + '<div class="tarot-layout">'
-          + '<div class="tarot-flip" id="tarot-flip" onclick="flipTarot()">'
-            + '<div class="tarot-inner">'
-              + '<div class="tarot-front"></div>'
-              + '<div class="tarot-back">' + cardArt + '</div>'
-            + '</div>'
-          + '</div>'
-          + '<div class="tarot-text" id="tarot-text">'
-            + '<div class="tarot-text-prompt">the deck is shuffled. tap the card to see what it has to say.</div>'
-          + '</div>'
-        + '</div>'
-        + '<div class="tarot-caption">drawn from the last sixty days of reading · tap to draw, tap again to reset.</div>'
+  // Tarot section
+  const cardArt = card.image
+    ? '<div class="tarot-back-image" style="background-image:url(\'' + card.image + '\');"></div>'
+    : '<div class="tarot-back-placeholder">'
+        + '<div class="tarot-back-placeholder-emoji">' + card.emoji + '</div>'
+        + '<div class="tarot-back-placeholder-name">' + card.name + '</div>'
+        + '<div class="tarot-back-placeholder-note">art incoming</div>'
       + '</div>';
-    })()
-    +
-
-    // Archetype section
-    + '<div class="oracle-section">'
-      + '<div class="oracle-section-title">your reader archetype</div>'
-      + '<div class="oracle-section-sub">a longer view than the tarot \u2014 calculated from everything you\u2019ve logged.</div>'
-      + '<div class="archetype-card">'
-        + '<div class="archetype-name">' + arch.name + '</div>'
-        + '<div class="archetype-desc">' + arch.desc + '</div>'
-        + (saints.length ? '<div class="archetype-saints-label">your patron saints</div><div class="archetype-saints">' + saints.map(s => '<span class="genre-pill">' + s + '</span>').join('') + '</div>' : '')
+  const tarotSection = '<div class="oracle-section">'
+    + '<div class="tarot-layout">'
+      + '<div class="tarot-flip" id="tarot-flip" onclick="flipTarot()">'
+        + '<div class="tarot-inner">'
+          + '<div class="tarot-front"></div>'
+          + '<div class="tarot-back">' + cardArt + '</div>'
+        + '</div>'
+      + '</div>'
+      + '<div class="tarot-text" id="tarot-text">'
+        + '<div class="tarot-text-prompt">the deck is shuffled. tap the card to see what it has to say.</div>'
       + '</div>'
     + '</div>'
+    + '<div class="tarot-caption">drawn from the last sixty days of reading \u00b7 tap to draw, tap again to reset.</div>'
+  + '</div>';
 
-    // Trope forensics
-    + '<div class="oracle-section">'
-      + '<div class="oracle-section-title">trope forensics</div>'
-      + '<div class="oracle-section-sub">the patterns we keep \u2014 from your tags, your tags, and the words you reach for in reviews.</div>'
-      + '<div class="tropes-grid">'
-        + '<div class="trope-block"><div class="trope-block-title">your most reliable haunts</div><div class="trope-list">' + tagPills + '</div></div>'
-        + '<div class="trope-block"><div class="trope-block-title">vocabulary forensics</div><div class="trope-list">' + vocabPills + '</div></div>'
+  // Archetype section \u2014 no patron saints, just name + descriptor
+  const archetypeSection = '<div class="oracle-section">'
+    + '<div class="oracle-section-title">your archetype</div>'
+    + '<div class="oracle-section-sub">a longer view than the tarot \u2014 calculated from everything you\u2019ve logged.</div>'
+    + '<div class="archetype-card">'
+      + '<div class="archetype-name">' + arch.name + '</div>'
+      + '<div class="archetype-desc">' + arch.desc + '</div>'
+    + '</div>'
+  + '</div>';
+
+  // Patterns section \u2014 flowing observations, no lists
+  const patternsSection = '<div class="oracle-section">'
+    + '<div class="oracle-section-title">the patterns</div>'
+    + '<div class="oracle-section-sub">the words you reach for, the tags you keep coming back to. observed without judgement.</div>'
+    + '<div class="patterns-prose">' + obsHtml + '</div>'
+  + '</div>';
+
+  // Prophecy section \u2014 single misty card, tap to reveal, persists for the day
+  const prophecyText = prophecy || 'the deck is quiet today. log a few more books and try again tomorrow.';
+  const prophecySection = '<div class="oracle-section">'
+    + '<div class="oracle-section-title">the prophecy</div>'
+    + '<div class="oracle-section-sub">one prediction. fresh tomorrow. tap to reveal.</div>'
+    + '<div class="prophecy-mist' + (prophecyRevealed ? ' revealed' : '') + '" id="prophecy-mist" onclick="revealProphecy()">'
+      + '<div class="prophecy-text">' + prophecyText + '</div>'
+      + '<div class="prophecy-mist-veil">'
+        + '<div>the mist hasn\u2019t cleared.</div>'
+        + '<div class="prophecy-mist-veil-hint">tap to reveal</div>'
       + '</div>'
-      + obsHtml
     + '</div>'
+  + '</div>';
 
-    // Matchmaker (placeholder, populated async if Claude key)
-    + '<div class="oracle-section">'
-      + '<div class="oracle-section-title">the matchmaker</div>'
-      + '<div class="oracle-section-sub">' + (apiKey ? 'the oracle (read: claude) reads your shelves and suggests something brilliant.' : 'fortune-teller logic, statistically defensible. based on your last few favourites.') + '</div>'
-      + '<div id="matchmaker-content">' + matchmakerPlaceholder + '</div>'
-    + '</div>'
+  // Matchmaker section \u2014 moved to bottom
+  const matchmakerSection = '<div class="oracle-section">'
+    + '<div class="oracle-section-title">the matchmaker</div>'
+    + '<div class="oracle-section-sub">' + (apiKey ? 'the oracle (read: claude) reads your shelves and suggests something brilliant.' : '') + '</div>'
+    + '<div id="matchmaker-content">' + matchmakerPlaceholder + '</div>'
+  + '</div>';
 
-    // Prophecies
-    + '<div class="oracle-section">'
-      + '<div class="oracle-section-title">the prophecies</div>'
-      + '<div class="oracle-section-sub">predictions for the rest of the year. some grounded in pattern. some in vibes.</div>'
-      + '<div class="prophecy-list">' + prophecies.map(p => '<div class="prophecy-row">' + p + '</div>').join('') + '</div>'
-    + '</div>';
+  // Assemble with dinkus dividers between each section
+  wrap.innerHTML = tarotSection
+    + _oracleDinkus() + archetypeSection
+    + _oracleDinkus() + patternsSection
+    + _oracleDinkus() + prophecySection
+    + _oracleDinkus() + matchmakerSection;
 
   // Populate Claude-powered matchmaker async
   if (apiKey) {
