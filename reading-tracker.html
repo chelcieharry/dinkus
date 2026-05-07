@@ -353,6 +353,35 @@ body.onboarding #welcome-screen { display: flex; }
 .prophecy-mist.revealed .prophecy-mist-veil { opacity: 0; pointer-events: none; }
 .prophecy-text { font-family: var(--font-display); font-style: italic; font-size: 17px; color: var(--ink); line-height: 1.6; max-width: 460px; letter-spacing: 0.01em; }
 
+/* The reading room — friend feed */
+.rr-empty { text-align: center; padding: 60px 20px; color: var(--ink-3); }
+.rr-empty p { font-family: var(--font-display); font-style: italic; font-size: 16px; margin-bottom: 12px; }
+.rr-empty a { color: var(--accent); text-decoration: none; }
+.rr-pending-block { background: var(--paper-2); border-left: 3px solid #8b3a3a; border-radius: 0 var(--radius) var(--radius) 0; padding: 14px 16px; margin-bottom: 24px; }
+.rr-pending-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); margin-bottom: 10px; font-weight: 500; }
+.rr-pending-row { display: flex; align-items: center; gap: 12px; padding: 6px 0; }
+.rr-pending-row:not(:last-child) { border-bottom: 1px solid var(--paper-3); }
+.rr-pending-handle { flex: 1; font-size: 13px; color: var(--ink-2); }
+.rr-feed { display: flex; flex-direction: column; gap: 18px; }
+.rr-event { display: flex; gap: 14px; background: var(--paper-2); border-radius: var(--radius); padding: 14px; }
+.rr-event-body { flex: 1; min-width: 0; }
+.rr-event-meta { font-size: 12px; color: var(--ink-3); margin-bottom: 8px; }
+.rr-event-meta strong { color: var(--ink-2); font-weight: 500; }
+.rr-event-meta .rr-verb { font-family: var(--font-display); font-style: italic; color: var(--accent); }
+.rr-event-book { display: flex; gap: 12px; align-items: flex-start; }
+.rr-event-cover { width: 54px; height: 80px; border-radius: 4px; background-size: cover; background-position: center; flex-shrink: 0; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; color: white; font-size: 9px; text-align: center; padding: 4px; font-weight: 500; line-height: 1.15; cursor: pointer; }
+.rr-event-info { flex: 1; min-width: 0; }
+.rr-event-title { font-weight: 500; font-size: 14px; color: var(--ink); line-height: 1.3; margin-bottom: 2px; }
+.rr-event-author { font-size: 12px; color: var(--ink-3); margin-bottom: 8px; }
+.rr-event-rating { font-size: 12px; color: var(--accent); margin-bottom: 6px; }
+.rr-event-thoughts { font-family: var(--font-display); font-style: italic; font-size: 13px; color: var(--ink-2); line-height: 1.55; padding: 8px 12px; background: var(--paper); border-left: 2px solid var(--accent-2); margin-top: 6px; border-radius: 0 4px 4px 0; }
+.rr-event-actions { margin-top: 10px; display: flex; gap: 8px; align-items: center; }
+.rr-event-tbr-btn { font-family: var(--font-body); font-size: 12px; padding: 5px 12px; background: var(--paper); border: 1px solid var(--paper-3); color: var(--ink-2); border-radius: 99px; cursor: pointer; transition: all 0.15s; }
+.rr-event-tbr-btn:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent-2); }
+.rr-event-already { font-size: 11px; color: var(--ink-3); font-style: italic; }
+.rr-event-when { font-size: 11px; color: var(--ink-3); margin-top: 8px; font-style: italic; }
+.rr-source-tag { font-family: var(--font-display); font-style: italic; font-size: 12px; color: var(--ink-3); padding: 6px 10px; background: var(--paper-2); border-radius: 4px; display: inline-block; margin-top: 8px; }
+
 /* Re-read tiles — matchmaker no-key fallback */
 .reread-tiles { display: flex; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
 .reread-tile { display: flex; gap: 12px; align-items: center; background: var(--paper-2); padding: 12px; border-radius: var(--radius); cursor: pointer; flex: 1 1 240px; min-width: 220px; transition: background 0.15s; }
@@ -488,6 +517,43 @@ body.onboarding #welcome-screen { display: flex; }
 .rating-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); font-weight: 500; }
 .form-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); font-weight: 500; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--paper-3); }
 .divider { height: 1px; background: var(--paper-3); margin: 20px 0; }
+
+/* Multi-page book modal — page indicator and per-page nav */
+.book-page { display: none; }
+.book-page.active { display: block; }
+.book-page-indicator { display: flex; gap: 6px; align-items: center; justify-content: center; margin-bottom: 16px; }
+.book-page-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--paper-3); transition: background 0.2s, transform 0.2s; }
+.book-page-dot.active { background: var(--accent); transform: scale(1.3); }
+.book-page-dot.completed { background: var(--accent-2); }
+.book-page-nav { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; align-items: center; }
+.book-page-nav .nav-back { font-family: var(--font-body); font-size: 13px; padding: 9px 14px; background: none; border: 1px solid var(--paper-3); color: var(--ink-2); border-radius: var(--radius); cursor: pointer; }
+.book-page-nav .nav-cancel { font-family: var(--font-body); font-size: 13px; padding: 9px 18px; background: var(--paper-2); border: 1px solid var(--paper-3); color: var(--ink-2); border-radius: var(--radius); cursor: pointer; }
+.book-page-nav .nav-next { font-family: var(--font-body); font-size: 13px; padding: 9px 18px; background: var(--paper-2); border: 1px solid var(--accent-2); color: var(--accent); border-radius: var(--radius); cursor: pointer; font-weight: 500; }
+.book-page-nav .nav-primary { font-family: var(--font-body); font-size: 13px; padding: 9px 20px; background: var(--accent); color: var(--paper); border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; }
+.book-page-nav .nav-spacer { flex: 1; }
+
+/* Romance tropes section — only shown when genre includes "romance" */
+.tropes-section { background: var(--paper-2); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; border-left: 3px solid var(--accent-2); }
+.tropes-section-title { font-family: var(--font-display); font-style: italic; font-size: 14px; color: var(--accent); margin-bottom: 4px; font-weight: 500; }
+.tropes-section-sub { font-size: 11px; color: var(--ink-3); margin-bottom: 10px; font-style: italic; }
+
+/* Spice meter — chilli picker, shown when "Spicy" tag is added */
+.spice-section { background: var(--paper-2); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; border-left: 3px solid var(--accent-2); }
+.spice-section-title { font-family: var(--font-display); font-style: italic; font-size: 14px; color: var(--accent); margin-bottom: 4px; font-weight: 500; }
+.spice-section-sub { font-size: 11px; color: var(--ink-3); margin-bottom: 10px; font-style: italic; }
+.spice-meter { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.chilli { display: inline-block; width: 36px; height: 36px; cursor: pointer; transition: transform 0.15s; line-height: 0; }
+.chilli:hover { transform: scale(1.1); }
+.chilli .chilli-inner { width: 100%; height: 100%; display: block; }
+.chilli .chilli-fill { fill: #d9cfc5; transition: fill 0.2s; }
+.chilli.lit .chilli-fill { fill: #c84a1f; }
+.chilli .chilli-stem { fill: #6b8e3a; }
+.spice-meter-label { margin-left: 6px; font-family: var(--font-display); font-style: italic; font-size: 13px; color: #c84a1f; }
+.spice-meter-desc { font-size: 12px; color: var(--ink-3); font-style: italic; min-height: 16px; }
+
+@media (max-width: 720px) {
+  .chilli { width: 30px; height: 30px; }
+}
 
 /* Stats page specific */
 .stats-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
@@ -814,6 +880,21 @@ body.onboarding #welcome-screen { display: flex; }
 </div>
 
 <!-- Sign-out confirm modal (replaces the native browser confirm) -->
+<!-- Reusable dinkus-styled confirm modal — populated by dinkusConfirm() -->
+<div class="modal-backdrop" id="modal-confirm" style="z-index:550;">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="confirm-title">are we sure?</h3>
+      <button class="modal-close" onclick="_dinkusConfirmResolve(false)">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:18px;" id="confirm-body"></p>
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button id="confirm-cancel" onclick="_dinkusConfirmResolve(false)" style="font-family:var(--font-body);padding:9px 18px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">cancel</button>
+      <button id="confirm-ok" onclick="_dinkusConfirmResolve(true)" style="font-family:var(--font-body);padding:9px 20px;background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">confirm</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="modal-signout">
   <div class="modal" style="max-width:400px;">
     <div class="modal-header">
@@ -832,6 +913,60 @@ body.onboarding #welcome-screen { display: flex; }
      the same overlay; JS swaps the card content per step. -->
 <div id="welcome-screen">
   <div class="welcome-card" id="welcome-card"><!-- populated by showOnboardingStep() --></div>
+</div>
+
+<!-- Handle gate — appears for any signed-in user who doesn't yet have a valid handle.
+     Cannot be dismissed; sets profile.handle and reveals the app. -->
+<div class="modal-backdrop" id="modal-handle-gate" style="z-index:500;">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header" style="border-bottom:none;">
+      <h3 class="modal-title" style="font-family:var(--font-display);font-style:italic;font-size:24px;">claim your handle</h3>
+    </div>
+    <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:18px;">
+      you’ll need a handle to find friends and join the reading room. lowercase letters, numbers, underscore. 3–20 chars. unique. unchangeable for now (we’ll trust you).
+    </p>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <div id="handle-gate-avatar"><!-- populated as they type --></div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:6px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);padding:8px 12px;">
+          <span style="color:var(--ink-3);font-family:var(--font-display);font-style:italic;">@</span>
+          <input type="text" id="handle-gate-input" maxlength="20" placeholder="yourhandle" oninput="onHandleGateInput()" style="font-family:var(--font-body);font-size:14px;border:none;outline:none;background:none;flex:1;padding:0;">
+        </div>
+      </div>
+    </div>
+    <div id="handle-gate-status" style="font-size:12px;color:var(--ink-3);font-style:italic;min-height:18px;line-height:1.5;">3–20 chars. lowercase letters, numbers, underscore.</div>
+    <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+      <button id="handle-gate-submit" onclick="submitHandleGate()" disabled style="font-family:var(--font-body);padding:9px 20px;background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;opacity:0.4;">claim it</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lend to friend sub-modal — opened from the view-book modal -->
+<div class="modal-backdrop" id="modal-lend-book">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <h3 class="modal-title">lend to friend</h3>
+      <button class="modal-close" onclick="closeModal('modal-lend-book')">×</button>
+    </div>
+    <p style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.6;font-style:italic;">tag a dinkus friend by their handle, or just type a name. we'll remember.</p>
+    <div class="form-row">
+      <div class="field" style="flex:1;">
+        <label>who's borrowing it?</label>
+        <input type="text" id="lend-to-input" placeholder="name or @handle" autocomplete="off" oninput="onLendToInput()" style="font-family:var(--font-body);font-size:14px;">
+        <div id="lend-to-suggestions" style="display:none;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);margin-top:4px;max-height:160px;overflow-y:auto;"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field" style="flex:1;">
+        <label>when did they take it?</label>
+        <input type="date" id="lend-date-input" style="font-family:var(--font-body);font-size:14px;">
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;">
+      <button onclick="closeModal('modal-lend-book')" style="font-family:var(--font-body);padding:9px 18px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">cancel</button>
+      <button onclick="saveLendBook()" style="font-family:var(--font-body);padding:9px 20px;background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">log the loan</button>
+    </div>
+  </div>
 </div>
 
 <!-- Phase 1: sign-in gate. Fullscreen overlay, hidden by default. JS shows it
@@ -887,6 +1022,11 @@ body.onboarding #welcome-screen { display: flex; }
     <div class="nav-item" onclick="showPage('oracle')">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="3" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="13" cy="8" r="1.2" fill="currentColor"/></svg>
       your reading
+    </div>
+    <div class="nav-item" onclick="showPage('readingRoom')" style="position:relative;">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4a1 1 0 011-1h4l1 1h5a1 1 0 011 1v8a1 1 0 01-1 1H3a1 1 0 01-1-1V4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+      the reading room
+      <span id="rr-nav-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#8b3a3a;margin-left:auto;"></span>
     </div>
     <div class="nav-item" onclick="showPage('goals')">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.3"/></svg>
@@ -952,6 +1092,7 @@ body.onboarding #welcome-screen { display: flex; }
         <option value="all">everything</option>
         <option value="read">actually read</option>
         <option value="want">tbr (the audacity)</option>
+        <option value="onLoan">books on loan</option>
       </select>
       <select id="lib-lens" onchange="renderVisualLibrary()">
         <option value="">show me everything</option>
@@ -1076,6 +1217,16 @@ body.onboarding #welcome-screen { display: flex; }
   </div>
 </div>
 
+<!-- The reading room — friends feed -->
+<div id="page-readingRoom" class="hidden">
+  <div class="topbar">
+    <div><h2 class="page-title">the reading room</h2><p class="page-subtitle">what your friends are in the middle of, and what they just put down.</p></div>
+  </div>
+  <div class="content">
+    <div id="rr-content"></div>
+  </div>
+</div>
+
 <!-- Oracle settings modal -->
 <div class="modal-backdrop" id="modal-oracle-settings">
   <div class="modal" style="max-width:480px;">
@@ -1126,141 +1277,185 @@ body.onboarding #welcome-screen { display: flex; }
       <h3 class="modal-title" id="modal-book-title">Log a book</h3>
       <button class="modal-close" onclick="closeModal('modal-book')">×</button>
     </div>
-    <div class="form-section-title">Search &amp; autofill</div>
-    <div class="form-row" style="align-items:flex-end;gap:10px;">
-      <div class="field" style="flex:1;">
-        <label>Search by title</label>
-        <div class="autofill-wrap">
-          <input type="text" id="search-title" placeholder="Start typing…" autocomplete="off" oninput="handleTitleSearch(this.value)">
-          <span class="autofill-status" id="autofill-status"></span>
-          <div class="autofill-suggestions hidden" id="autofill-suggestions"></div>
+    <div class="book-page-indicator">
+      <div class="book-page-dot active" data-page="1"></div>
+      <div class="book-page-dot" data-page="2"></div>
+      <div class="book-page-dot" data-page="3"></div>
+    </div>
+
+    <!-- Page 1 — the book itself -->
+    <div class="book-page active" data-page="1">
+      <div class="form-section-title">Search &amp; autofill</div>
+      <div class="form-row" style="align-items:flex-end;gap:10px;">
+        <div class="field" style="flex:1;">
+          <label>Search by title</label>
+          <div class="autofill-wrap">
+            <input type="text" id="search-title" placeholder="Start typing…" autocomplete="off" oninput="handleTitleSearch(this.value)">
+            <span class="autofill-status" id="autofill-status"></span>
+            <div class="autofill-suggestions hidden" id="autofill-suggestions"></div>
+          </div>
+        </div>
+        <button type="button" onclick="openIsbnScanner()" style="font-family:var(--font-body);font-size:13px;padding:9px 14px;background:var(--paper-2);border:1px solid var(--paper-3);color:var(--ink-2);border-radius:var(--radius);cursor:pointer;white-space:nowrap;flex-shrink:0;">📷 scan</button>
+      </div>
+      <div class="divider"></div>
+      <div class="form-section-title">The book itself</div>
+      <div class="form-row" style="align-items:center;gap:14px;margin-bottom:12px;">
+        <div id="f-cover-preview" style="width:60px;aspect-ratio:2/3;border-radius:6px;background:var(--paper-3);background-size:cover;background-position:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ink-4);">📕</div>
+        <div style="flex:1;font-size:11px;color:var(--ink-3);">Cover auto-fills from the search above. Paste a URL below to override.</div>
+        <input type="text" id="f-cover-url" placeholder="image URL (optional)" oninput="setCoverFromInput(this.value)" style="flex:1.6;font-family:var(--font-body);font-size:12px;padding:7px 10px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;">
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Title *</label><input type="text" id="f-title" placeholder="Book title"></div>
+        <div class="field"><label>Author *</label><input type="text" id="f-author" placeholder="Author name"></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Published</label><input type="text" id="f-published" placeholder="Year"></div>
+        <div class="field">
+          <label>Format</label>
+          <select id="f-format" onchange="handleFormatChange()">
+            <option value="">Select…</option>
+            <option value="paperback">Paperback</option>
+            <option value="hardback">Hardback</option>
+            <option value="ebook">Ebook</option>
+            <option value="audio">Audiobook</option>
+          </select>
         </div>
       </div>
-      <button type="button" onclick="openIsbnScanner()" style="font-family:var(--font-body);font-size:13px;padding:9px 14px;background:var(--paper-2);border:1px solid var(--paper-3);color:var(--ink-2);border-radius:var(--radius);cursor:pointer;white-space:nowrap;flex-shrink:0;">📷 scan</button>
-    </div>
-    <div class="divider"></div>
-    <div class="form-section-title">Book details</div>
-    <div class="form-row" style="align-items:center;gap:14px;margin-bottom:12px;">
-      <div id="f-cover-preview" style="width:60px;aspect-ratio:2/3;border-radius:6px;background:var(--paper-3);background-size:cover;background-position:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ink-4);">📕</div>
-      <div style="flex:1;font-size:11px;color:var(--ink-3);">Cover auto-fills from the search above. Paste a URL below to override.</div>
-      <input type="text" id="f-cover-url" placeholder="image URL (optional)" oninput="setCoverFromInput(this.value)" style="flex:1.6;font-family:var(--font-body);font-size:12px;padding:7px 10px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;">
-    </div>
-    <div class="form-row cols-2">
-      <div class="field"><label>Title *</label><input type="text" id="f-title" placeholder="Book title"></div>
-      <div class="field"><label>Author *</label><input type="text" id="f-author" placeholder="Author name"></div>
-    </div>
-    <div class="form-row cols-2">
-      <div class="field"><label>Published</label><input type="text" id="f-published" placeholder="Year"></div>
-      <div class="field"><label>Pages</label><input type="number" id="f-pages" placeholder="0"></div>
-    </div>
-    <div class="form-row">
-      <div class="field" style="flex:1;"><label>Genre</label><input type="text" id="f-genre" placeholder="type new, or click below"></div>
-    </div>
-    <div class="pill-picker" id="pick-genre"></div>
-    <div class="form-row cols-2">
-      <div class="field"><label>series</label><input type="text" id="f-series" placeholder="Series name"></div>
-      <div class="field"><label># in series</label><input type="text" id="f-series-num" placeholder="1"></div>
-    </div>
-    <div class="form-row">
-      <div class="field" style="flex:1;"><label>Tags</label><input type="text" id="f-tags" placeholder="type new, or click below"></div>
-    </div>
-    <div class="pill-picker" id="pick-tags"></div>
-    <div class="form-row cols-2">
-      <div class="field">
-        <label>Format</label>
-        <select id="f-format" onchange="handleFormatChange()">
-          <option value="">Select…</option>
-          <option value="paperback">Paperback</option>
-          <option value="hardback">Hardback</option>
-          <option value="ebook">Ebook</option>
-          <option value="audio">Audiobook</option>
-        </select>
-      </div>
-      <div class="field hidden" id="f-length-wrap">
-        <label>Length</label>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <input type="number" id="f-length-h" placeholder="h" min="0" style="flex:1;">
-          <span style="color:var(--ink-3);font-size:13px;">h</span>
-          <input type="number" id="f-length-m" placeholder="m" min="0" max="59" style="flex:1;">
-          <span style="color:var(--ink-3);font-size:13px;">m</span>
+      <div class="form-row cols-2">
+        <div class="field hidden" id="f-pages-wrap"><label>Pages</label><input type="number" id="f-pages" placeholder="0"></div>
+        <div class="field hidden" id="f-length-wrap">
+          <label>Length</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="number" id="f-length-h" placeholder="h" min="0" style="flex:1;">
+            <span style="color:var(--ink-3);font-size:13px;">h</span>
+            <input type="number" id="f-length-m" placeholder="m" min="0" max="59" style="flex:1;">
+            <span style="color:var(--ink-3);font-size:13px;">m</span>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="form-row cols-3">
-      <div class="field"><label>Owned?</label><select id="f-owned"><option value="">not tracked</option><option value="yes">yes, I own it</option><option value="no">no / library / borrowed</option></select></div>
-      <div class="field"><label>Lent to</label><input type="text" id="f-lent-to" placeholder="e.g. Sarah"></div>
-      <div class="field"><label>Lent date</label><input type="date" id="f-lent-date"></div>
-    </div>
-    <div class="divider"></div>
-    <div class="form-section-title">Author</div>
-    <div class="form-row cols-2">
-      <div class="field">
-        <label>Nationality</label>
-        <input type="text" id="f-nationality" list="nationality-list" placeholder="start typing — or use 'X / Y' for dual">
-        <datalist id="nationality-list"></datalist>
+      <div class="form-row">
+        <div class="field" style="flex:1;"><label>Genre</label><input type="text" id="f-genre" placeholder="type new, or click below" oninput="handleGenreChange()"></div>
       </div>
-      <div class="field">
-        <label>Gender</label>
-        <select id="f-gender" style="font-family:var(--font-body);font-size:13px;padding:8px 10px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);color:var(--ink);outline:none;width:100%;">
-        </select>
+      <div class="pill-picker" id="pick-genre"></div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Series</label><input type="text" id="f-series" placeholder="Series name"></div>
+        <div class="field"><label># in series</label><input type="text" id="f-series-num" placeholder="1"></div>
+      </div>
+      <div class="book-page-nav">
+        <button class="nav-cancel" onclick="closeModal('modal-book')">cancel</button>
+        <div class="nav-spacer"></div>
+        <button class="nav-next" onclick="goBookPage(2)">next →</button>
       </div>
     </div>
-    <div class="form-row">
-      <div class="field" style="flex:1;"><label>Race / ethnicity</label><input type="text" id="f-race" placeholder="click below; multi-select for mixed heritage"></div>
-    </div>
-    <div class="pill-picker" id="pick-race"></div>
-    <div class="divider"></div>
-    <div class="form-section-title">Your experience</div>
-    <div class="form-row cols-2">
-      <div class="field">
-        <label>Status</label>
-        <select id="f-status" onchange="handleStatusChange()">
-          <option value="read">Read</option>
-          <option value="currently">Currently reading</option>
-          <option value="want">want to read</option>
-          <option value="dnf">DNF</option>
-        </select>
-      </div>
-      <div class="field hidden" id="f-progress-wrap">
-        <label>Progress (%)</label>
-        <input type="number" id="f-progress" min="0" max="100" placeholder="0">
-      </div>
-    </div>
-    <div id="reread-section" class="hidden" style="margin-bottom:14px;padding:12px 14px;background:var(--paper-2);border-radius:var(--radius);">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-        <div style="font-size:12px;color:var(--ink-3);">reading this one again? log it as a re-read to keep the old reading's dates and rating.</div>
-        <button type="button" class="reread-btn" onclick="logReread()">↻ log a re-read</button>
-      </div>
-      <div class="readings-history" id="readings-history"></div>
-    </div>
-    <div class="form-row cols-2" id="f-dates-wrap">
-      <div class="field"><label>Started</label><input type="date" id="f-started"></div>
-      <div class="field">
-        <label>Finished</label>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input type="date" id="f-finished" style="flex:1;">
-          <button type="button" onclick="markDnfInForm()" style="font-family:var(--font-body);font-size:11px;padding:7px 10px;background:#f5e8e8;border:1px solid #e8c4c4;color:#8b3a3a;border-radius:var(--radius);cursor:pointer;white-space:nowrap;" title="mark as DNF — no shame, life is short">✕ DNF</button>
+
+    <!-- Page 2 — your experience -->
+    <div class="book-page" data-page="2">
+      <div class="form-section-title">Your experience</div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Status</label>
+          <select id="f-status" onchange="handleStatusChange()">
+            <option value="read">Read</option>
+            <option value="currently">Currently reading</option>
+            <option value="want">want to read</option>
+            <option value="dnf">DNF</option>
+          </select>
+        </div>
+        <div class="field hidden" id="f-progress-wrap">
+          <label>Progress (%)</label>
+          <input type="number" id="f-progress" min="0" max="100" placeholder="0">
         </div>
       </div>
-    </div>
-    <div class="form-row cols-2" id="f-rating-wrap">
-      <div class="rating-field">
-        <label>Rating (/5)</label>
-        <div class="quarter-stars" id="qs-rating" data-value="0"></div>
-        <input type="hidden" id="f-rating" value="0">
+      <div id="reread-section" class="hidden" style="margin-bottom:14px;padding:12px 14px;background:var(--paper-2);border-radius:var(--radius);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="font-size:12px;color:var(--ink-3);">reading this one again? log it as a re-read to keep the old reading's dates and rating.</div>
+          <button type="button" class="reread-btn" onclick="logReread()">↻ log a re-read</button>
+        </div>
+        <div class="readings-history" id="readings-history"></div>
       </div>
-      <div class="rating-field hidden" id="f-narration-wrap">
-        <label>Narration (/5)</label>
-        <div class="quarter-stars" id="qs-narration" data-value="0"></div>
-        <input type="hidden" id="f-narration" value="0">
+      <div class="form-row cols-2" id="f-dates-wrap">
+        <div class="field"><label>Started</label><input type="date" id="f-started"></div>
+        <div class="field">
+          <label>Finished</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="date" id="f-finished" style="flex:1;">
+            <button type="button" onclick="markDnfInForm()" style="font-family:var(--font-body);font-size:11px;padding:7px 10px;background:#f5e8e8;border:1px solid #e8c4c4;color:#8b3a3a;border-radius:var(--radius);cursor:pointer;white-space:nowrap;" title="mark as DNF — no shame, life is short">✕ DNF</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-row cols-2" id="f-rating-wrap">
+        <div class="rating-field">
+          <label>Rating (/5)</label>
+          <div class="quarter-stars" id="qs-rating" data-value="0"></div>
+          <input type="hidden" id="f-rating" value="0">
+        </div>
+        <div class="rating-field hidden" id="f-narration-wrap">
+          <label>Narration (/5)</label>
+          <div class="quarter-stars" id="qs-narration" data-value="0"></div>
+          <input type="hidden" id="f-narration" value="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Thoughts / notes</label><textarea id="f-thoughts" placeholder="Your review, notes, reflections…"></textarea></div>
+      </div>
+      <div class="book-page-nav">
+        <button class="nav-back" onclick="goBookPage(1)">← back</button>
+        <div class="nav-spacer"></div>
+        <button class="nav-primary" onclick="saveBook()">save &amp; shelve</button>
+        <button class="nav-next" onclick="goBookPage(3)">more data, more fun →</button>
       </div>
     </div>
-    <div class="form-row">
-      <div class="field"><label>Thoughts / notes</label><textarea id="f-thoughts" placeholder="Your review, notes, reflections…"></textarea></div>
-    </div>
-    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;">
-      <button onclick="closeModal('modal-book')" style="font-family:var(--font-body);padding:9px 18px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">Cancel</button>
-      <button onclick="saveBook()" style="font-family:var(--font-body);padding:9px 20px;background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">save it</button>
+
+    <!-- Page 3 — tags + author demographics -->
+    <div class="book-page" data-page="3">
+      <div class="form-section-title">Tags &amp; author</div>
+      <div class="form-row">
+        <div class="field" style="flex:1;"><label>Tags</label><input type="text" id="f-tags" placeholder="type new, or click below" oninput="handleTagsChange()"></div>
+      </div>
+      <div class="pill-picker" id="pick-tags"></div>
+
+      <!-- Romance tropes — only shown if genre includes "romance" -->
+      <div id="tropes-wrap" class="tropes-section hidden">
+        <div class="tropes-section-title">tropes &middot; we know it's romance</div>
+        <div class="tropes-section-sub">the patterns that keep us coming back. lgbtq+ inclusive.</div>
+        <div class="pill-picker" id="pick-tropes"></div>
+      </div>
+
+      <!-- Spice meter — only shown if "Spicy" tag is added -->
+      <div id="spice-wrap" class="spice-section hidden">
+        <div class="spice-section-title">spice meter</div>
+        <div class="spice-section-sub">how hot are we talking?</div>
+        <div class="spice-meter">
+          <span id="spice-chillies"></span>
+          <span class="spice-meter-label" id="spice-meter-label"></span>
+        </div>
+        <div class="spice-meter-desc" id="spice-meter-desc">tap a chilli to set the heat.</div>
+        <input type="hidden" id="f-spice-level" value="0">
+      </div>
+
+      <div class="divider"></div>
+      <div class="form-section-title">Author</div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Nationality</label>
+          <input type="text" id="f-nationality" list="nationality-list" placeholder="start typing — or use 'X / Y' for dual">
+          <datalist id="nationality-list"></datalist>
+        </div>
+        <div class="field">
+          <label>Gender</label>
+          <select id="f-gender" style="font-family:var(--font-body);font-size:13px;padding:8px 10px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);color:var(--ink);outline:none;width:100%;">
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field" style="flex:1;"><label>Race / ethnicity</label><input type="text" id="f-race" placeholder="click below; multi-select for mixed heritage"></div>
+      </div>
+      <div class="pill-picker" id="pick-race"></div>
+      <div class="book-page-nav">
+        <button class="nav-back" onclick="goBookPage(2)">← back</button>
+        <div class="nav-spacer"></div>
+        <button class="nav-primary" onclick="saveBook()">log this</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2243,6 +2438,7 @@ function renderVisualLibrary() {
   let filtered;
   if (statusMode === 'read') filtered = books.filter(b => b.status === 'read' || b.status === 'currently' || b.status === 'dnf');
   else if (statusMode === 'want') filtered = books.filter(b => b.status === 'want');
+  else if (statusMode === 'onLoan') filtered = books.filter(b => (b.lentTo || '').trim());
   else filtered = books.filter(b => b.status === 'read' || b.status === 'currently' || b.status === 'dnf' || b.status === 'want');
   if (search) filtered = filtered.filter(b =>
     (b.title+b.author+(b.genre||'')).toLowerCase().includes(search));
@@ -2464,41 +2660,59 @@ function _dbToBook(row) {
     readings: row.readings || [],
     sessions: [],  // sessions live in their own table, joined in Phase 3b
     addedAt: row.added_at,
+    sourceFriendId: row.source_friend_id || null,
+    spiceLevel: row.spice_level || 0,
+    owned: row.owned || '',
+    lentTo: row.lent_to || '',
+    lentDate: row.lent_date || '',
   };
 }
 
 function _bookToDb(book, userId) {
-  const out = {
-    title: book.title || '',
-    author: book.author || '',
-    published: book.published || '',
-    format: book.format || '',
-    pages: parseInt(book.pages) || 0,
-    length: parseFloat(book.length) || 0,
-    genre: book.genre || '',
-    started: book.started || '',
-    finished: book.finished || '',
-    rating: parseFloat(book.rating) || 0,
-    narration: parseFloat(book.narration) || 0,
-    thoughts: book.thoughts || '',
-    series: book.series || '',
-    series_num: book.seriesNum || '',
-    tags: Array.isArray(book.tags) ? book.tags : [],
-    nationality: book.nationality || '',
-    gender: book.gender || '',
-    race: book.race || '',
-    status: book.status || 'want',
-    progress: parseInt(book.progress) || 0,
-    cover_url: book.coverUrl || '',
-    readings: book.readings || [],
-  };
+  // Sparse mapper — only include fields that are EXPLICITLY set on the input.
+  // This lets callers do partial patches like {lentTo, lentDate} without
+  // wiping everything else by writing default empty strings. Inserts always
+  // pass full objects so they still produce a complete row.
+  const out = {};
+  if (book.title !== undefined) out.title = book.title || '';
+  if (book.author !== undefined) out.author = book.author || '';
+  if (book.published !== undefined) out.published = book.published || '';
+  if (book.format !== undefined) out.format = book.format || '';
+  if (book.pages !== undefined) out.pages = parseInt(book.pages) || 0;
+  if (book.length !== undefined) out.length = parseFloat(book.length) || 0;
+  if (book.genre !== undefined) out.genre = book.genre || '';
+  if (book.started !== undefined) out.started = book.started || null;
+  if (book.finished !== undefined) out.finished = book.finished || null;
+  if (book.rating !== undefined) out.rating = parseFloat(book.rating) || 0;
+  if (book.narration !== undefined) out.narration = parseFloat(book.narration) || 0;
+  if (book.thoughts !== undefined) out.thoughts = book.thoughts || '';
+  if (book.series !== undefined) out.series = book.series || '';
+  if (book.seriesNum !== undefined) out.series_num = book.seriesNum || '';
+  if (book.tags !== undefined) out.tags = Array.isArray(book.tags) ? book.tags : [];
+  if (book.nationality !== undefined) out.nationality = book.nationality || '';
+  if (book.gender !== undefined) out.gender = book.gender || '';
+  if (book.race !== undefined) out.race = book.race || '';
+  if (book.status !== undefined) out.status = book.status || 'want';
+  if (book.progress !== undefined) out.progress = parseInt(book.progress) || 0;
+  if (book.coverUrl !== undefined) out.cover_url = book.coverUrl || '';
+  if (book.readings !== undefined) out.readings = book.readings || [];
   if (userId) out.user_id = userId;
+  if (book.sourceFriendId !== undefined) out.source_friend_id = book.sourceFriendId;
+  if (book.spiceLevel !== undefined) out.spice_level = book.spiceLevel || null;
+  if (book.owned !== undefined) out.owned = book.owned || '';
+  if (book.lentTo !== undefined) out.lent_to = book.lentTo || '';
+  if (book.lentDate !== undefined) out.lent_date = book.lentDate || null;
   return out;
 }
 
 const booksAPI = {
   async fetchAll() {
-    const { data, error } = await db.from('books').select('*').order('added_at', { ascending: false });
+    // CRITICAL: scope to your own books only. The friends RLS policy lets you
+    // see your friends' currently + read books, so without this filter
+    // they'd show up in your own library.
+    const userId = await _currentUserId();
+    if (!userId) return [];
+    const { data, error } = await db.from('books').select('*').eq('user_id', userId).order('added_at', { ascending: false });
     if (error) { console.error('books fetch failed:', error); return []; }
     return data.map(_dbToBook);
   },
@@ -2636,7 +2850,133 @@ const profileAPI = {
     if (error) { console.error('profile update failed:', error); throw error; }
     return data;
   },
+  // Check if a handle is taken by someone else. Returns {available, takenByMe}.
+  async checkHandleAvailable(handle) {
+    const userId = await _currentUserId();
+    const { data, error } = await db.from('public_profiles')
+      .select('id')
+      .eq('handle', handle.toLowerCase())
+      .maybeSingle();
+    if (error) { console.error('handle check failed:', error); return { available: false, error }; }
+    if (!data) return { available: true };
+    return { available: false, takenByMe: data.id === userId };
+  },
 };
+
+// ─────────────────────────────────────────────────────────────
+// SUPABASE DATA LAYER — friendships (mutual follow state machine)
+// One row per pair. status: pending → accepted (or deleted on decline).
+// ─────────────────────────────────────────────────────────────
+const friendsAPI = {
+  // Look up a user by handle (exact, case-insensitive). Returns public_profile row or null.
+  async findByHandle(handle) {
+    const h = (handle || '').trim().toLowerCase();
+    if (!h) return null;
+    const { data, error } = await db.from('public_profiles').select('*').eq('handle', h).maybeSingle();
+    if (error) { console.error('find friend failed:', error); return null; }
+    return data;
+  },
+
+  // Send a friend request. Throws on duplicate.
+  async request(addresseeId) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    if (userId === addresseeId) throw new Error('cannot friend yourself');
+    const { data, error } = await db.from('friendships')
+      .insert({ requester_id: userId, addressee_id: addresseeId, status: 'pending' })
+      .select().single();
+    if (error) {
+      if (/duplicate|unique/i.test(error.message)) {
+        // Could be: I already sent → still pending. They sent → I should accept theirs. Or we're already friends.
+        throw new Error('already in flight — check your pending list');
+      }
+      throw error;
+    }
+    return data;
+  },
+
+  // Accept an incoming pending request
+  async accept(friendshipId) {
+    const { data, error } = await db.from('friendships')
+      .update({ status: 'accepted', responded_at: new Date().toISOString() })
+      .eq('id', friendshipId)
+      .select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  // Decline / cancel / unfriend — all just delete the row
+  async remove(friendshipId) {
+    const { error } = await db.from('friendships').delete().eq('id', friendshipId);
+    if (error) throw error;
+  },
+
+  // List all friendships (any status) involving me, joined with the other party's public_profile.
+  async list() {
+    const userId = await _currentUserId();
+    if (!userId) return [];
+    const { data, error } = await db.from('friendships')
+      .select('*')
+      .or('requester_id.eq.' + userId + ',addressee_id.eq.' + userId);
+    if (error) { console.error('friends list failed:', error); return []; }
+    const rows = data || [];
+    if (!rows.length) return [];
+    // Augment with the OTHER party's profile + a direction flag
+    const otherIds = rows.map(f => f.requester_id === userId ? f.addressee_id : f.requester_id);
+    const { data: profiles, error: pErr } = await db.from('public_profiles').select('*').in('id', otherIds);
+    if (pErr) console.warn('profile join failed:', pErr);
+    const profMap = {};
+    (profiles || []).forEach(p => { profMap[p.id] = p; });
+    rows.forEach(f => {
+      const otherId = f.requester_id === userId ? f.addressee_id : f.requester_id;
+      f.otherUserId = otherId;
+      f.iAmRequester = f.requester_id === userId;
+      f.otherProfile = profMap[otherId] || { id: otherId, handle: '?', avatar_url: null };
+    });
+    return rows;
+  },
+};
+
+// Handle validation — same rules as the DB constraint
+const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
+function validateHandle(raw) {
+  const handle = (raw || '').trim().toLowerCase();
+  if (!handle) return { ok: false, error: 'handle required' };
+  if (handle.length < 3) return { ok: false, error: 'too short — 3 char minimum' };
+  if (handle.length > 20) return { ok: false, error: 'too long — 20 char max' };
+  if (!HANDLE_RE.test(handle)) return { ok: false, error: 'lowercase letters, numbers, underscore only' };
+  return { ok: true, handle };
+}
+
+// Initials avatar — deterministic colour from handle, used wherever a person appears
+const AVATAR_PALETTE = [
+  '#7c4f2a', '#a86a3a', '#5e6b4a', '#7a8a5a', '#8a5a3a', '#6b4a4a',
+  '#4a6b6b', '#8a6b4a', '#6b5a3a', '#5a7a6b', '#7a4a5a', '#4a5a7a'
+];
+function _avatarColor(handle) {
+  const h = (handle || '').toLowerCase();
+  let hash = 0;
+  for (let i = 0; i < h.length; i++) hash = ((hash * 31) + h.charCodeAt(i)) >>> 0;
+  return AVATAR_PALETTE[hash % AVATAR_PALETTE.length];
+}
+function _avatarInitials(handle) {
+  const h = (handle || '').trim();
+  if (!h) return '?';
+  // first 2 chars of handle, uppercase. handle constraints already enforce it's clean.
+  return h.slice(0, 2).toUpperCase();
+}
+// Returns inline HTML for an avatar circle. Size in px.
+function avatarHtml(profileLike, size = 36) {
+  const handle = (profileLike && profileLike.handle) || '';
+  const avatarUrl = profileLike && profileLike.avatar_url;
+  const fontSize = Math.round(size * 0.4);
+  if (avatarUrl) {
+    return '<div class="avatar" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;background-image:url(\'' + avatarUrl + '\');background-size:cover;background-position:center;flex-shrink:0;"></div>';
+  }
+  const bg = _avatarColor(handle);
+  const initials = _avatarInitials(handle);
+  return '<div class="avatar" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:' + bg + ';color:#f5ede4;font-family:var(--font-display);font-style:italic;font-weight:500;font-size:' + fontSize + 'px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:0.02em;">' + initials + '</div>';
+}
 
 // ─────────────────────────────────────────────────────────────
 // SUPABASE DATA LAYER — boty_picks (book of the year monthly picks)
@@ -2716,6 +3056,13 @@ const goalsAPI = {
 function maybeShowOnboarding() {
   const onboarded = profile && profile.preferences && profile.preferences.onboarded === true;
   const isEmpty = (!books || books.length === 0) && (!goals || goals.length === 0);
+  const handleValid = profile && validateHandle(profile.handle || '').ok;
+  // If they need to claim a handle (always step 0 of onboarding), force that even if they have data
+  if (!handleValid) {
+    document.body.classList.add('onboarding');
+    showOnboardingStep('handle');
+    return;
+  }
   if (!onboarded && isEmpty) {
     document.body.classList.add('onboarding');
     showOnboardingStep('home');
@@ -2725,6 +3072,21 @@ function maybeShowOnboarding() {
 }
 
 const ONBOARDING_STEPS = {
+  handle: () => `
+    <h1 class="welcome-title">welcome to dinkus</h1>
+    <div class="welcome-asterisks">* * *</div>
+    <p class="welcome-blurb">first things first — claim your handle.<br>it's how friends will find you in the reading room.</p>
+    <div style="display:flex;align-items:center;gap:12px;margin:28px 0 8px;justify-content:center;">
+      <div id="onboarding-handle-avatar"></div>
+      <div style="display:flex;align-items:center;gap:6px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);padding:8px 12px;flex:1;max-width:240px;">
+        <span style="color:var(--ink-3);font-family:var(--font-display);font-style:italic;">@</span>
+        <input type="text" id="onboarding-handle-input" maxlength="20" placeholder="yourhandle" oninput="onOnboardingHandleInput()" onkeydown="if(event.key==='Enter'){event.preventDefault();submitOnboardingHandle();}" style="font-family:var(--font-body);font-size:14px;border:none;outline:none;background:none;flex:1;padding:0;">
+      </div>
+    </div>
+    <div id="onboarding-handle-status" style="font-size:12px;color:var(--ink-3);font-style:italic;min-height:18px;line-height:1.5;text-align:center;margin-bottom:18px;">3–20 chars. lowercase letters, numbers, underscore.</div>
+    <button id="onboarding-handle-submit" class="welcome-btn welcome-btn-primary" onclick="submitOnboardingHandle()" disabled style="opacity:0.4;cursor:not-allowed;">claim it &amp; continue</button>
+    <p class="welcome-footer" style="margin-top:24px;">per aspera ad libros.</p>`,
+
   home: () => `
     <h1 class="welcome-title">welcome to dinkus</h1>
     <div class="welcome-asterisks">* * *</div>
@@ -2817,6 +3179,116 @@ function showOnboardingStep(step) {
   if (!card) return;
   const renderer = ONBOARDING_STEPS[step] || ONBOARDING_STEPS.home;
   card.innerHTML = renderer();
+  // Initialise the live avatar/status for the handle step
+  if (step === 'handle') {
+    setTimeout(() => {
+      const slot = document.getElementById('onboarding-handle-avatar');
+      if (slot) slot.innerHTML = avatarHtml({ handle: '?' }, 44);
+      const input = document.getElementById('onboarding-handle-input');
+      if (input) input.focus();
+    }, 0);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// ONBOARDING HANDLE — same logic as the gate, but inline in the welcome flow
+// ─────────────────────────────────────────────────────────────
+let _onboardingHandleTimer = null;
+let _onboardingHandleLastChecked = '';
+
+function _setOnboardingHandleStatus(msg, kind) {
+  const el = document.getElementById('onboarding-handle-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = kind === 'ok' ? 'var(--accent)'
+                : kind === 'err' ? '#b85'
+                : 'var(--ink-3)';
+}
+function _setOnboardingHandleSubmit(enabled) {
+  const submit = document.getElementById('onboarding-handle-submit');
+  if (!submit) return;
+  submit.disabled = !enabled;
+  submit.style.opacity = enabled ? '1' : '0.4';
+  submit.style.cursor = enabled ? 'pointer' : 'not-allowed';
+}
+
+function onOnboardingHandleInput() {
+  const input = document.getElementById('onboarding-handle-input');
+  const avatarSlot = document.getElementById('onboarding-handle-avatar');
+  const raw = input.value || '';
+  const lowered = raw.toLowerCase();
+  const cleaned = lowered.replace(/[^a-z0-9_]/g, '');
+  const hadUppercase = raw !== lowered;
+  const hadInvalidChars = lowered !== cleaned;
+  if (input.value !== cleaned) input.value = cleaned;
+
+  if (avatarSlot) avatarSlot.innerHTML = avatarHtml({ handle: cleaned || '?' }, 44);
+
+  let tidyHint = '';
+  if (hadUppercase && hadInvalidChars) tidyHint = 'tidied that up · ';
+  else if (hadUppercase) tidyHint = 'lowercased for you · ';
+  else if (hadInvalidChars) tidyHint = 'letters, numbers, underscore only · ';
+
+  const v = validateHandle(cleaned);
+  if (!v.ok) {
+    let msg;
+    if (!cleaned) msg = '3–20 chars. lowercase letters, numbers, underscore.';
+    else if (cleaned.length < 3) msg = tidyHint + 'a little more — 3 char minimum.';
+    else if (cleaned.length > 20) msg = tidyHint + 'easy now — 20 char max.';
+    else msg = tidyHint + v.error;
+    _setOnboardingHandleStatus(msg, cleaned ? 'err' : 'info');
+    _setOnboardingHandleSubmit(false);
+    return;
+  }
+  _setOnboardingHandleStatus(tidyHint + 'consulting the registry…', 'info');
+  _setOnboardingHandleSubmit(false);
+  clearTimeout(_onboardingHandleTimer);
+  _onboardingHandleTimer = setTimeout(async () => {
+    const handle = v.handle;
+    _onboardingHandleLastChecked = handle;
+    const result = await profileAPI.checkHandleAvailable(handle);
+    if (handle !== _onboardingHandleLastChecked) return;
+    if (input.value !== handle) return;
+    if (result.available || result.takenByMe) {
+      _setOnboardingHandleStatus('yours for the taking · @' + handle, 'ok');
+      _setOnboardingHandleSubmit(true);
+    } else {
+      _setOnboardingHandleStatus('oops, too slow — @' + handle + ' is already someone. try another?', 'err');
+      _setOnboardingHandleSubmit(false);
+    }
+  }, 350);
+}
+
+async function submitOnboardingHandle() {
+  const input = document.getElementById('onboarding-handle-input');
+  const submit = document.getElementById('onboarding-handle-submit');
+  const v = validateHandle(input.value);
+  if (!v.ok) return;
+  _setOnboardingHandleSubmit(false);
+  submit.textContent = 'claiming…';
+  try {
+    const updated = await profileAPI.update({ handle: v.handle });
+    profile = updated || { ...profile, handle: v.handle };
+    if (typeof setGreeting === 'function') setGreeting();
+    // Now advance — if they have data already, just exit onboarding; otherwise go to the three paths
+    const isEmpty = (!books || books.length === 0) && (!goals || goals.length === 0);
+    const onboarded = profile && profile.preferences && profile.preferences.onboarded === true;
+    if (onboarded || !isEmpty) {
+      document.body.classList.remove('onboarding');
+    } else {
+      showOnboardingStep('home');
+    }
+  } catch (e) {
+    submit.textContent = 'claim it & continue';
+    _setOnboardingHandleSubmit(true);
+    const msg = (e && e.message) || String(e);
+    if (/duplicate|unique/i.test(msg)) {
+      _setOnboardingHandleStatus('oops, too slow — @' + v.handle + ' is already someone. try another?', 'err');
+      _setOnboardingHandleSubmit(false);
+    } else {
+      _setOnboardingHandleStatus('the registry coughed. try again?', 'err');
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -2840,9 +3312,16 @@ async function renderSettings() {
       <div style="font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:14px;">
         signed in as <strong>${userEmail}</strong>
       </div>
-      <div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-weight:500;">what should we call you?</div>
-      <input type="text" id="profile-handle-input" value="${(profile && profile.handle || '').replace(/"/g,'&quot;')}" placeholder="your name" maxlength="40" onblur="saveProfileName()" style="font-family:var(--font-body);font-size:14px;padding:8px 12px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;width:100%;max-width:280px;">
-      <div style="font-size:11px;color:var(--ink-3);margin-top:6px;font-style:italic;">we’ll use this in the dashboard greeting and the occasional prophecy. blank is fine.</div>
+      <div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;font-weight:500;">your handle</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        ${avatarHtml(profile, 44)}
+        <div style="display:flex;align-items:center;gap:6px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);padding:8px 12px;flex:1;max-width:280px;">
+          <span style="color:var(--ink-3);font-family:var(--font-display);font-style:italic;">@</span>
+          <input type="text" id="profile-handle-input" value="${(profile && profile.handle || '').replace(/"/g,'&quot;')}" placeholder="yourhandle" maxlength="20" onblur="saveProfileName()" style="font-family:var(--font-body);font-size:14px;border:none;outline:none;background:none;flex:1;padding:0;">
+        </div>
+      </div>
+      <div id="profile-handle-status" style="font-size:12px;color:var(--ink-3);margin-top:8px;font-style:italic;min-height:18px;line-height:1.5;"></div>
+      <div style="font-size:11px;color:var(--ink-3);margin-top:2px;font-style:italic;">lowercase, 3–20 chars, letters/numbers/underscore. used in the dashboard greeting and the reading room.</div>
     </div>
 
     <div class="stat-block" style="margin-bottom:18px;">
@@ -2852,6 +3331,20 @@ async function renderSettings() {
       </div>
       <div style="font-size:13px;color:var(--ink-2);margin-bottom:8px;">${apiKey ? 'current key: <code style="font-family:monospace;background:var(--paper-2);padding:2px 6px;border-radius:4px;">'+masked+'</code>' : '<em>no key set</em>'}</div>
       <button onclick="openOracleSettings()" style="font-family:var(--font-body);font-size:12px;padding:7px 14px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;">${apiKey ? 'change key' : 'add key'}</button>
+    </div>
+
+    <div class="stat-block" style="margin-bottom:18px;">
+      <div class="stat-block-title">your friends</div>
+      <div style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5;">
+        find people by their handle. mutual follow — they'll need to accept. you'll see what they're currently reading and their last 5 finishes in <strong>the reading room</strong>.
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);padding:8px 12px;max-width:340px;">
+        <span style="color:var(--ink-3);font-family:var(--font-display);font-style:italic;">@</span>
+        <input type="text" id="friend-search-input" maxlength="20" placeholder="theirhandle" style="font-family:var(--font-body);font-size:14px;border:none;outline:none;background:none;flex:1;padding:0;" onkeydown="if(event.key==='Enter'){event.preventDefault();findFriendByHandle();}">
+        <button onclick="findFriendByHandle()" style="font-family:var(--font-body);font-size:12px;padding:5px 12px;background:var(--accent);color:var(--paper);border:none;border-radius:99px;cursor:pointer;font-weight:500;">add</button>
+      </div>
+      <div id="friend-search-status" style="font-size:12px;color:var(--ink-3);margin-top:8px;font-style:italic;min-height:18px;line-height:1.5;"></div>
+      <div id="friends-list" style="margin-top:14px;"><!-- populated by renderFriendsList() --></div>
     </div>
 
     <div class="stat-block" style="margin-bottom:18px;">
@@ -2878,6 +3371,331 @@ async function renderSettings() {
       <button onclick="openDeleteAccount()" style="font-family:var(--font-body);font-size:12px;padding:7px 14px;background:#f5e8e8;border:1px solid #e8c4c4;color:#8b3a3a;border-radius:var(--radius);cursor:pointer;">delete account</button>
     </div>
   `;
+  renderFriendsList();
+}
+
+// ─────────────────────────────────────────────────────────────
+// FRIENDS — search, request, accept/decline, list, remove
+// All UI lives in the settings page; the reading-room page reads from the
+// same friendsAPI but renders the actual feed.
+// ─────────────────────────────────────────────────────────────
+function _setFriendSearchStatus(msg, kind) {
+  const el = document.getElementById('friend-search-status');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.style.color = kind === 'ok' ? 'var(--accent)'
+                : kind === 'err' ? '#b85'
+                : 'var(--ink-3)';
+}
+
+async function findFriendByHandle() {
+  const input = document.getElementById('friend-search-input');
+  const raw = (input.value || '').trim().toLowerCase();
+  if (!raw) { _setFriendSearchStatus('type a handle first.', 'err'); return; }
+  const v = validateHandle(raw);
+  if (!v.ok) { _setFriendSearchStatus('that\'s not a valid handle (' + v.error + ')', 'err'); return; }
+  if (v.handle === (profile && profile.handle)) {
+    _setFriendSearchStatus('that\'s you. you already follow yourself.', 'err'); return;
+  }
+  _setFriendSearchStatus('looking…', 'info');
+  const found = await friendsAPI.findByHandle(v.handle);
+  if (!found) {
+    _setFriendSearchStatus('no @' + v.handle + ' in dinkus. send them an invite link?', 'err');
+    return;
+  }
+  // Found. Send the request.
+  try {
+    await friendsAPI.request(found.id);
+    _setFriendSearchStatus('request sent to @' + v.handle + ' · they\'ll need to accept.', 'ok');
+    input.value = '';
+    renderFriendsList();
+  } catch (e) {
+    _setFriendSearchStatus(e.message || String(e), 'err');
+  }
+}
+
+async function renderFriendsList() {
+  const wrap = document.getElementById('friends-list');
+  if (!wrap) return;
+  const all = await friendsAPI.list();
+  if (!all.length) {
+    wrap.innerHTML = '<div style="font-size:12px;color:var(--ink-3);font-style:italic;">no one yet. find someone above by their handle.</div>';
+    return;
+  }
+  const incoming = all.filter(f => f.status === 'pending' && !f.iAmRequester);
+  const outgoing = all.filter(f => f.status === 'pending' && f.iAmRequester);
+  const accepted = all.filter(f => f.status === 'accepted');
+
+  let html = '';
+  if (incoming.length) {
+    html += '<div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;font-weight:500;">waiting on you</div>';
+    html += incoming.map(f => _friendRowHtml(f, 'incoming')).join('');
+  }
+  if (outgoing.length) {
+    html += '<div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin:14px 0 8px;font-weight:500;">awaiting their reply</div>';
+    html += outgoing.map(f => _friendRowHtml(f, 'outgoing')).join('');
+  }
+  if (accepted.length) {
+    html += '<div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin:14px 0 8px;font-weight:500;">in the room with you</div>';
+    html += accepted.map(f => _friendRowHtml(f, 'accepted')).join('');
+  }
+  wrap.innerHTML = html;
+}
+
+function _friendRowHtml(f, kind) {
+  const handle = (f.otherProfile && f.otherProfile.handle) || '?';
+  const avatar = avatarHtml(f.otherProfile, 36);
+  let actions = '';
+  if (kind === 'incoming') {
+    actions = '<button onclick="acceptFriend(\'' + f.id + '\')" style="font-family:var(--font-body);font-size:12px;padding:5px 12px;background:var(--accent);color:var(--paper);border:none;border-radius:99px;cursor:pointer;font-weight:500;">accept</button>'
+      + '<button onclick="removeFriend(\'' + f.id + '\', \'declined\')" style="font-family:var(--font-body);font-size:12px;padding:5px 12px;background:none;color:var(--ink-3);border:1px solid var(--paper-3);border-radius:99px;cursor:pointer;">decline</button>';
+  } else if (kind === 'outgoing') {
+    actions = '<button onclick="removeFriend(\'' + f.id + '\', \'cancelled\')" style="font-family:var(--font-body);font-size:12px;padding:5px 12px;background:none;color:var(--ink-3);border:1px solid var(--paper-3);border-radius:99px;cursor:pointer;">cancel</button>';
+  } else {
+    actions = '<button onclick="removeFriend(\'' + f.id + '\', \'unfriended\')" style="font-family:var(--font-body);font-size:12px;padding:5px 12px;background:none;color:var(--ink-3);border:1px solid var(--paper-3);border-radius:99px;cursor:pointer;">unfollow</button>';
+  }
+  return '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--paper-3);">'
+    + avatar
+    + '<div style="flex:1;font-size:13px;color:var(--ink-2);">@' + handle + '</div>'
+    + '<div style="display:flex;gap:6px;">' + actions + '</div>'
+  + '</div>';
+}
+
+async function acceptFriend(id) {
+  try {
+    await friendsAPI.accept(id);
+    renderFriendsList();
+    if (typeof refreshReadingRoomDot === 'function') refreshReadingRoomDot();
+    // If we're on the reading room when accepting, re-render so the pending row clears and the friend's books appear
+    const rrPage = document.getElementById('page-readingRoom');
+    if (rrPage && !rrPage.classList.contains('hidden') && typeof renderReadingRoom === 'function') {
+      renderReadingRoom();
+    }
+  } catch (e) {
+    alert('couldn\'t accept: ' + (e.message || e));
+  }
+}
+
+async function removeFriend(id, verb) {
+  // verb just for nicer copy in the absent confirm — we delete in all three cases (decline/cancel/unfriend)
+  try {
+    await friendsAPI.remove(id);
+    renderFriendsList();
+    if (typeof refreshReadingRoomDot === 'function') refreshReadingRoomDot();
+    if (typeof renderReadingRoom === 'function' && !document.getElementById('page-readingRoom').classList.contains('hidden')) {
+      renderReadingRoom();
+    }
+  } catch (e) {
+    alert('couldn\'t ' + verb + ': ' + (e.message || e));
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// THE READING ROOM — friend feed page
+// Pulls all friend books visible to me (RLS already filters to currently+read),
+// shows pending requests at the top, then a chronological mixed feed of
+// "currently reading" + last 5 finishes per friend.
+// ─────────────────────────────────────────────────────────────
+
+// Format a date as "3 days ago" / "today" / "yesterday" / "DD MMM"
+function _relTime(dateStr) {
+  if (!dateStr) return '';
+  const then = new Date(dateStr);
+  if (isNaN(then.getTime())) return '';
+  const now = new Date();
+  const days = Math.floor((now - then) / 86400000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 7) return days + ' days ago';
+  if (days < 30) return Math.floor(days/7) + 'w ago';
+  return then.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+async function renderReadingRoom() {
+  const wrap = document.getElementById('rr-content');
+  if (!wrap) return;
+  wrap.innerHTML = '<div style="font-family:var(--font-display);font-style:italic;color:var(--ink-3);text-align:center;padding:40px;">peeking through the doorway…</div>';
+
+  const all = await friendsAPI.list();
+  const incoming = all.filter(f => f.status === 'pending' && !f.iAmRequester);
+  const accepted = all.filter(f => f.status === 'accepted');
+
+  let html = '';
+
+  // Pending incoming requests up top
+  if (incoming.length) {
+    html += '<div class="rr-pending-block">';
+    html += '<div class="rr-pending-title">' + incoming.length + ' want' + (incoming.length===1?'s':'') + ' in</div>';
+    html += incoming.map(f => {
+      const handle = f.otherProfile.handle || '?';
+      return '<div class="rr-pending-row">'
+        + avatarHtml(f.otherProfile, 32)
+        + '<div class="rr-pending-handle">@' + handle + '</div>'
+        + '<button onclick="acceptFriend(\'' + f.id + '\')" style="font-family:var(--font-body);font-size:12px;padding:5px 12px;background:var(--accent);color:var(--paper);border:none;border-radius:99px;cursor:pointer;font-weight:500;">accept</button>'
+        + '<button onclick="removeFriend(\'' + f.id + '\', \'declined\')" style="font-family:var(--font-body);font-size:12px;padding:5px 12px;background:none;color:var(--ink-3);border:1px solid var(--paper-3);border-radius:99px;cursor:pointer;">decline</button>'
+      + '</div>';
+    }).join('');
+    html += '</div>';
+  }
+
+  // Empty state — no friends yet
+  if (!accepted.length) {
+    html += '<div class="rr-empty"><p>the room is empty.</p>'
+      + '<p style="font-size:14px;">find people by handle in <a onclick="showSettings()" style="cursor:pointer;">settings → your friends</a>.</p></div>';
+    wrap.innerHTML = html;
+    return;
+  }
+
+  // Fetch their books — RLS only returns currently + read for accepted friends
+  const friendIds = accepted.map(f => f.otherUserId);
+  const { data: rows, error } = await db.from('books').select('*').in('user_id', friendIds);
+  if (error) {
+    console.error('reading room load failed:', error);
+    wrap.innerHTML = html + '<div class="rr-empty"><p>the room won\'t open. try again in a moment.</p></div>';
+    return;
+  }
+
+  const friendMap = {};
+  accepted.forEach(f => { friendMap[f.otherUserId] = f.otherProfile; });
+
+  // Build event list — currently reading per friend, last 5 finishes per friend
+  const events = [];
+  const finishedByFriend = {};
+  (rows || []).forEach(r => {
+    const friend = friendMap[r.user_id];
+    if (!friend) return;
+    const book = _dbToBook(r);
+    if (book.status === 'currently') {
+      events.push({ type: 'currently', book, friend, date: book.started || book.addedAt || '' });
+    } else if (book.status === 'read') {
+      finishedByFriend[r.user_id] = finishedByFriend[r.user_id] || [];
+      finishedByFriend[r.user_id].push(book);
+    }
+  });
+  Object.entries(finishedByFriend).forEach(([fid, fbooks]) => {
+    fbooks.sort((a,b) => (b.finished || '').localeCompare(a.finished || ''));
+    const friend = friendMap[fid];
+    fbooks.slice(0, 5).forEach(b => {
+      events.push({ type: 'finished', book: b, friend, date: b.finished || b.addedAt || '' });
+    });
+  });
+  events.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+
+  if (!events.length) {
+    html += '<div class="rr-empty"><p>your friends are quiet right now. check back soon.</p></div>';
+    wrap.innerHTML = html;
+    return;
+  }
+
+  // Pre-compute "is in my library?" lookup keyed on title+author for the add-to-tbr button
+  const myKeys = new Set(books.map(b => (b.title + '|' + b.author).toLowerCase()));
+
+  html += '<div class="rr-feed">';
+  html += events.map(e => _rrEventHtml(e, myKeys)).join('');
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+function _rrEventHtml(e, myKeys) {
+  const { book: b, friend, type } = e;
+  const handle = friend.handle || '?';
+  const verb = type === 'currently' ? 'is reading' : 'finished';
+  const cover = b.coverUrl
+    ? '<div class="rr-event-cover" style="background-image:url(\'' + b.coverUrl + '\');" onclick="rrPeekBook(\'' + b.id + '\', \'' + (friend.id || '') + '\')"></div>'
+    : '<div class="rr-event-cover" style="background:' + bookColor(b.title) + ';" onclick="rrPeekBook(\'' + b.id + '\', \'' + (friend.id || '') + '\')">' + (b.title || '') + '</div>';
+
+  const ratingHtml = (type === 'finished' && b.rating)
+    ? '<div class="rr-event-rating">' + '★'.repeat(Math.floor(b.rating)) + (b.rating % 1 ? '½' : '') + '</div>'
+    : '';
+  const thoughtsHtml = (type === 'finished' && b.thoughts && b.thoughts.trim())
+    ? '<div class="rr-event-thoughts">' + b.thoughts.trim().slice(0, 280) + (b.thoughts.length > 280 ? '…' : '') + '</div>'
+    : '';
+
+  const key = (b.title + '|' + b.author).toLowerCase();
+  const inLibrary = myKeys.has(key);
+  const tbrAction = inLibrary
+    ? '<span class="rr-event-already">already in your library</span>'
+    : '<button class="rr-event-tbr-btn" onclick="addToTbrFromFriend(\'' + b.id + '\', \'' + (friend.id || '') + '\', \'' + (friend.handle || '') + '\')">+ add to my tbr</button>';
+
+  return '<div class="rr-event">'
+    + avatarHtml(friend, 36)
+    + '<div class="rr-event-body">'
+      + '<div class="rr-event-meta"><strong>@' + handle + '</strong> <span class="rr-verb">' + verb + '</span></div>'
+      + '<div class="rr-event-book">'
+        + cover
+        + '<div class="rr-event-info">'
+          + '<div class="rr-event-title">' + b.title + '</div>'
+          + '<div class="rr-event-author">' + b.author + '</div>'
+          + ratingHtml
+          + thoughtsHtml
+          + '<div class="rr-event-actions">' + tbrAction + '</div>'
+        + '</div>'
+      + '</div>'
+      + '<div class="rr-event-when">' + _relTime(e.date) + '</div>'
+    + '</div>'
+  + '</div>';
+}
+
+// Cache of the friend book details by id, populated as renderReadingRoom runs,
+// so add-to-tbr can pull the whole book without a second fetch.
+let _rrBookCache = {};
+
+// Add a friend's book to your TBR with attribution. Refreshes the room.
+async function addToTbrFromFriend(friendBookId, friendUserId, friendHandle) {
+  // Re-pull the row from supabase (it'll be visible to me via the friends RLS)
+  // Could pull from a cache but a fresh pull is the simplest path.
+  const { data, error } = await db.from('books').select('*').eq('id', friendBookId).maybeSingle();
+  if (error || !data) {
+    alert('that book slipped away. try refreshing the room.');
+    return;
+  }
+  const friendBook = _dbToBook(data);
+  const newBook = {
+    title: friendBook.title,
+    author: friendBook.author,
+    published: friendBook.published,
+    pages: friendBook.pages,
+    length: friendBook.length,
+    genre: friendBook.genre,
+    series: friendBook.series,
+    seriesNum: friendBook.seriesNum,
+    nationality: friendBook.nationality,
+    gender: friendBook.gender,
+    race: friendBook.race,
+    coverUrl: friendBook.coverUrl,
+    status: 'want',
+    rating: 0,
+    addedAt: new Date().toISOString(),
+    sourceFriendId: friendUserId,
+    readings: [],
+  };
+  try {
+    const inserted = await booksAPI.insert(newBook);
+    books.unshift(inserted);
+    save();
+    // Re-render the room so the button flips to "already in your library"
+    renderReadingRoom();
+  } catch (e) {
+    alert('couldn\'t add: ' + (e.message || e));
+  }
+}
+
+// Tap a friend's book cover in the room — for now just the same as add-to-tbr,
+// but we could expand to a peek modal later.
+function rrPeekBook(friendBookId, friendUserId) {
+  // V1: nothing extra — could add an expanded book detail in v2
+}
+
+// Refresh the burgundy notification dot on the sidebar nav based on incoming pending count
+async function refreshReadingRoomDot() {
+  try {
+    const all = await friendsAPI.list();
+    const incoming = all.filter(f => f.status === 'pending' && !f.iAmRequester);
+    const dot = document.getElementById('rr-nav-dot');
+    if (dot) dot.style.display = incoming.length ? 'inline-block' : 'none';
+  } catch (e) {
+    console.warn('reading room dot refresh failed:', e);
+  }
 }
 
 const POLICY_PRIVACY = `
@@ -2959,15 +3777,171 @@ const POLICY_TERMS = `
   </div>
 `;
 
+function _setProfileHandleStatus(msg, kind) {
+  // kind: 'ok' | 'err' | 'info' | '' (clears)
+  const el = document.getElementById('profile-handle-status');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.style.color = kind === 'ok' ? 'var(--accent)'
+                : kind === 'err' ? '#b85'
+                : 'var(--ink-3)';
+}
+
 async function saveProfileName() {
-  const handle = (document.getElementById('profile-handle-input').value || '').trim().slice(0, 40);
-  if (handle === (profile.handle || '')) return;  // no change
+  const input = document.getElementById('profile-handle-input');
+  const raw = (input.value || '').trim();
+  const handle = raw.toLowerCase();
+  if (handle === (profile.handle || '')) {
+    _setProfileHandleStatus('', '');
+    if (raw !== handle) input.value = handle;  // tidy any case drift even on no-op
+    return;
+  }
+  const v = validateHandle(handle);
+  if (!v.ok) {
+    let nice = v.error;
+    if (raw !== handle) nice = 'we keep it lowercase. ' + v.error;
+    _setProfileHandleStatus(nice, 'err');
+    input.value = profile.handle || '';
+    return;
+  }
+  if (raw !== handle) input.value = handle;  // visually normalize before save
+  _setProfileHandleStatus('consulting the registry…', 'info');
+  const avail = await profileAPI.checkHandleAvailable(v.handle);
+  if (!avail.available && !avail.takenByMe) {
+    _setProfileHandleStatus('oops, too slow — @' + v.handle + ' is already someone. try another?', 'err');
+    input.value = profile.handle || '';
+    return;
+  }
   try {
-    const updated = await profileAPI.update({ handle: handle || null });
-    profile = updated || { ...profile, handle: handle || null };
+    const updated = await profileAPI.update({ handle: v.handle });
+    profile = updated || { ...profile, handle: v.handle };
+    _setProfileHandleStatus('saved · you are now @' + v.handle, 'ok');
     if (typeof setGreeting === 'function') setGreeting();
+    // Refresh the settings page so the avatar preview updates (status will reset on render)
+    if (typeof renderSettings === 'function') renderSettings();
   } catch (e) {
-    console.warn('profile name save failed:', e);
+    const msg = (e && e.message) || String(e);
+    if (/duplicate|unique/i.test(msg)) {
+      _setProfileHandleStatus('oops, too slow — @' + v.handle + ' is already someone. try another?', 'err');
+    } else {
+      _setProfileHandleStatus('the registry coughed. try again?', 'err');
+    }
+    input.value = profile.handle || '';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// HANDLE GATE — blocks the app for anyone signed in without a valid handle.
+// Live uniqueness check, format validation, can't be dismissed.
+// ─────────────────────────────────────────────────────────────
+let _handleGateTimer = null;
+let _handleGateLastChecked = '';
+
+function maybeShowHandleGate() {
+  // Only show if we have a profile (synced) and it has no handle, or an invalid one
+  if (!profile) return;
+  const v = validateHandle(profile.handle || '');
+  if (v.ok) return;  // they're fine
+  // Don't show during onboarding flow — that's a separate gate, handled afterwards
+  if (document.body.classList.contains('onboarding')) return;
+  openModal('modal-handle-gate');
+  document.getElementById('handle-gate-input').focus();
+  onHandleGateInput();  // initialise avatar + status
+}
+
+function _setGateStatus(msg, kind) {
+  const status = document.getElementById('handle-gate-status');
+  status.textContent = msg;
+  status.style.color = kind === 'ok' ? 'var(--accent)'
+                     : kind === 'err' ? '#b85'
+                     : 'var(--ink-3)';
+}
+function _setGateSubmit(enabled) {
+  const submit = document.getElementById('handle-gate-submit');
+  submit.disabled = !enabled;
+  submit.style.opacity = enabled ? '1' : '0.4';
+  submit.style.cursor = enabled ? 'pointer' : 'not-allowed';
+}
+
+function onHandleGateInput() {
+  const input = document.getElementById('handle-gate-input');
+  const avatarSlot = document.getElementById('handle-gate-avatar');
+  const raw = input.value || '';
+  // Lowercase + strip invalid chars in real time so the user SEES the rule being applied.
+  // Track WHAT was wrong with the original so we can give a hint.
+  const lowered = raw.toLowerCase();
+  const cleaned = lowered.replace(/[^a-z0-9_]/g, '');
+  const hadUppercase = raw !== lowered;
+  const hadInvalidChars = lowered !== cleaned;
+  if (input.value !== cleaned) input.value = cleaned;
+
+  // Live avatar preview from the in-progress handle
+  avatarSlot.innerHTML = avatarHtml({ handle: cleaned || '?' }, 44);
+
+  // A small hint to prepend to the next status if the input was tidied
+  let tidyHint = '';
+  if (hadUppercase && hadInvalidChars) tidyHint = 'tidied that up · ';
+  else if (hadUppercase) tidyHint = 'lowercased for you · ';
+  else if (hadInvalidChars) tidyHint = 'letters, numbers, underscore only · ';
+
+  const v = validateHandle(cleaned);
+  if (!v.ok) {
+    let msg;
+    if (!cleaned) msg = '3–20 chars. lowercase letters, numbers, underscore.';
+    else if (cleaned.length < 3) msg = tidyHint + 'a little more — 3 char minimum.';
+    else if (cleaned.length > 20) msg = tidyHint + 'easy now — 20 char max.';
+    else msg = tidyHint + v.error;
+    _setGateStatus(msg, cleaned ? 'err' : 'info');
+    _setGateSubmit(false);
+    return;
+  }
+  // Format ok — debounced uniqueness check
+  _setGateStatus(tidyHint + 'consulting the registry…', 'info');
+  _setGateSubmit(false);
+  clearTimeout(_handleGateTimer);
+  _handleGateTimer = setTimeout(async () => {
+    const handle = v.handle;
+    _handleGateLastChecked = handle;
+    const result = await profileAPI.checkHandleAvailable(handle);
+    // Only act if the input hasn't changed since the request fired
+    if (handle !== _handleGateLastChecked) return;
+    if (input.value !== handle) return;
+    if (result.available || result.takenByMe) {
+      _setGateStatus('yours for the taking · @' + handle, 'ok');
+      _setGateSubmit(true);
+    } else {
+      _setGateStatus('oops, too slow — @' + handle + ' is already someone. try another?', 'err');
+      _setGateSubmit(false);
+    }
+  }, 350);
+}
+
+async function submitHandleGate() {
+  const input = document.getElementById('handle-gate-input');
+  const submit = document.getElementById('handle-gate-submit');
+  const v = validateHandle(input.value);
+  if (!v.ok) return;
+  _setGateSubmit(false);
+  submit.textContent = 'claiming…';
+  try {
+    const updated = await profileAPI.update({ handle: v.handle });
+    profile = updated || { ...profile, handle: v.handle };
+    closeModal('modal-handle-gate');
+    if (typeof setGreeting === 'function') setGreeting();
+    // If they're sitting on the settings page, re-render it
+    if (document.getElementById('page-settings') && !document.getElementById('page-settings').classList.contains('hidden')) {
+      renderSettings();
+    }
+  } catch (e) {
+    submit.textContent = 'claim it';
+    _setGateSubmit(true);
+    const msg = (e && e.message) || String(e);
+    if (/duplicate|unique/i.test(msg)) {
+      _setGateStatus('oops, too slow — @' + v.handle + ' is already someone. try another?', 'err');
+      _setGateSubmit(false);
+    } else {
+      _setGateStatus('the registry coughed. try again?', 'err');
+    }
   }
 }
 
@@ -3093,6 +4067,12 @@ async function syncBooksFromDb() {
     if (typeof setGreeting === 'function') setGreeting();
     refreshCurrentPage();
 
+    // Existing user without a valid handle? Show the gate. Defers to onboarding if that's open.
+    if (typeof maybeShowHandleGate === 'function') maybeShowHandleGate();
+
+    // Refresh the reading-room notification dot
+    if (typeof refreshReadingRoomDot === 'function') refreshReadingRoomDot();
+
     // Surface a soft error banner if any endpoint timed out, so the user knows data is partial
     if (failed.length) document.body.classList.add('sync-error');
   } catch (e) {
@@ -3104,7 +4084,7 @@ async function syncBooksFromDb() {
 }
 
 // ── NAV ──────────────────────────────────────────────
-const PAGES = ['dashboard','library','stats','want','series','oracle','goals'];
+const PAGES = ['dashboard','library','stats','want','series','oracle','readingRoom','goals'];
 function showPage(name) {
   PAGES.forEach(p => document.getElementById('page-'+p).classList.toggle('hidden', p !== name));
   // Settings page lives outside the PAGES array, so hide it explicitly when nav'ing to a regular page
@@ -3120,6 +4100,7 @@ function showPage(name) {
   if (name==='stats') renderStats();
   if (name==='goals') renderGoals();
   if (name==='oracle') renderOracle();
+  if (name==='readingRoom') renderReadingRoom();
 }
 
 // ── STARS ──────────────────────────────────────────────
@@ -3143,11 +4124,18 @@ function buildPillPicker(inputId, pickerId, options) {
         const idx = current.findIndex(v => v.toLowerCase() === opt.toLowerCase());
         if (idx >= 0) current.splice(idx, 1); else current.push(opt);
         input.value = current.join(', ');
-        render();
+        // Fire input event so the inline oninput AND every picker's render fires
+        input.dispatchEvent(new Event('input', { bubbles: true }));
       };
     });
   };
-  input.oninput = render;
+  // Track render fns per picker so multiple pickers on the same input each get their own
+  // listener AND so we don't accumulate stale ones when the modal is reopened.
+  if (!input._pickerRenderers) input._pickerRenderers = new Map();
+  const prev = input._pickerRenderers.get(pickerId);
+  if (prev) input.removeEventListener('input', prev);
+  input.addEventListener('input', render);
+  input._pickerRenderers.set(pickerId, render);
   render();
 }
 
@@ -3608,17 +4596,22 @@ function allGenreOptions() {
 const GENDER_OPTIONS = ['Female', 'Male', 'Non-binary'];
 
 function allGenderOptions() {
-  const inUse = new Set(books.map(b => (b.gender||'').trim()).filter(Boolean));
-  GENDER_OPTIONS.forEach(g => inUse.add(g));
-  return [...inUse].sort();
+  return GENDER_OPTIONS.slice();
 }
 
-function populateGenderSelect() {
+// Populate the gender select. Pass `legacyValue` so we can include it as a one-off
+// option for books that still have an older value (e.g. "Female (duo)") — keeps the
+// edit-modal display correct without polluting the canonical list.
+function populateGenderSelect(legacyValue) {
   const sel = document.getElementById('f-gender');
   if (!sel) return;
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">—</option>'
-    + allGenderOptions().map(g => '<option value="'+g+'">'+g+'</option>').join('');
+  const cur = legacyValue !== undefined ? legacyValue : sel.value;
+  let html = '<option value="">—</option>'
+    + GENDER_OPTIONS.map(g => '<option value="'+g+'">'+g+'</option>').join('');
+  if (cur && !GENDER_OPTIONS.includes(cur)) {
+    html += '<option value="'+cur+'">'+cur+'</option>';
+  }
+  sel.innerHTML = html;
   if (cur) sel.value = cur;
 }
 
@@ -3644,34 +4637,74 @@ function populateNationalityList() {
   list.innerHTML = [...inUse].sort().map(c => '<option value="'+c+'">').join('');
 }
 
-// Curated ethnicity options — multi-select via pill picker. No single list is canonical;
-// this leans on the union of UK ONS + US Census + diasporic identity terms common in
-// publishing data. Free-text values from existing records still display alongside.
+// Curated ethnicity options — multi-select via pill picker. For mixed heritage,
+// click multiple pills (e.g. East Asian + White). Legacy values on existing books
+// remain in the underlying race string; they just don't show as togglable pills anymore.
 const ETHNICITY_OPTIONS = [
-  'White', 'Black / African', 'Black American', 'Caribbean / Black British',
-  'East Asian', 'Southeast Asian', 'South Asian', 'Middle Eastern / Arab',
-  'Latino / Latina / Latine', 'Indigenous / First Nations', 'Pacific Islander',
-  'Mixed Heritage', 'Jewish', 'Roma / Romani', 'Other',
+  'White', 'Black', 'African American',
+  'East Asian', 'Southeast Asian', 'South Asian',
+  'Middle Eastern', 'North African', 'Latinx',
+  'Indigenous / First Nations', 'Pacific Islander',
+  'Jewish', 'Roma',
 ];
 
 function allEthnicityOptions() {
-  // Curated list first, then any other strings already in use (so existing free-text
-  // values like "Chinese American" or "White (Jewish)" still display as togglable pills)
-  const inUse = new Set();
-  books.forEach(b => (b.race||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(e => inUse.add(e)));
-  const extras = [...inUse].filter(e => !ETHNICITY_OPTIONS.some(o => o.toLowerCase() === e.toLowerCase())).sort();
-  return [...ETHNICITY_OPTIONS, ...extras];
+  return ETHNICITY_OPTIONS.slice();
 }
 
 // Curated tags seeded into the pill picker so they're always available, even before
 // any book uses them. "Queer Author" lets cis queer authors (e.g. TJ Klune) be
 // captured by the queer / non-cis filter on the library.
-const SUGGESTED_TAGS = ['Queer Author', 'Re-read', 'Translation', 'Debut', 'Award Winner'];
+const SUGGESTED_TAGS = ['Queer Author', 'Re-read', 'Translation', 'Debut', 'Award Winner', 'Spicy'];
+
+// Romance tropes — only surfaced when the genre includes "romance". LGBTQ+ inclusive.
+// All lowercase by convention; the picker shows them exactly as listed here.
+const ROMANCE_TROPES = [
+  'enemies to lovers', 'slow burn', 'friends to lovers', 'fated mates',
+  'forced proximity', 'only one bed', 'found family', 'age gap',
+  'fake dating', 'second chance', 'marriage of convenience', 'who hurt you',
+  'dark romance', 'morally grey', 'monster romance', 'alpha hero',
+  'smut', 'single mum', 'single dad',
+  'mlm', 'wlw', 'sapphic', 'queer romance', 'reverse harem',
+  "brother's best friend", "best friend's sibling", 'polyamory', 'throuple',
+  'forbidden love', 'grumpy/sunshine',
+];
+
+// Normalize a tag for matching: lowercase, strip hyphens, collapse whitespace.
+// This catches "Slow-burn" → "slow burn", "Reverse Hareem" → "reverse hareem", etc.
+function _normalizeTagForMatch(s) {
+  return (s || '').toLowerCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// Filter set includes the canonical tropes PLUS common spelling variants users have logged
+const _ROMANCE_TROPE_SET = new Set([
+  ...ROMANCE_TROPES,
+  // user-spotted variants (so existing tags like "Reverse Hareem" or "Who did this to you" still get filtered out of the generic tags box)
+  'reverse hareem', 'who did this to you',
+].map(_normalizeTagForMatch));
+
+// Nando's-inspired spice levels with descriptions, for the chilli meter
+const SPICE_LEVELS = [
+  { level: 1, label: 'barely there', desc: 'sweet and subtle' },
+  { level: 2, label: 'mild',         desc: 'lemon and herb' },
+  { level: 3, label: 'medium',       desc: "it's heating up" },
+  { level: 4, label: 'hot',          desc: 'hot & steamy' },
+  { level: 5, label: 'extra hot',    desc: 'gird your loins' },
+];
 
 function allTagOptions() {
   const inUse = new Set(books.flatMap(b=>(b.tags||[]).filter(Boolean)));
   SUGGESTED_TAGS.forEach(s => inUse.add(s));
-  return [...inUse].sort((a,b)=>a.localeCompare(b));
+  // Filter out romance tropes (and known variants) — they live in their own picker
+  return [...inUse]
+    .filter(t => !_ROMANCE_TROPE_SET.has(_normalizeTagForMatch(t)))
+    .sort((a,b)=>a.localeCompare(b));
+}
+
+// Romance trope picker source — canonical lowercase list only.
+// User variants stay on their books but the picker shows the canonical names so things stay tidy.
+function allRomanceTropeOptions() {
+  return [...ROMANCE_TROPES].sort((a,b) => a.localeCompare(b));
 }
 
 function buildStarPicker(containerId, hiddenId, initial) {
@@ -4738,6 +5771,19 @@ async function deleteGoal(id) {
 }
 
 // ── VIEW BOOK ──────────────────────────────────────────────
+// Cache of user_id → handle for source-friend attribution lookups
+const _friendHandleCache = {};
+async function _resolveFriendHandle(userId) {
+  if (!userId) return null;
+  if (_friendHandleCache[userId]) return _friendHandleCache[userId];
+  const { data } = await db.from('public_profiles').select('handle').eq('id', userId).maybeSingle();
+  if (data && data.handle) {
+    _friendHandleCache[userId] = data.handle;
+    return data.handle;
+  }
+  return null;
+}
+
 function viewBook(id) {
   const b = books.find(x=>x.id===id);
   if (!b) return;
@@ -4746,6 +5792,8 @@ function viewBook(id) {
   const fkView = b.format==='physical'?'paperback':b.format;
   const fLabelView = {audio:'Audiobook',ebook:'Ebook',hardback:'Hardback',paperback:'Paperback'};
   const fmtBadge = b.format ? `<span class="badge badge-${fkView||'paperback'}">${fLabelView[fkView]||'Physical'}</span>` : '';
+  // Source-friend attribution placeholder — filled in async if sourceFriendId is set
+  const sourceSlot = b.sourceFriendId ? '<div id="view-source-tag" class="rr-source-tag">from a friend\'s reading room</div>' : '';
   document.getElementById('view-content').innerHTML = `
     <div style="display:flex;gap:20px;margin-bottom:20px;">
       ${coverEl(b,72,100)}
@@ -4768,16 +5816,141 @@ function viewBook(id) {
     </div>
   ${b.tags&&b.tags.length?`<div class="tag-list" style="margin-bottom:14px;">${b.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
     ${b.thoughts?`<div style="background:var(--paper-2);border-radius:var(--radius);padding:14px;font-size:13px;line-height:1.7;color:var(--ink-2);margin-bottom:16px;font-style:italic;">"${b.thoughts}"</div>`:''}
-    <div style="display:flex;gap:10px;justify-content:flex-end;">
-      <button onclick="deleteBook('${b.id}')" style="font-family:var(--font-body);padding:7px 14px;background:none;border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--ink-3);">Delete</button>
-      <button onclick="openEditBook('${b.id}')" style="font-family:var(--font-body);padding:7px 16px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">Edit</button>
-      ${b.status==='currently'?`<button onclick="markFinished('${b.id}')" style="font-family:var(--font-body);padding:7px 16px;background:var(--green);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">Mark finished</button>`:''}
+    ${b.lentTo?`<div style="background:var(--paper-2);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--ink-2);margin-bottom:14px;font-style:italic;">📖 lent to <strong>${b.lentTo}</strong>${b.lentDate?' · since '+fmtDate(b.lentDate):''} · <span onclick="markBookReturned('${b.id}')" style="color:var(--accent);cursor:pointer;text-decoration:underline;">mark returned</span></div>`:''}
+    ${sourceSlot}
+    <div style="display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="openLendBook('${b.id}')" style="font-family:var(--font-body);font-size:12px;padding:6px 12px;background:none;border:1px solid var(--paper-3);color:var(--ink-2);border-radius:99px;cursor:pointer;">📖 ${b.lentTo?'update loan':'lend to friend'}</button>
+        ${b.status==='read'?`<button onclick="openLogReread('${b.id}')" style="font-family:var(--font-body);font-size:12px;padding:6px 12px;background:none;border:1px solid var(--paper-3);color:var(--ink-2);border-radius:99px;cursor:pointer;">↻ log read</button>`:''}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="deleteBook('${b.id}')" style="font-family:var(--font-body);padding:7px 14px;background:none;border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--ink-3);">Delete</button>
+        <button onclick="openEditBook('${b.id}')" style="font-family:var(--font-body);padding:7px 16px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">Edit</button>
+        ${b.status==='currently'?`<button onclick="markFinished('${b.id}')" style="font-family:var(--font-body);padding:7px 16px;background:var(--green);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">Mark finished</button>`:''}
+      </div>
     </div>`;
   openModal('modal-view');
   // Kick the timer ticker if a timer is running for this book
   const tmr = JSON.parse(localStorage.getItem('rj_timer') || 'null');
   if (tmr && tmr.bookId === b.id) startTimerTick();
+  // Resolve source-friend handle async and update the badge if found
+  if (b.sourceFriendId) {
+    _resolveFriendHandle(b.sourceFriendId).then(handle => {
+      const tag = document.getElementById('view-source-tag');
+      if (tag && handle) tag.textContent = 'from @' + handle + '\'s reading room';
+    });
+  }
 }
+// Lend a book to a friend — opens the sub-modal preloaded with this book id and any existing loan
+let _lendingBookId = null;
+async function openLendBook(bookId) {
+  const b = books.find(x => x.id === bookId);
+  if (!b) return;
+  _lendingBookId = bookId;
+  document.getElementById('lend-to-input').value = b.lentTo || '';
+  document.getElementById('lend-date-input').value = b.lentDate || new Date().toISOString().split('T')[0];
+  document.getElementById('lend-to-suggestions').style.display = 'none';
+  closeModal('modal-view');
+  openModal('modal-lend-book');
+  setTimeout(() => document.getElementById('lend-to-input').focus(), 50);
+}
+
+// Suggest friends as you type (matches handle case-insensitively)
+async function onLendToInput() {
+  const raw = document.getElementById('lend-to-input').value.trim().toLowerCase();
+  const sugg = document.getElementById('lend-to-suggestions');
+  if (!raw || raw.length < 2) { sugg.style.display = 'none'; return; }
+  // Lazy-load friends if we haven't yet
+  try {
+    const all = await friendsAPI.list();
+    const accepted = all.filter(f => f.status === 'accepted');
+    const matches = accepted
+      .filter(f => (f.otherProfile.handle || '').toLowerCase().includes(raw.replace(/^@/, '')))
+      .slice(0, 6);
+    if (!matches.length) { sugg.style.display = 'none'; return; }
+    sugg.innerHTML = matches.map(f => {
+      const handle = f.otherProfile.handle || '?';
+      return '<div onclick="pickLendSuggestion(\'@' + handle + '\')" style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--paper-3);" onmouseover="this.style.background=\'var(--paper-2)\'" onmouseout="this.style.background=\'transparent\'">'
+        + avatarHtml(f.otherProfile, 28)
+        + '<span style="font-size:13px;color:var(--ink-2);">@' + handle + '</span>'
+      + '</div>';
+    }).join('');
+    sugg.style.display = 'block';
+  } catch (e) {
+    sugg.style.display = 'none';
+  }
+}
+function pickLendSuggestion(text) {
+  document.getElementById('lend-to-input').value = text;
+  document.getElementById('lend-to-suggestions').style.display = 'none';
+}
+
+async function saveLendBook() {
+  if (!_lendingBookId) return;
+  const lentTo = document.getElementById('lend-to-input').value.trim();
+  const lentDate = document.getElementById('lend-date-input').value;
+  if (!lentTo) { alert('who are you lending it to?'); return; }
+  try {
+    const updated = await booksAPI.update(_lendingBookId, { lentTo, lentDate });
+    const i = books.findIndex(b => b.id === _lendingBookId);
+    if (i !== -1) books[i] = { ...books[i], ...updated };
+    save();
+    closeModal('modal-lend-book');
+    refreshCurrentPage();
+  } catch (e) {
+    alert('couldn\'t log the loan: ' + (e.message || e));
+  }
+}
+
+// Reusable dinkus-styled confirm. Returns a Promise<boolean>.
+//   const ok = await dinkusConfirm({ title, message, confirmLabel, cancelLabel, danger });
+let _dinkusConfirmResolveFn = null;
+function _dinkusConfirmResolve(value) {
+  closeModal('modal-confirm');
+  if (_dinkusConfirmResolveFn) { const f = _dinkusConfirmResolveFn; _dinkusConfirmResolveFn = null; f(value); }
+}
+function dinkusConfirm(opts) {
+  const o = opts || {};
+  document.getElementById('confirm-title').textContent = o.title || 'are we sure?';
+  document.getElementById('confirm-body').textContent = o.message || '';
+  const ok = document.getElementById('confirm-ok');
+  const cancel = document.getElementById('confirm-cancel');
+  ok.textContent = o.confirmLabel || 'confirm';
+  cancel.textContent = o.cancelLabel || 'cancel';
+  ok.style.background = o.danger ? '#8b3a3a' : 'var(--accent)';
+  return new Promise(resolve => {
+    _dinkusConfirmResolveFn = resolve;
+    openModal('modal-confirm');
+  });
+}
+
+async function markBookReturned(bookId) {
+  const b = books.find(x => x.id === bookId);
+  if (!b) return;
+  const ok = await dinkusConfirm({
+    title: 'returned to you?',
+    message: '"' + b.title + '" — back in your hands from ' + (b.lentTo || 'them') + '? we\'ll close the loan.',
+    confirmLabel: 'yes, it\'s back',
+    cancelLabel: 'still with them',
+  });
+  if (!ok) return;
+  try {
+    const updated = await booksAPI.update(bookId, { lentTo: '', lentDate: '' });
+    const i = books.findIndex(x => x.id === bookId);
+    if (i !== -1) books[i] = { ...books[i], ...updated };
+    save();
+    closeModal('modal-view');
+    refreshCurrentPage();
+  } catch (e) {
+    alert('couldn\'t mark returned: ' + (e.message || e));
+  }
+}
+
+// Jump straight into the edit modal at the "your experience" page (page 2)
+function openLogReread(bookId) {
+  openEditBook(bookId, { startPage: 2 });
+}
+
 async function deleteBook(id) {
   if (!confirm('Delete this book?')) return;
   try {
@@ -4824,19 +5997,28 @@ function openAddBook(defaultStatus) {
   buildStarPicker('qs-narration','f-narration',0);
   buildPillPicker('f-genre','pick-genre',allGenreOptions());
   buildPillPicker('f-tags','pick-tags',allTagOptions());
+  buildPillPicker('f-tags','pick-tropes',allRomanceTropeOptions());
   buildPillPicker('f-race','pick-race',allEthnicityOptions());
   populateGenderSelect();
   populateNationalityList();
   pendingReadings = [];
   document.getElementById('reread-section').classList.add('hidden');
+  goBookPage(1);
+  handleGenreChange(); handleTagsChange();
   openModal('modal-book');
 }
-function openEditBook(id) {
+function openEditBook(id, opts) {
   const b = books.find(x=>x.id===id);
   if (!b) return;
   editingId = id;
   document.getElementById('modal-book-title').textContent = 'Edit book';
   clearForm();
+  // CRITICAL: populate the gender <select> BEFORE setting f-gender.value below.
+  // Setting .value on a <select> silently fails if the matching <option> doesn't exist yet,
+  // which used to leave gender blank on edit and overwrite it on save.
+  // Pass the book's gender so any legacy value (e.g. "Female (duo)") is included as a one-off option.
+  populateGenderSelect(b.gender || '');
+  populateNationalityList();
   ['title','author','published','pages','genre','series','nationality','gender','race','thoughts'].forEach(k=>{
     const el = document.getElementById('f-'+k); if(el) el.value = b[k]||'';
   });
@@ -4847,13 +6029,11 @@ function openEditBook(id) {
   document.getElementById('f-series-num').value = b.seriesNum||'';
   document.getElementById('f-tags').value = (b.tags||[]).join(', ');
   document.getElementById('f-format').value = b.format||'';
-  if(document.getElementById('f-owned')) document.getElementById('f-owned').value = b.owned||'';
-  if(document.getElementById('f-lent-to')) document.getElementById('f-lent-to').value = b.lentTo||'';
-  if(document.getElementById('f-lent-date')) document.getElementById('f-lent-date').value = b.lentDate||'';
   document.getElementById('f-status').value = b.status||'read';
   document.getElementById('f-progress').value = b.progress||'';
   document.getElementById('f-started').value = b.started||'';
   document.getElementById('f-finished').value = b.finished||'';
+  document.getElementById('f-spice-level').value = b.spiceLevel || 0;
   document.getElementById('f-title')._coverUrl = b.coverUrl||'';
   document.getElementById('f-cover-url').value = b.coverUrl||'';
   updateCoverPreview();
@@ -4862,12 +6042,14 @@ function openEditBook(id) {
   buildStarPicker('qs-narration','f-narration',b.narration||0);
   buildPillPicker('f-genre','pick-genre',allGenreOptions());
   buildPillPicker('f-tags','pick-tags',allTagOptions());
+  buildPillPicker('f-tags','pick-tropes',allRomanceTropeOptions());
   buildPillPicker('f-race','pick-race',allEthnicityOptions());
-  populateGenderSelect();
-  populateNationalityList();
   pendingReadings = [];
   document.getElementById('reread-section').classList.remove('hidden');
   renderReadingsHistory(b.readings || [], 0);
+  // Open at page 1 by default; "Log read" deep-links to page 2
+  goBookPage(opts && opts.startPage ? opts.startPage : 1);
+  handleGenreChange(); handleTagsChange();
   closeModal('modal-view');
   openModal('modal-book');
 }
@@ -4886,26 +6068,101 @@ function clearForm() {
     const el = document.getElementById('f-'+k); if(el) { el.value=''; el._coverUrl=''; }
   });
   document.getElementById('f-format').value='';
-  if(document.getElementById('f-owned')) document.getElementById('f-owned').value='';
-  if(document.getElementById('f-lent-to')) document.getElementById('f-lent-to').value='';
-  if(document.getElementById('f-lent-date')) document.getElementById('f-lent-date').value='';
   document.getElementById('f-status').value='read';
   document.getElementById('f-rating').value=0;
   document.getElementById('f-narration').value=0;
+  if (document.getElementById('f-spice-level')) document.getElementById('f-spice-level').value = 0;
   document.getElementById('autofill-status').textContent='';
   document.getElementById('autofill-suggestions').classList.add('hidden');
   updateCoverPreview();
 }
 function handleFormatChange() {
   const fmt = document.getElementById('f-format').value;
-  document.getElementById('f-length-wrap').classList.toggle('hidden', fmt!=='audio');
-  document.getElementById('f-narration-wrap').classList.toggle('hidden', fmt!=='audio');
+  // Audiobook: show length + narration. Print/ebook: show pages. Empty: show neither.
+  document.getElementById('f-length-wrap').classList.toggle('hidden', fmt !== 'audio');
+  document.getElementById('f-pages-wrap').classList.toggle('hidden', !fmt || fmt === 'audio');
+  document.getElementById('f-narration-wrap').classList.toggle('hidden', fmt !== 'audio');
 }
 function handleStatusChange() {
   const s = document.getElementById('f-status').value;
   document.getElementById('f-progress-wrap').classList.toggle('hidden', s!=='currently');
   document.getElementById('f-dates-wrap').classList.toggle('hidden', s==='want');
   document.getElementById('f-rating-wrap').classList.toggle('hidden', s==='want'||s==='dnf');
+}
+
+// Show/hide the romance tropes picker based on the genre input
+function handleGenreChange() {
+  const g = (document.getElementById('f-genre').value || '').toLowerCase();
+  const isRomance = g.includes('romance') || g.includes('romantasy');
+  const wrap = document.getElementById('tropes-wrap');
+  if (!wrap) return;
+  wrap.classList.toggle('hidden', !isRomance);
+  if (isRomance) buildPillPicker('f-tags', 'pick-tropes', allRomanceTropeOptions());
+}
+
+// Show/hide the spice meter when "Spicy" appears in the tags input
+function handleTagsChange() {
+  const tags = (document.getElementById('f-tags').value || '').toLowerCase();
+  const hasSpicy = /(?:^|,\s*)spicy(?:\s*,|\s*$)/i.test(document.getElementById('f-tags').value || '');
+  const wrap = document.getElementById('spice-wrap');
+  if (!wrap) return;
+  wrap.classList.toggle('hidden', !hasSpicy);
+  if (hasSpicy) {
+    // Initialise to existing value if it's already in the form (edit case)
+    const cur = parseInt(document.getElementById('f-spice-level').value) || 0;
+    renderSpiceMeter(cur);
+  }
+}
+
+// Hand-drawn chilli SVG — elongated tear with a slight curve and small leaf-stem.
+// Colour driven by .lit class; same path for all five chillies in the meter.
+function _chilliSvg() {
+  return '<svg viewBox="0 0 36 36" class="chilli-inner">'
+    // Stem: small leaf-shape on top with a short connector
+    + '<path class="chilli-stem" d="M14 4 Q18 2 22 4 Q23 6 22 8 L14 8 Q13 6 14 4 Z M17 8 L19 8 L19 11 L17 11 Z"/>'
+    // Body: pointed tear-drop tilted toward the bottom-right tip, with a subtle inner curve.
+    + '<path class="chilli-fill" d="M14 10 C 9 12, 7 18, 9 24 C 11 30, 17 33, 22 31 L 21 27 C 23 24, 25 21, 25 16 C 25 11, 21 9, 17 10 C 16 10, 15 10, 14 10 Z"/>'
+    + '</svg>';
+}
+
+function renderSpiceMeter(level) {
+  const wrap = document.getElementById('spice-chillies');
+  if (!wrap) return;
+  let html = '';
+  for (let i = 1; i <= 5; i++) {
+    html += '<span class="chilli' + (i <= level ? ' lit' : '') + '" data-level="' + i + '" onclick="setSpiceLevel(' + i + ')">' + _chilliSvg() + '</span>';
+  }
+  wrap.innerHTML = html;
+  // Update label + desc
+  const cfg = SPICE_LEVELS.find(s => s.level === level);
+  const label = document.getElementById('spice-meter-label');
+  const desc = document.getElementById('spice-meter-desc');
+  if (label) label.textContent = cfg ? cfg.label : '';
+  if (desc) desc.textContent = cfg ? cfg.desc : 'tap a chilli to set the heat.';
+  document.getElementById('f-spice-level').value = level;
+}
+
+function setSpiceLevel(level) {
+  const cur = parseInt(document.getElementById('f-spice-level').value) || 0;
+  // Tap the same level twice = clear it
+  renderSpiceMeter(cur === level ? 0 : level);
+}
+
+// Multi-page modal — show one page at a time, light up dot indicator
+let _bookModalPage = 1;
+function goBookPage(n) {
+  _bookModalPage = n;
+  document.querySelectorAll('#modal-book .book-page').forEach(p => {
+    p.classList.toggle('active', parseInt(p.dataset.page) === n);
+  });
+  document.querySelectorAll('#modal-book .book-page-dot').forEach(d => {
+    const dotPage = parseInt(d.dataset.page);
+    d.classList.toggle('active', dotPage === n);
+    d.classList.toggle('completed', dotPage < n);
+  });
+  // Scroll modal back to top so the page change feels clean
+  const modal = document.querySelector('#modal-book .modal');
+  if (modal) modal.scrollTop = 0;
 }
 async function saveBook() {
   const title = document.getElementById('f-title').value.trim();
@@ -4920,9 +6177,7 @@ async function saveBook() {
     seriesNum: document.getElementById('f-series-num').value.trim(),
     tags: document.getElementById('f-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
     format: document.getElementById('f-format').value,
-    owned: document.getElementById('f-owned') ? document.getElementById('f-owned').value : '',
-    lentTo: document.getElementById('f-lent-to') ? document.getElementById('f-lent-to').value.trim() : '',
-    lentDate: document.getElementById('f-lent-date') ? document.getElementById('f-lent-date').value : '',
+    spiceLevel: parseInt(document.getElementById('f-spice-level') ? document.getElementById('f-spice-level').value : 0) || 0,
     length: (parseInt(document.getElementById('f-length-h').value)||0) + (parseInt(document.getElementById('f-length-m').value)||0)/60,
     nationality: document.getElementById('f-nationality').value.trim(),
     gender: document.getElementById('f-gender').value.trim(),
