@@ -233,6 +233,9 @@ body.onboarding #welcome-screen { display: flex; }
 .nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
 .nav-item.active .nav-icon { opacity: 1; }
 .sidebar-footer { margin-top: auto; padding: 16px 24px 0; border-top: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 8px; }
+
+/* Mobile-only settings cog — fixed top-right, only visible at small viewports */
+#mobile-settings-cog { display: none; }
 .sidebar-link { font-family: var(--font-body); font-size: 11px; color: rgba(255,255,255,0.4); text-align: center; text-decoration: none; padding: 8px 0 0; transition: color 0.15s; }
 .sidebar-link:hover { color: rgba(255,255,255,0.8); }
 .sidebar-btn { font-family: var(--font-body); font-size: 12px; padding: 7px 12px; border-radius: var(--radius); cursor: pointer; font-weight: 500; transition: all 0.15s; text-align: center; border: none; }
@@ -785,6 +788,21 @@ body.onboarding #welcome-screen { display: flex; }
 
   /* Main column gets full width + bottom padding for the nav clearance */
   .main { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0)); }
+
+  /* Mobile-only settings cog */
+  #mobile-settings-cog {
+    display: flex; align-items: center; justify-content: center;
+    position: fixed; top: 14px; right: 14px;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--paper-2); border: 1px solid var(--paper-3);
+    color: var(--ink-2); cursor: pointer;
+    z-index: 150;
+    box-shadow: var(--shadow);
+    padding: 0;
+  }
+  #mobile-settings-cog:hover, #mobile-settings-cog:active { background: var(--paper-3); color: var(--ink); }
+  /* Nudge the topbar so the cog doesn't overlap "+ log a book" or page title */
+  .topbar { padding-right: 60px !important; }
   .topbar { padding: 18px 16px 0; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
   .page-title { font-size: 22px !important; line-height: 1.15; }
   .page-subtitle { font-size: 12px !important; }
@@ -1041,6 +1059,14 @@ body.onboarding #welcome-screen { display: flex; }
   </div>
 </aside>
 
+<!-- Mobile-only settings cog — sidebar footer is hidden on small screens, so this gives access -->
+<button id="mobile-settings-cog" onclick="showSettings()" aria-label="settings" title="settings">
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+
 <main class="main">
 
 <!-- Dashboard -->
@@ -1227,29 +1253,6 @@ body.onboarding #welcome-screen { display: flex; }
   </div>
 </div>
 
-<!-- Oracle settings modal -->
-<div class="modal-backdrop" id="modal-oracle-settings">
-  <div class="modal" style="max-width:480px;">
-    <div class="modal-header">
-      <h3 class="modal-title">horoscope settings</h3>
-      <button class="modal-close" onclick="closeModal('modal-oracle-settings')">×</button>
-    </div>
-    <div style="font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:14px;">
-      paste a Claude api key and the matchmaker section will use it to suggest books beyond your library — properly personalised, not just the open-library shuffle.
-      <div style="font-size:11px;color:var(--ink-3);margin-top:8px;">stored locally in your browser. never leaves this file. blank it to fall back to free recs.</div>
-    </div>
-    <div class="form-row">
-      <div class="field" style="flex:1;">
-        <label>Claude API key</label>
-        <input type="password" id="oracle-api-key" placeholder="sk-ant-..." autocomplete="off">
-      </div>
-    </div>
-    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;">
-      <button onclick="closeModal('modal-oracle-settings')" style="font-family:var(--font-body);padding:9px 18px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">Cancel</button>
-      <button onclick="saveOracleSettings()" style="font-family:var(--font-body);padding:9px 20px;background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">save</button>
-    </div>
-  </div>
-</div>
 
 </main>
 </div>
@@ -2411,7 +2414,7 @@ function getColorSortValue(hex) {
   return h;
 }
 
-let libraryView = localStorage.getItem('rj_lib_view') || 'spines';
+let libraryView = localStorage.getItem('rj_lib_view') || 'covers';
 function setLibraryView(v) {
   libraryView = v;
   localStorage.setItem('rj_lib_view', v);
@@ -3304,8 +3307,6 @@ function showSettings() {
 
 async function renderSettings() {
   const userEmail = (await db.auth.getUser()).data.user?.email || '';
-  const apiKey = (profile && profile.anthropic_api_key) || '';
-  const masked = apiKey ? apiKey.slice(0,8) + '…' + apiKey.slice(-4) : '';
   document.getElementById('settings-content').innerHTML = `
     <div class="stat-block" style="margin-bottom:18px;">
       <div class="stat-block-title">your account</div>
@@ -3322,15 +3323,6 @@ async function renderSettings() {
       </div>
       <div id="profile-handle-status" style="font-size:12px;color:var(--ink-3);margin-top:8px;font-style:italic;min-height:18px;line-height:1.5;"></div>
       <div style="font-size:11px;color:var(--ink-3);margin-top:2px;font-style:italic;">lowercase, 3–20 chars, letters/numbers/underscore. used in the dashboard greeting and the reading room.</div>
-    </div>
-
-    <div class="stat-block" style="margin-bottom:18px;">
-      <div class="stat-block-title">the matchmaker (Claude API)</div>
-      <div style="font-size:12px;color:var(--ink-3);margin-bottom:10px;line-height:1.5;">
-        an optional Claude API key powers the personalised book recommendations on your reading horoscope page. without one, the matchmaker falls back to local TBR-overlap suggestions. stored securely in your profile and synced across devices.
-      </div>
-      <div style="font-size:13px;color:var(--ink-2);margin-bottom:8px;">${apiKey ? 'current key: <code style="font-family:monospace;background:var(--paper-2);padding:2px 6px;border-radius:4px;">'+masked+'</code>' : '<em>no key set</em>'}</div>
-      <button onclick="openOracleSettings()" style="font-family:var(--font-body);font-size:12px;padding:7px 14px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;">${apiKey ? 'change key' : 'add key'}</button>
     </div>
 
     <div class="stat-block" style="margin-bottom:18px;">
@@ -3722,7 +3714,7 @@ const POLICY_PRIVACY = `
 
     <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">who else sees it</h3>
     <p>nobody but you. row-level security in the database means each user's authenticated session can only read their own rows. the operator (chelcie) has admin access to the database for maintenance, but does not read individual users' data.</p>
-    <p style="margin-top:8px;">if you opt into the matchmaker with a Claude API key, your recent reading data is sent to Anthropic to generate recommendations. that's the only third-party data sharing, and it's entirely opt-in.</p>
+    <p style="margin-top:8px;">friends you've accepted in the reading room can see your currently-reading and last 5 finished books — that's the only data shared, and only with people you've explicitly accepted. nothing leaves dinkus to any third party.</p>
 
     <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">your rights (GDPR)</h3>
     <ul style="padding-left:22px;margin-bottom:8px;">
@@ -5203,90 +5195,6 @@ function buildLocalRecs(all) {
   return { tbr, reReads, mode: 'local' };
 }
 
-function openOracleSettings() {
-  document.getElementById('oracle-api-key').value = (profile && profile.anthropic_api_key) || '';
-  openModal('modal-oracle-settings');
-}
-async function saveOracleSettings() {
-  const key = document.getElementById('oracle-api-key').value.trim();
-  try {
-    const updated = await profileAPI.update({ anthropic_api_key: key || null });
-    profile = updated || profile;
-  } catch (e) {
-    alert('Couldn’t save: ' + (e.message || e));
-    return;
-  }
-  closeModal('modal-oracle-settings');
-  if (document.getElementById('oracle-content')) renderOracle();
-}
-
-async function callClaudeForRecs(seedBooks) {
-  const apiKey = (profile && profile.anthropic_api_key) || '';
-  if (!apiKey) return null;
-  const inLibrary = books.map(b => b.title).slice(0, 250);
-  const seed = seedBooks.map(b => ({
-    title: b.title, author: b.author, genre: b.genre || '', rating: b.rating,
-    thought: (b.thoughts || '').slice(0, 200),
-  }));
-  const prompt = "You are a witty, dry book recommender for a personal reading tracker. The user is a UK reader who reads a lot of romantasy, literary fiction, dark academia, audiobooks, and series. Their voice is lowercase, slightly unhinged, affectionate.\n\n"
-    + "Recent favourites (all 4.5+ stars):\n" + JSON.stringify(seed, null, 2) + "\n\n"
-    + "Books already in their library (do NOT recommend these):\n" + inLibrary.join(', ') + "\n\n"
-    + "Recommend 5 real published books they\u2019d genuinely love, not in the library above. For each, give a one-line 'why' in lowercase, witty, dry voice (no emphasis caps). Match the user\u2019s voice: terse, observational, affectionate.\n\n"
-    + "Output ONLY a valid JSON array, no preamble, no markdown fences:\n"
-    + '[{"title":"...","author":"...","why":"..."}, ...]';
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
-    if (!r.ok) {
-      const txt = await r.text();
-      console.warn('Claude API error', r.status, txt);
-      return { error: r.status === 401 ? 'invalid api key' : r.status === 429 ? 'rate limited' : 'something went wrong' };
-    }
-    const data = await r.json();
-    const text = data.content?.[0]?.text || '';
-    const match = text.match(/\[[\s\S]*\]/);
-    if (!match) return { error: 'oracle is fuzzy. try again.' };
-    return { recs: JSON.parse(match[0]) };
-  } catch (e) {
-    console.warn('Claude fetch failed', e);
-    return { error: 'couldn\u2019t reach the oracle. check your connection.' };
-  }
-}
-
-async function fetchCoverFor(title, author) {
-  try {
-    const q = 'title:"' + title + '" author:"' + author + '"';
-    const r = await fetch('https://openlibrary.org/search.json?q=' + encodeURIComponent(q) + '&limit=1');
-    if (!r.ok) return '';
-    const d = await r.json();
-    const cover = d.docs?.[0]?.cover_i;
-    return cover ? 'https://covers.openlibrary.org/b/id/' + cover + '-M.jpg' : '';
-  } catch { return ''; }
-}
-
-function renderMatchmakerCard(rec, withCover) {
-  const bg = withCover ? 'background-image:url(\'' + withCover + '\');' : 'background:' + bookColor(rec.title) + ';';
-  return '<div class="matchmaker-card">'
-    + '<div class="matchmaker-cover" style="' + bg + '"></div>'
-    + '<div class="matchmaker-info">'
-    + '<div class="matchmaker-title">' + (rec.title || '') + '</div>'
-    + '<div class="matchmaker-author">' + (rec.author || '') + '</div>'
-    + '<div class="matchmaker-why">' + (rec.why || '') + '</div>'
-    + '</div></div>';
-}
-
 // Small helper for the dinkus divider between sections
 function _oracleDinkus() { return '<div class="oracle-dinkus">* * *</div>'; }
 
@@ -5323,27 +5231,10 @@ async function renderOracle() {
   const prophecy = dailyProphecy(all);
   const prophecyRevealed = isProphecyRevealedToday();
 
-  const apiKey = (profile && profile.anthropic_api_key) || '';
-
   // Patterns: just the witty observations as flowing italic prose. No lists.
   const obsHtml = tropes.observations.length
     ? tropes.observations.map(o => '<div class="observation">' + o + '</div>').join('')
     : '<div class="observation" style="opacity:0.7;">the patterns are still forming. log a few more reviews and the deck will have things to say.</div>';
-
-  // Matchmaker placeholder \u2014 Claude path async, no-key path is option C copy + 2 re-reads
-  const matchmakerPlaceholder = apiKey
-    ? '<div style="font-size:12px;color:var(--ink-3);font-style:italic;">consulting the oracle\u2026</div>'
-    : (() => {
-        const local = buildLocalRecs(all);
-        const reReads = (local && local.reReads) ? local.reReads.slice(0, 2) : [];
-        const tiles = reReads.length
-          ? '<div class="reread-tiles">' + reReads.map(_rereadTile).join('') + '</div>'
-          : '<div style="font-size:12px;color:var(--ink-3);font-style:italic;margin-top:10px;">need a few 4.5+ ratings before the deck can suggest a re-read. read on.</div>';
-        return '<div style="font-family:var(--font-display);font-style:italic;font-size:15px;color:var(--ink-2);line-height:1.65;">'
-          + 'the matchmaker is napping. add an Anthropic key in <span style="color:var(--accent);cursor:pointer;" onclick="openOracleSettings()">settings</span>, or revisit one of these old loves?'
-          + '</div>'
-          + tiles;
-      })();
 
   // Tarot section
   const cardArt = card.image
@@ -5399,43 +5290,11 @@ async function renderOracle() {
     + '</div>'
   + '</div>';
 
-  // Matchmaker section \u2014 moved to bottom
-  const matchmakerSection = '<div class="oracle-section">'
-    + '<div class="oracle-section-title">the matchmaker</div>'
-    + '<div class="oracle-section-sub">' + (apiKey ? 'the oracle (read: claude) reads your shelves and suggests something brilliant.' : '') + '</div>'
-    + '<div id="matchmaker-content">' + matchmakerPlaceholder + '</div>'
-  + '</div>';
-
   // Assemble with dinkus dividers between each section
   wrap.innerHTML = tarotSection
     + _oracleDinkus() + archetypeSection
     + _oracleDinkus() + patternsSection
-    + _oracleDinkus() + prophecySection
-    + _oracleDinkus() + matchmakerSection;
-
-  // Populate Claude-powered matchmaker async
-  if (apiKey) {
-    const seed = all.filter(b => b.rating >= 4.5 && b.finished).sort((a,b) => (b.finished||'').localeCompare(a.finished||'')).slice(0, 5);
-    if (!seed.length) {
-      document.getElementById('matchmaker-content').innerHTML = '<div style="font-size:12px;color:var(--ink-3);">need a few 4.5+ ratings before the oracle has anything to work with. read on.</div>';
-      return;
-    }
-    const result = await callClaudeForRecs(seed);
-    const target = document.getElementById('matchmaker-content');
-    if (!target) return;
-    if (result?.error) {
-      target.innerHTML = '<div style="font-size:12px;color:var(--ink-3);">' + result.error + ' <span style="color:var(--accent);cursor:pointer;" onclick="openOracleSettings()">check your settings</span> or refresh the page.</div>';
-      return;
-    }
-    if (result?.recs?.length) {
-      // Fetch covers in parallel
-      const covers = await Promise.all(result.recs.map(r => fetchCoverFor(r.title, r.author)));
-      target.innerHTML = '<div class="archetype-saints-label">books you don\u2019t own yet</div>'
-        + result.recs.map((r, i) => renderMatchmakerCard(r, covers[i])).join('');
-    } else {
-      target.innerHTML = '<div style="font-size:12px;color:var(--ink-3);">the oracle returned nothing useful. try again later.</div>';
-    }
-  }
+    + _oracleDinkus() + prophecySection;
 }
 
 // ── DASHBOARD ──────────────────────────────────────────────
@@ -5502,7 +5361,21 @@ const WORDS_OF_THE_DAY = [
   { word:'rhapsody', pos:'noun', def:'an effusively enthusiastic expression of feeling.', origin:'greek rhapsoidia (epic recitation).' },
 ];
 
+// First-ever word a new user sees is "dinkus" — a small introduction to the app's namesake.
+// After they've seen it once, the daily rotation takes over.
+const DINKUS_WELCOME_WORD = {
+  word: 'dinkus',
+  pos: 'noun',
+  def: 'three asterisks (* * *) used to mark a soft pause between sections of a text.',
+  origin: "a typesetter's gentle break. sometimes called an asterism. the namesake of this app.",
+};
+
 function wordOfTheDay() {
+  // First visit on this browser? Welcome them with the namesake.
+  if (!localStorage.getItem('rj_seen_dinkus_word')) {
+    localStorage.setItem('rj_seen_dinkus_word', '1');
+    return DINKUS_WELCOME_WORD;
+  }
   const start = new Date(new Date().getFullYear(), 0, 0);
   const day = Math.floor((Date.now() - start.getTime()) / 86400000);
   return WORDS_OF_THE_DAY[day % WORDS_OF_THE_DAY.length];
