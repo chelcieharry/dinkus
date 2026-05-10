@@ -464,7 +464,7 @@ body.onboarding #welcome-screen { display: flex; }
 .pick-pill { background: var(--paper-3); color: var(--ink-3); border-radius: 99px; padding: 3px 10px; font-size: 11px; cursor: pointer; transition: background 0.15s, color 0.15s; user-select: none; }
 .pick-pill:hover { background: var(--paper); color: var(--ink-2); }
 .pick-pill.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
-.quarter-stars { display: flex; gap: 3px; align-items: center; }
+.quarter-stars { display: flex; gap: 3px; align-items: center; touch-action: none; user-select: none; }
 .quarter-stars .star-wrap { position: relative; width: 40px; height: 40px; cursor: pointer; flex-shrink: 0; }
 .quarter-stars .star-outline,
 .quarter-stars .star-fill { position: absolute; top: 0; left: 0; height: 40px; pointer-events: none; }
@@ -789,6 +789,15 @@ body.onboarding #welcome-screen { display: flex; }
   /* Main column gets full width + bottom padding for the nav clearance */
   .main { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0)); }
 
+  /* iOS auto-zooms on focus when input font-size < 16px. Force >= 16px on mobile. */
+  input, textarea, select { font-size: 16px !important; }
+
+  /* Bigger star tap targets on mobile — quarter zones go from ~10px to ~14px */
+  .quarter-stars .star-wrap { width: 56px; height: 56px; }
+  .quarter-stars .star-outline,
+  .quarter-stars .star-fill { height: 56px; }
+  .quarter-stars .star-outline { width: 56px; }
+
   /* Mobile-only settings cog */
   #mobile-settings-cog {
     display: flex; align-items: center; justify-content: center;
@@ -898,6 +907,17 @@ body.onboarding #welcome-screen { display: flex; }
 </div>
 
 <!-- Sign-out confirm modal (replaces the native browser confirm) -->
+<!-- Reading-room peek modal — opens when you tap a friend's event in the feed -->
+<div class="modal-backdrop" id="modal-rr-peek">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="rr-peek-title">book</h3>
+      <button class="modal-close" onclick="closeModal('modal-rr-peek')">×</button>
+    </div>
+    <div id="rr-peek-content"></div>
+  </div>
+</div>
+
 <!-- Reusable dinkus-styled confirm modal — populated by dinkusConfirm() -->
 <div class="modal-backdrop" id="modal-confirm" style="z-index:550;">
   <div class="modal" style="max-width:420px;">
@@ -2665,7 +2685,6 @@ function _dbToBook(row) {
     addedAt: row.added_at,
     sourceFriendId: row.source_friend_id || null,
     spiceLevel: row.spice_level || 0,
-    owned: row.owned || '',
     lentTo: row.lent_to || '',
     lentDate: row.lent_date || '',
   };
@@ -2702,7 +2721,6 @@ function _bookToDb(book, userId) {
   if (userId) out.user_id = userId;
   if (book.sourceFriendId !== undefined) out.source_friend_id = book.sourceFriendId;
   if (book.spiceLevel !== undefined) out.spice_level = book.spiceLevel || null;
-  if (book.owned !== undefined) out.owned = book.owned || '';
   if (book.lentTo !== undefined) out.lent_to = book.lentTo || '';
   if (book.lentDate !== undefined) out.lent_date = book.lentDate || null;
   return out;
@@ -3592,24 +3610,26 @@ function _rrEventHtml(e, myKeys) {
   const { book: b, friend, type } = e;
   const handle = friend.handle || '?';
   const verb = type === 'currently' ? 'is reading' : 'finished';
+  const peekArgs = "'" + b.id + "', '" + (friend.id || '') + "'";
   const cover = b.coverUrl
-    ? '<div class="rr-event-cover" style="background-image:url(\'' + b.coverUrl + '\');" onclick="rrPeekBook(\'' + b.id + '\', \'' + (friend.id || '') + '\')"></div>'
-    : '<div class="rr-event-cover" style="background:' + bookColor(b.title) + ';" onclick="rrPeekBook(\'' + b.id + '\', \'' + (friend.id || '') + '\')">' + (b.title || '') + '</div>';
+    ? '<div class="rr-event-cover" style="background-image:url(\'' + b.coverUrl + '\');"></div>'
+    : '<div class="rr-event-cover" style="background:' + bookColor(b.title) + ';">' + (b.title || '') + '</div>';
 
   const ratingHtml = (type === 'finished' && b.rating)
     ? '<div class="rr-event-rating">' + '★'.repeat(Math.floor(b.rating)) + (b.rating % 1 ? '½' : '') + '</div>'
     : '';
   const thoughtsHtml = (type === 'finished' && b.thoughts && b.thoughts.trim())
-    ? '<div class="rr-event-thoughts">' + b.thoughts.trim().slice(0, 280) + (b.thoughts.length > 280 ? '…' : '') + '</div>'
+    ? '<div class="rr-event-thoughts">' + b.thoughts.trim().slice(0, 280) + (b.thoughts.length > 280 ? '… <span style="color:var(--accent);font-style:normal;font-size:11px;">tap for more</span>' : '') + '</div>'
     : '';
 
   const key = (b.title + '|' + b.author).toLowerCase();
   const inLibrary = myKeys.has(key);
   const tbrAction = inLibrary
     ? '<span class="rr-event-already">already in your library</span>'
-    : '<button class="rr-event-tbr-btn" onclick="addToTbrFromFriend(\'' + b.id + '\', \'' + (friend.id || '') + '\', \'' + (friend.handle || '') + '\')">+ add to my tbr</button>';
+    : '<button class="rr-event-tbr-btn" onclick="event.stopPropagation(); addToTbrFromFriend(\'' + b.id + '\', \'' + (friend.id || '') + '\', \'' + (friend.handle || '') + '\')">+ add to my tbr</button>';
 
-  return '<div class="rr-event">'
+  // Whole card opens the peek modal; the tbr button stops propagation so it doesn't double-fire
+  return '<div class="rr-event" style="cursor:pointer;" onclick="rrPeekBook(' + peekArgs + ')">'
     + avatarHtml(friend, 36)
     + '<div class="rr-event-body">'
       + '<div class="rr-event-meta"><strong>@' + handle + '</strong> <span class="rr-verb">' + verb + '</span></div>'
@@ -3672,10 +3692,62 @@ async function addToTbrFromFriend(friendBookId, friendUserId, friendHandle) {
   }
 }
 
-// Tap a friend's book cover in the room — for now just the same as add-to-tbr,
-// but we could expand to a peek modal later.
-function rrPeekBook(friendBookId, friendUserId) {
-  // V1: nothing extra — could add an expanded book detail in v2
+// Open the reading-room peek modal for a friend's book — full details + full review,
+// no truncation, with the same "add to my tbr" action as the feed card.
+async function rrPeekBook(friendBookId, friendUserId) {
+  const { data, error } = await db.from('books').select('*').eq('id', friendBookId).maybeSingle();
+  if (error || !data) {
+    alert('that book slipped away. try refreshing the room.');
+    return;
+  }
+  const b = _dbToBook(data);
+  const friendHandle = await _resolveFriendHandle(friendUserId);
+  const friend = { id: friendUserId, handle: friendHandle || '?' };
+
+  document.getElementById('rr-peek-title').textContent = b.title;
+
+  const verb = b.status === 'currently' ? 'is reading' : 'finished';
+  const coverHtml = b.coverUrl
+    ? '<div style="width:84px;height:126px;border-radius:6px;background-image:url(\'' + b.coverUrl + '\');background-size:cover;background-position:center;flex-shrink:0;box-shadow:var(--shadow);"></div>'
+    : '<div style="width:84px;height:126px;border-radius:6px;background:' + bookColor(b.title) + ';flex-shrink:0;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;text-align:center;padding:6px;font-weight:500;">' + b.title + '</div>';
+
+  const ratingHtml = (b.status === 'read' && b.rating) ? renderStarsStatic(b.rating) : '';
+  const meta = [b.published, b.pages ? b.pages + 'pp' : '', b.format].filter(Boolean).join(' · ');
+
+  const genrePills = (b.genre || '').split(',').map(g => g.trim()).filter(Boolean).slice(0, 3)
+    .map(g => '<span class="badge badge-genre">' + g + '</span>').join('');
+  const tagPills = (b.tags || []).slice(0, 10).map(t => '<span class="tag">' + t + '</span>').join('');
+
+  const thoughtsHtml = (b.thoughts && b.thoughts.trim())
+    ? '<div style="background:var(--paper-2);border-left:2px solid var(--accent-2);padding:14px 16px;font-family:var(--font-display);font-style:italic;font-size:14px;line-height:1.7;color:var(--ink-2);border-radius:0 var(--radius) var(--radius) 0;margin-bottom:16px;white-space:pre-wrap;">"' + b.thoughts + '"</div>'
+    : '<div style="font-size:12px;color:var(--ink-3);font-style:italic;margin-bottom:16px;">no thoughts logged.</div>';
+
+  const myKey = (b.title + '|' + b.author).toLowerCase();
+  const inLibrary = books.some(x => (x.title + '|' + x.author).toLowerCase() === myKey);
+  const tbrAction = inLibrary
+    ? '<span style="font-size:12px;color:var(--ink-3);font-style:italic;align-self:center;">already in your library</span>'
+    : '<button onclick="addToTbrFromFriend(\'' + b.id + '\', \'' + friend.id + '\', \'' + friend.handle + '\'); closeModal(\'modal-rr-peek\');" style="font-family:var(--font-body);font-size:13px;padding:8px 18px;background:var(--accent);color:var(--paper);border:none;border-radius:99px;cursor:pointer;font-weight:500;">+ add to my tbr</button>';
+
+  document.getElementById('rr-peek-content').innerHTML =
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;font-size:13px;color:var(--ink-3);">'
+        + avatarHtml(friend, 32)
+        + '<div><strong style="color:var(--ink-2);font-weight:500;">@' + friend.handle + '</strong> '
+        + '<span style="font-family:var(--font-display);font-style:italic;color:var(--accent);">' + verb + '</span></div>'
+      + '</div>'
+      + '<div style="display:flex;gap:18px;margin-bottom:16px;align-items:flex-start;">'
+        + coverHtml
+        + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-family:var(--font-display);font-size:20px;font-weight:500;line-height:1.2;margin-bottom:4px;">' + b.title + '</div>'
+          + '<div style="font-size:13px;color:var(--ink-2);margin-bottom:8px;">' + b.author + '</div>'
+          + (meta ? '<div style="font-size:11px;color:var(--ink-3);margin-bottom:10px;">' + meta + '</div>' : '')
+          + ratingHtml
+        + '</div>'
+      + '</div>'
+      + (genrePills || tagPills ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">' + genrePills + tagPills + '</div>' : '')
+      + thoughtsHtml
+      + '<div style="display:flex;justify-content:flex-end;">' + tbrAction + '</div>';
+
+  openModal('modal-rr-peek');
 }
 
 // Refresh the burgundy notification dot on the sidebar nav based on incoming pending count
@@ -4706,8 +4778,10 @@ function buildStarPicker(containerId, hiddenId, initial) {
   c.dataset.value = initial || 0;
   const hidden = document.getElementById(hiddenId);
   if (hidden) hidden.value = initial || 0;
-  const starSvg = fillColor => `<svg width="${STAR_SIZE}" height="${STAR_SIZE}" viewBox="0 0 28 28"><path d="M14 3l2.7 5.6 6.1.9-4.4 4.3 1 6-5.4-2.9-5.4 2.9 1-6L5 9.5l6.1-.9z" fill="${fillColor==='none'?'none':fillColor}" stroke="${fillColor==='none'?'#d9cfc5':fillColor}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
-  const quarter = x => { const q = STAR_SIZE/4; return x<q?.25 : x<q*2?.5 : x<q*3?.75 : 1; };
+  const starSvg = fillColor => `<svg width="100%" height="100%" viewBox="0 0 28 28"><path d="M14 3l2.7 5.6 6.1.9-4.4 4.3 1 6-5.4-2.9-5.4 2.9 1-6L5 9.5l6.1-.9z" fill="${fillColor==='none'?'none':fillColor}" stroke="${fillColor==='none'?'#d9cfc5':fillColor}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+  // Compute which quarter of a star was tapped, using the ACTUAL rendered width
+  // (mobile makes stars bigger, so STAR_SIZE constant alone is wrong)
+  const quarter = (x, sz) => { const q = (sz || STAR_SIZE) / 4; return x<q?.25 : x<q*2?.5 : x<q*3?.75 : 1; };
   for (let s=1;s<=5;s++) {
     const w = document.createElement('div');
     w.className = 'star-wrap';
@@ -4720,15 +4794,15 @@ function buildStarPicker(containerId, hiddenId, initial) {
     fill.innerHTML = starSvg('#c4845a');
     w.appendChild(outline);
     w.appendChild(fill);
-    w.addEventListener('mousemove', e => previewStars(containerId, s-1+quarter(e.clientX - w.getBoundingClientRect().left)));
-    w.addEventListener('mouseleave', () => updateStarDisplay(containerId, parseFloat(c.dataset.value)));
-    w.addEventListener('click', e => {
-      const val = s-1+quarter(e.clientX - w.getBoundingClientRect().left);
-      c.dataset.value = val;
-      if (hidden) hidden.value = val;
-      updateStarDisplay(containerId, val);
-      const lbl = document.getElementById('rv-'+containerId);
-      if (lbl) lbl.textContent = val > 0 ? val : '—';
+    // Desktop hover preview only — committing happens via pointer events on the container
+    w.addEventListener('mousemove', e => {
+      if (_starDragActive) return;  // don't fight an in-progress drag
+      const r = w.getBoundingClientRect();
+      previewStars(containerId, s-1+quarter(e.clientX - r.left, r.width));
+    });
+    w.addEventListener('mouseleave', () => {
+      if (_starDragActive) return;
+      updateStarDisplay(containerId, parseFloat(c.dataset.value));
     });
     c.appendChild(w);
   }
@@ -4738,11 +4812,61 @@ function buildStarPicker(containerId, hiddenId, initial) {
   lbl.textContent = initial > 0 ? initial : '—';
   c.appendChild(lbl);
   updateStarDisplay(containerId, initial || 0);
+
+  // Container-level pointer handlers — works for click (mouse), tap (touch), AND drag-to-fine-tune (both)
+  const valFromX = clientX => {
+    const wraps = c.querySelectorAll('.star-wrap');
+    for (let i = 0; i < wraps.length; i++) {
+      const r = wraps[i].getBoundingClientRect();
+      if (clientX < r.left) return i;            // before this star = i full
+      if (clientX <= r.right) return i + quarter(clientX - r.left, r.width);
+    }
+    return 5;  // past the last star
+  };
+  const liveLabel = v => {
+    const lbl2 = document.getElementById('rv-'+containerId);
+    if (lbl2) lbl2.textContent = v > 0 ? v : '—';
+  };
+  c.addEventListener('pointerdown', e => {
+    _starDragActive = true;
+    try { c.setPointerCapture(e.pointerId); } catch(_) {}
+    const v = valFromX(e.clientX);
+    previewStars(containerId, v);
+    liveLabel(v);
+    e.preventDefault();
+  });
+  c.addEventListener('pointermove', e => {
+    if (!_starDragActive) return;
+    const v = valFromX(e.clientX);
+    previewStars(containerId, v);
+    liveLabel(v);
+  });
+  const finish = e => {
+    if (!_starDragActive) return;
+    _starDragActive = false;
+    try { c.releasePointerCapture(e.pointerId); } catch(_) {}
+    const v = valFromX(e.clientX);
+    c.dataset.value = v;
+    if (hidden) hidden.value = v;
+    updateStarDisplay(containerId, v);
+    liveLabel(v);
+  };
+  c.addEventListener('pointerup', finish);
+  c.addEventListener('pointercancel', () => {
+    _starDragActive = false;
+    updateStarDisplay(containerId, parseFloat(c.dataset.value) || 0);
+    liveLabel(parseFloat(c.dataset.value) || 0);
+  });
 }
+let _starDragActive = false;
 function previewStars(cId, val) {
+  // Use the actual rendered star width (mobile = bigger, desktop = STAR_SIZE)
+  const c = document.getElementById(cId);
+  const firstWrap = c && c.querySelector('.star-wrap');
+  const sz = firstWrap ? firstWrap.getBoundingClientRect().width : STAR_SIZE;
   for (let s=1;s<=5;s++) {
     const f = document.getElementById(`sf-${cId}-${s}`);
-    if (f) f.style.width = (Math.min(1,Math.max(0,val-(s-1)))*STAR_SIZE)+'px';
+    if (f) f.style.width = (Math.min(1,Math.max(0,val-(s-1)))*sz)+'px';
   }
 }
 function updateStarDisplay(cId, val) { previewStars(cId, val); }
