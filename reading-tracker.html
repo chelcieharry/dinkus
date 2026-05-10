@@ -236,6 +236,23 @@ body.onboarding #welcome-screen { display: flex; }
 
 /* Mobile-only settings cog — fixed top-right, only visible at small viewports */
 #mobile-settings-cog { display: none; }
+
+/* Customisation — toggle switch (paper-coloured) */
+.custom-toggle input { display: none; }
+.custom-toggle-slider {
+  width: 36px; height: 20px; border-radius: 999px;
+  background: var(--paper-3);
+  position: relative; transition: background 0.2s;
+  display: inline-block; flex-shrink: 0;
+}
+.custom-toggle-slider::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--paper); box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+}
+.custom-toggle input:checked + .custom-toggle-slider { background: var(--accent); }
+.custom-toggle input:checked + .custom-toggle-slider::after { transform: translateX(16px); }
 .sidebar-link { font-family: var(--font-body); font-size: 11px; color: rgba(255,255,255,0.4); text-align: center; text-decoration: none; padding: 8px 0 0; transition: color 0.15s; }
 .sidebar-link:hover { color: rgba(255,255,255,0.8); }
 .sidebar-btn { font-family: var(--font-body); font-size: 12px; padding: 7px 12px; border-radius: var(--radius); cursor: pointer; font-weight: 500; transition: all 0.15s; text-align: center; border: none; }
@@ -356,6 +373,34 @@ body.onboarding #welcome-screen { display: flex; }
 .prophecy-mist.revealed .prophecy-mist-veil { opacity: 0; pointer-events: none; }
 .prophecy-text { font-family: var(--font-display); font-style: italic; font-size: 17px; color: var(--ink); line-height: 1.6; max-width: 460px; letter-spacing: 0.01em; }
 
+/* The reading room — recommendations block (distinct cards pinned above the feed) */
+.rr-recs-block { margin-bottom: 24px; display: flex; flex-direction: column; gap: 14px; }
+.rr-rec { background: var(--paper-2); border: 1px solid var(--accent-2); border-radius: var(--radius); padding: 14px; transition: box-shadow 0.15s; }
+.rr-rec:hover { box-shadow: var(--shadow); }
+.rr-rec-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 12px; color: var(--ink-3); }
+.rr-rec-meta strong { color: var(--ink-2); font-weight: 500; }
+.rr-rec-verb { font-family: var(--font-display); font-style: italic; color: var(--accent); margin-left: 4px; }
+.rr-rec-book { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.rr-rec-cover { width: 54px; height: 80px; border-radius: 4px; background-size: cover; background-position: center; flex-shrink: 0; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; color: white; font-size: 9px; text-align: center; padding: 4px; font-weight: 500; line-height: 1.15; }
+.rr-rec-info { flex: 1; min-width: 0; }
+.rr-rec-title { font-weight: 500; font-size: 14px; color: var(--ink); line-height: 1.3; margin-bottom: 2px; }
+.rr-rec-author { font-size: 12px; color: var(--ink-3); }
+.rr-rec-message { font-family: var(--font-display); font-style: italic; font-size: 13px; color: var(--ink-2); line-height: 1.6; padding: 10px 14px; background: var(--paper); border-left: 2px solid var(--accent-2); border-radius: 0 4px 4px 0; margin-bottom: 12px; }
+.rr-rec-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Reading-room comment badge on event cards */
+.rr-event-comment-badge { font-size: 11px; color: var(--ink-3); padding: 4px 10px; background: var(--paper); border: 1px solid var(--paper-3); border-radius: 99px; font-style: italic; }
+
+/* Peek modal — comments thread */
+.peek-comments { border-top: 1px solid var(--paper-3); padding-top: 16px; margin-top: 4px; }
+.peek-comments-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); font-weight: 500; margin-bottom: 10px; }
+.peek-comment { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--paper-3); }
+.peek-comment:last-child { border-bottom: none; }
+.peek-comment-body { flex: 1; min-width: 0; }
+.peek-comment-meta { font-size: 11px; color: var(--ink-3); margin-bottom: 4px; }
+.peek-comment-meta strong { color: var(--ink-2); font-weight: 500; }
+.peek-comment-text { font-size: 13px; color: var(--ink-2); line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
+
 /* The reading room — friend feed */
 .rr-empty { text-align: center; padding: 60px 20px; color: var(--ink-3); }
 .rr-empty p { font-family: var(--font-display); font-style: italic; font-size: 16px; margin-bottom: 12px; }
@@ -470,7 +515,8 @@ body.onboarding #welcome-screen { display: flex; }
 .quarter-stars .star-fill { position: absolute; top: 0; left: 0; height: 40px; pointer-events: none; }
 .quarter-stars .star-outline { width: 40px; }
 .quarter-stars .star-fill { overflow: hidden; width: 0; }
-.quarter-stars .star-fill svg, .quarter-stars .star-outline svg { display: block; }
+/* SVGs must render at full star size so .star-fill width clips them — never lets them squish */
+.quarter-stars .star-outline svg, .quarter-stars .star-fill svg { display: block; width: 40px; height: 40px; }
 .rating-val { margin-left: 8px; font-size: 13px; color: var(--ink-2); min-width: 28px; }
 
 /* Tabs */
@@ -797,6 +843,7 @@ body.onboarding #welcome-screen { display: flex; }
   .quarter-stars .star-outline,
   .quarter-stars .star-fill { height: 56px; }
   .quarter-stars .star-outline { width: 56px; }
+  .quarter-stars .star-outline svg, .quarter-stars .star-fill svg { width: 56px; height: 56px; }
 
   /* Mobile-only settings cog */
   #mobile-settings-cog {
@@ -975,6 +1022,35 @@ body.onboarding #welcome-screen { display: flex; }
     <div id="handle-gate-status" style="font-size:12px;color:var(--ink-3);font-style:italic;min-height:18px;line-height:1.5;">3–20 chars. lowercase letters, numbers, underscore.</div>
     <div style="display:flex;justify-content:flex-end;margin-top:18px;">
       <button id="handle-gate-submit" onclick="submitHandleGate()" disabled style="font-family:var(--font-body);padding:9px 20px;background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;opacity:0.4;">claim it</button>
+    </div>
+  </div>
+</div>
+
+<!-- Recommend to friend sub-modal — opened from the view-book modal -->
+<div class="modal-backdrop" id="modal-recommend-book">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <h3 class="modal-title">recommend to friend</h3>
+      <button class="modal-close" onclick="closeModal('modal-recommend-book')">×</button>
+    </div>
+    <p id="recommend-book-summary" style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.6;font-style:italic;"></p>
+    <div class="form-row">
+      <div class="field" style="flex:1;">
+        <label>which friend?</label>
+        <input type="text" id="recommend-friend-input" placeholder="@theirhandle" autocomplete="off" oninput="onRecommendFriendInput()" style="font-family:var(--font-body);font-size:14px;">
+        <div id="recommend-friend-suggestions" style="display:none;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);margin-top:4px;max-height:200px;overflow-y:auto;"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field" style="flex:1;">
+        <label>add a note <span style="color:var(--ink-3);font-weight:normal;text-transform:none;letter-spacing:0;">(optional)</span></label>
+        <textarea id="recommend-message-input" maxlength="280" placeholder="why this one? what should they expect?" rows="3" oninput="onRecommendMessageInput()" style="font-family:var(--font-body);font-size:14px;resize:vertical;"></textarea>
+        <div id="recommend-char-count" style="font-size:11px;color:var(--ink-3);text-align:right;margin-top:4px;">0 / 280</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;">
+      <button onclick="closeModal('modal-recommend-book')" style="font-family:var(--font-body);padding:9px 18px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">cancel</button>
+      <button id="recommend-send-btn" onclick="sendRecommendation()" disabled style="font-family:var(--font-body);padding:9px 20px;background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;opacity:0.4;">send</button>
     </div>
   </div>
 </div>
@@ -1884,8 +1960,27 @@ function renderYearStats(year) {
   const now2 = new Date();
   const isYearDone = parseInt(year) < now2.getFullYear()
     || (parseInt(year)===now2.getFullYear() && now2.getMonth()===11);
-  const journalHtml = isYearDone ? buildYearJournal(year) : '';
+  const journalHtml = (isYearDone && !isBlockHidden('year_in_review')) ? buildYearJournal(year) : '';
   const bracketHtml = buildMonthPicker(yb, year);
+
+  // Customisation: which optional blocks to render
+  const showMonth   = !isBlockHidden('books_per_month');
+  const showFormats = !isBlockHidden('formats');
+  const showAuthors = !isBlockHidden('authors_stats');
+
+  // Books per month + Formats can each be hidden independently. If both hidden, skip the row entirely.
+  // If only one is shown, render it as a single full-width block.
+  let monthFormatsRow = '';
+  if (showMonth && showFormats) {
+    monthFormatsRow = '<div class="stats-two-col">'
+      + '<div class="stat-block"><div class="stat-block-title">Books per month</div><div class="mini-bars">'+monthBars+'</div></div>'
+      + '<div class="stat-block"><div class="stat-block-title">Formats</div>'+fmtBars+'</div>'
+      + '</div>';
+  } else if (showMonth) {
+    monthFormatsRow = '<div class="stat-block" style="margin-bottom:20px;"><div class="stat-block-title">Books per month</div><div class="mini-bars">'+monthBars+'</div></div>';
+  } else if (showFormats) {
+    monthFormatsRow = '<div class="stat-block" style="margin-bottom:20px;"><div class="stat-block-title">Formats</div>'+fmtBars+'</div>';
+  }
 
   // Assemble — single assignment
   content.innerHTML = yearVibeCard
@@ -1896,10 +1991,7 @@ function renderYearStats(year) {
     + '<div class="stat-card"><div class="stat-label">Audio hours</div><div class="stat-value">'+(Math.round(auHrs)||'—')+'</div></div>'
     + '<div class="stat-card" style="--accent-color:#6b6156"><div class="stat-label">🪦 laid to rest</div><div class="stat-value">'+dnfCount+'</div><div class="stat-sub">'+graveyardBlurb+'</div></div>'
     + '</div>'
-    + '<div class="stats-two-col">'
-    + '<div class="stat-block"><div class="stat-block-title">Books per month</div><div class="mini-bars">'+monthBars+'</div></div>'
-    + '<div class="stat-block"><div class="stat-block-title">Formats</div>'+fmtBars+'</div>'
-    + '</div>'
+    + monthFormatsRow
     + '<div class="stats-two-col">'
     + '<div class="stat-block"><div class="stat-block-title">Genres</div>'+genreBars+'</div>'
     + '<div class="stat-block"><div class="stat-block-title">Top rated in '+year+'</div>'+topRatedRows+'</div>'
@@ -1907,7 +1999,7 @@ function renderYearStats(year) {
     + '<div class="stats-two-col">'
     + topAuthorHtml
     + '</div>'
-    + diversityHtml
+    + (showAuthors ? diversityHtml : '')
     + bracketHtml
     + journalHtml;
 }
@@ -2633,6 +2725,56 @@ let journal = {};  // populated on sign-in by syncBooksFromDb
 let botyPicks = {};  // botyPicks[year][month] = bookId, populated on sign-in
 let tarotState = null;  // {date, cardId} or null, populated on sign-in
 let profile = {};  // {handle, avatar_url, preferences} populated on sign-in
+
+// ─────────────────────────────────────────────────────────────
+// CUSTOMISATION — let users hide individual page blocks they don't care about.
+// State lives in profile.preferences.hidden_blocks (array of block ids).
+// ─────────────────────────────────────────────────────────────
+const HIDEABLE_BLOCKS = {
+  dashboard: [
+    { id: 'reading_heatmap', label: 'reading heatmap', desc: 'the year-grid showing daily reading activity.' },
+  ],
+  stats: [
+    { id: 'books_per_month', label: 'books per month', desc: 'mini bar chart of monthly book counts.' },
+    { id: 'formats', label: 'formats breakdown', desc: 'audio / hardback / paperback / ebook split.' },
+    { id: 'authors_stats', label: 'author stats', desc: 'gender, race, and nationality breakdowns.' },
+    { id: 'year_in_review', label: 'year in review', desc: 'reflective prompts shown for completed years.' },
+  ],
+};
+
+function isBlockHidden(id) {
+  const list = (profile && profile.preferences && profile.preferences.hidden_blocks) || [];
+  return list.includes(id);
+}
+
+async function toggleHiddenBlock(id, hidden) {
+  const prefs = { ...((profile && profile.preferences) || {}) };
+  let list = Array.isArray(prefs.hidden_blocks) ? [...prefs.hidden_blocks] : [];
+  list = list.filter(x => x !== id);
+  if (hidden) list.push(id);
+  prefs.hidden_blocks = list;
+  try {
+    const updated = await profileAPI.update({ preferences: prefs });
+    profile = updated || { ...profile, preferences: prefs };
+  } catch (e) {
+    console.warn('toggleHiddenBlock failed:', e);
+    alert('couldn\'t save — try again?');
+  }
+}
+
+async function resetHiddenBlocks() {
+  const prefs = { ...((profile && profile.preferences) || {}) };
+  prefs.hidden_blocks = [];
+  try {
+    const updated = await profileAPI.update({ preferences: prefs });
+    profile = updated || { ...profile, preferences: prefs };
+    renderSettings();
+    refreshCurrentPage();
+  } catch (e) {
+    console.warn('resetHiddenBlocks failed:', e);
+    alert('couldn\'t reset — try again?');
+  }
+}
 let editingId = null;
 let libFilter = 'all';
 let csvData = null;
@@ -2955,6 +3097,101 @@ const friendsAPI = {
       f.otherProfile = profMap[otherId] || { id: otherId, handle: '?', avatar_url: null };
     });
     return rows;
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// SUPABASE DATA LAYER — recommendations (a friend pushes a book to your inbox)
+// ─────────────────────────────────────────────────────────────
+const recommendsAPI = {
+  async send({ recipientId, book, message }) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const { data, error } = await db.from('recommendations').insert({
+      sender_id: userId,
+      recipient_id: recipientId,
+      book_title: book.title,
+      book_author: book.author || null,
+      book_cover_url: book.coverUrl || null,
+      book_genre: book.genre || null,
+      book_id_at_sender: book.id,
+      message: (message || '').trim().slice(0, 280) || null,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  // Recommendations sent TO me, not yet dismissed
+  async fetchInbox() {
+    const userId = await _currentUserId();
+    if (!userId) return [];
+    const { data, error } = await db.from('recommendations')
+      .select('*')
+      .eq('recipient_id', userId)
+      .is('dismissed_at', null)
+      .order('created_at', { ascending: false });
+    if (error) { console.error('recs fetchInbox failed:', error); return []; }
+    return data || [];
+  },
+  // Mark a batch of recommendations as seen (clears the notification dot)
+  async markSeen(ids) {
+    if (!ids || !ids.length) return;
+    const { error } = await db.from('recommendations')
+      .update({ seen_at: new Date().toISOString() })
+      .in('id', ids)
+      .is('seen_at', null);
+    if (error) console.warn('recs markSeen failed:', error);
+  },
+  async dismiss(id) {
+    const { error } = await db.from('recommendations')
+      .update({ dismissed_at: new Date().toISOString() })
+      .eq('id', id);
+    if (error) throw error;
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// SUPABASE DATA LAYER — book comments (visible on any book you can SELECT via RLS)
+// ─────────────────────────────────────────────────────────────
+const commentsAPI = {
+  async listForBook(bookId) {
+    const { data, error } = await db.from('book_comments')
+      .select('*')
+      .eq('book_id', bookId)
+      .order('created_at', { ascending: true });
+    if (error) { console.error('comments list failed:', error); return []; }
+    return data || [];
+  },
+  // Bulk fetch for the reading-room feed → returns { bookId: [comments...] }
+  async listForBooks(bookIds) {
+    if (!bookIds || !bookIds.length) return {};
+    const { data, error } = await db.from('book_comments')
+      .select('*')
+      .in('book_id', bookIds)
+      .order('created_at', { ascending: true });
+    if (error) { console.error('comments bulk failed:', error); return {}; }
+    const byBook = {};
+    (data || []).forEach(c => {
+      if (!byBook[c.book_id]) byBook[c.book_id] = [];
+      byBook[c.book_id].push(c);
+    });
+    return byBook;
+  },
+  async create({ bookId, text }) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const trimmed = (text || '').trim().slice(0, 280);
+    if (!trimmed) throw new Error('comment is empty');
+    const { data, error } = await db.from('book_comments').insert({
+      book_id: bookId,
+      author_id: userId,
+      text: trimmed,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  async remove(id) {
+    const { error } = await db.from('book_comments').delete().eq('id', id);
+    if (error) throw error;
   },
 };
 
@@ -3358,6 +3595,17 @@ async function renderSettings() {
     </div>
 
     <div class="stat-block" style="margin-bottom:18px;">
+      <div class="stat-block-title">customisation</div>
+      <div style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5;">
+        hide blocks you don't care about. tabs and core stats stay put — these are just the optional extras.
+      </div>
+      <div id="customisation-content"><!-- populated by renderCustomisation() --></div>
+      <div style="margin-top:14px;">
+        <button onclick="resetHiddenBlocks()" style="font-family:var(--font-body);font-size:12px;padding:7px 14px;background:none;border:1px solid var(--paper-3);color:var(--ink-3);border-radius:var(--radius);cursor:pointer;">reset to defaults</button>
+      </div>
+    </div>
+
+    <div class="stat-block" style="margin-bottom:18px;">
       <div class="stat-block-title">your data</div>
       <div style="font-size:12px;color:var(--ink-3);margin-bottom:10px;line-height:1.5;">
         export everything as a CSV. you keep the file forever, importable into any other tracker.
@@ -3382,6 +3630,56 @@ async function renderSettings() {
     </div>
   `;
   renderFriendsList();
+  renderCustomisation();
+}
+
+// ─────────────────────────────────────────────────────────────
+// CUSTOMISATION SETTINGS — collapsible groups per page, toggle per block
+// ─────────────────────────────────────────────────────────────
+const _customCollapsed = { dashboard: false, stats: false };
+
+function _customGroupHtml(pageKey, label) {
+  const blocks = HIDEABLE_BLOCKS[pageKey] || [];
+  if (!blocks.length) return '';
+  const collapsed = _customCollapsed[pageKey];
+  const arrow = collapsed ? '▸' : '▾';
+  const rows = collapsed ? '' : blocks.map(b => {
+    const hidden = isBlockHidden(b.id);
+    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-top:1px solid var(--paper-3);">'
+      + '<div style="flex:1;">'
+        + '<div style="font-size:13px;color:var(--ink-2);font-weight:500;">' + b.label + '</div>'
+        + '<div style="font-size:11px;color:var(--ink-3);font-style:italic;margin-top:2px;">' + b.desc + '</div>'
+      + '</div>'
+      + '<label class="custom-toggle" style="display:inline-flex;align-items:center;cursor:pointer;flex-shrink:0;margin-top:2px;">'
+        + '<input type="checkbox" ' + (hidden ? '' : 'checked') + ' onchange="onCustomToggle(\'' + b.id + '\', !this.checked)">'
+        + '<span class="custom-toggle-slider"></span>'
+      + '</label>'
+    + '</div>';
+  }).join('');
+  return '<div style="margin-bottom:12px;">'
+    + '<div onclick="_customToggleGroup(\'' + pageKey + '\')" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);font-weight:500;padding:6px 0;">'
+      + '<span style="font-size:14px;">' + arrow + '</span>'
+      + '<span>' + label + '</span>'
+    + '</div>'
+    + rows
+  + '</div>';
+}
+
+function _customToggleGroup(pageKey) {
+  _customCollapsed[pageKey] = !_customCollapsed[pageKey];
+  renderCustomisation();
+}
+
+function renderCustomisation() {
+  const wrap = document.getElementById('customisation-content');
+  if (!wrap) return;
+  wrap.innerHTML = _customGroupHtml('dashboard', 'dashboard') + _customGroupHtml('stats', 'stats');
+}
+
+async function onCustomToggle(blockId, hidden) {
+  await toggleHiddenBlock(blockId, hidden);
+  // Re-render the affected page if it's currently visible, so the change is instant
+  refreshCurrentPage();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -3526,7 +3824,11 @@ async function renderReadingRoom() {
   if (!wrap) return;
   wrap.innerHTML = '<div style="font-family:var(--font-display);font-style:italic;color:var(--ink-3);text-align:center;padding:40px;">peeking through the doorway…</div>';
 
-  const all = await friendsAPI.list();
+  // Pull friends, recommendations in parallel
+  const [all, recs] = await Promise.all([
+    friendsAPI.list(),
+    recommendsAPI.fetchInbox(),
+  ]);
   const incoming = all.filter(f => f.status === 'pending' && !f.iAmRequester);
   const accepted = all.filter(f => f.status === 'accepted');
 
@@ -3548,15 +3850,33 @@ async function renderReadingRoom() {
     html += '</div>';
   }
 
-  // Empty state — no friends yet
-  if (!accepted.length) {
+  // Recommendations — distinct cards, pinned above the regular feed
+  if (recs.length) {
+    // Resolve sender profiles in parallel for handle + avatar
+    const senderProfiles = await Promise.all(recs.map(r => _resolveFriendProfile(r.sender_id)));
+    html += '<div class="rr-recs-block">';
+    html += recs.map((r, i) => _rrRecHtml(r, senderProfiles[i] || { id: r.sender_id, handle: '?' })).join('');
+    html += '</div>';
+    // Mark unseen recs as seen so the dot clears next time the dot refreshes
+    recommendsAPI.markSeen(recs.filter(r => !r.seen_at).map(r => r.id))
+      .then(() => { if (typeof refreshReadingRoomDot === 'function') refreshReadingRoomDot(); });
+  }
+
+  // Empty-state — no friends AND no recs
+  if (!accepted.length && !recs.length) {
     html += '<div class="rr-empty"><p>the room is empty.</p>'
       + '<p style="font-size:14px;">find people by handle in <a onclick="showSettings()" style="cursor:pointer;">settings → your friends</a>.</p></div>';
     wrap.innerHTML = html;
     return;
   }
 
-  // Fetch their books — RLS only returns currently + read for accepted friends
+  // No friends yet but they sent recommendations? Render what we have.
+  if (!accepted.length) {
+    wrap.innerHTML = html;
+    return;
+  }
+
+  // Fetch friends' books — RLS only returns currently + read for accepted friends
   const friendIds = accepted.map(f => f.otherUserId);
   const { data: rows, error } = await db.from('books').select('*').in('user_id', friendIds);
   if (error) {
@@ -3597,16 +3917,53 @@ async function renderReadingRoom() {
     return;
   }
 
+  // Bulk-fetch comment counts for the books in the feed
+  const commentMap = await commentsAPI.listForBooks(events.map(e => e.book.id));
+
   // Pre-compute "is in my library?" lookup keyed on title+author for the add-to-tbr button
   const myKeys = new Set(books.map(b => (b.title + '|' + b.author).toLowerCase()));
 
   html += '<div class="rr-feed">';
-  html += events.map(e => _rrEventHtml(e, myKeys)).join('');
+  html += events.map(e => _rrEventHtml(e, myKeys, (commentMap[e.book.id] || []).length)).join('');
   html += '</div>';
   wrap.innerHTML = html;
 }
 
-function _rrEventHtml(e, myKeys) {
+// Recommendation card — distinct style, pinned above the friend feed
+function _rrRecHtml(rec, sender) {
+  const handle = sender.handle || '?';
+  const cover = rec.book_cover_url
+    ? '<div class="rr-rec-cover" style="background-image:url(\'' + rec.book_cover_url + '\');"></div>'
+    : '<div class="rr-rec-cover" style="background:' + bookColor(rec.book_title) + ';">' + (rec.book_title || '') + '</div>';
+  const message = (rec.message || '').trim()
+    ? '<div class="rr-rec-message">"' + rec.message + '"</div>'
+    : '';
+  // Already in library? Note that recs include book_id_at_sender for the peek modal
+  const myKey = (rec.book_title + '|' + (rec.book_author || '')).toLowerCase();
+  const inLibrary = books.some(b => (b.title + '|' + b.author).toLowerCase() === myKey);
+  const tbrAction = inLibrary
+    ? '<span class="rr-event-already">already in your library</span>'
+    : '<button class="rr-event-tbr-btn" onclick="event.stopPropagation(); addToTbrFromRec(\'' + rec.id + '\')">+ add to my tbr</button>';
+  const dismissBtn = '<button onclick="event.stopPropagation(); dismissRecommendation(\'' + rec.id + '\')" style="font-family:var(--font-body);font-size:12px;padding:5px 12px;background:none;border:1px solid var(--paper-3);color:var(--ink-3);border-radius:99px;cursor:pointer;">dismiss</button>';
+
+  return '<div class="rr-rec" style="cursor:pointer;" onclick="rrPeekRec(\'' + rec.id + '\')">'
+    + '<div class="rr-rec-header">'
+      + avatarHtml(sender, 32)
+      + '<div class="rr-rec-meta"><strong>@' + handle + '</strong> <span class="rr-rec-verb">📩 recommends</span></div>'
+    + '</div>'
+    + '<div class="rr-rec-book">'
+      + cover
+      + '<div class="rr-rec-info">'
+        + '<div class="rr-rec-title">' + rec.book_title + '</div>'
+        + (rec.book_author ? '<div class="rr-rec-author">' + rec.book_author + '</div>' : '')
+      + '</div>'
+    + '</div>'
+    + message
+    + '<div class="rr-rec-actions">' + tbrAction + dismissBtn + '</div>'
+  + '</div>';
+}
+
+function _rrEventHtml(e, myKeys, commentCount) {
   const { book: b, friend, type } = e;
   const handle = friend.handle || '?';
   const verb = type === 'currently' ? 'is reading' : 'finished';
@@ -3628,6 +3985,12 @@ function _rrEventHtml(e, myKeys) {
     ? '<span class="rr-event-already">already in your library</span>'
     : '<button class="rr-event-tbr-btn" onclick="event.stopPropagation(); addToTbrFromFriend(\'' + b.id + '\', \'' + (friend.id || '') + '\', \'' + (friend.handle || '') + '\')">+ add to my tbr</button>';
 
+  // 💬 N comment badge — opens peek modal (where the thread lives) on tap
+  const cc = commentCount || 0;
+  const commentBadge = cc > 0
+    ? '<span class="rr-event-comment-badge">💬 ' + cc + '</span>'
+    : '';
+
   // Whole card opens the peek modal; the tbr button stops propagation so it doesn't double-fire
   return '<div class="rr-event" style="cursor:pointer;" onclick="rrPeekBook(' + peekArgs + ')">'
     + avatarHtml(friend, 36)
@@ -3640,7 +4003,7 @@ function _rrEventHtml(e, myKeys) {
           + '<div class="rr-event-author">' + b.author + '</div>'
           + ratingHtml
           + thoughtsHtml
-          + '<div class="rr-event-actions">' + tbrAction + '</div>'
+          + '<div class="rr-event-actions">' + tbrAction + commentBadge + '</div>'
         + '</div>'
       + '</div>'
       + '<div class="rr-event-when">' + _relTime(e.date) + '</div>'
@@ -3692,6 +4055,89 @@ async function addToTbrFromFriend(friendBookId, friendUserId, friendHandle) {
   }
 }
 
+// Add a recommendation to your TBR — uses the snapshot data so it works even if the sender's book is gone
+async function addToTbrFromRec(recId) {
+  const recs = await recommendsAPI.fetchInbox();
+  const rec = recs.find(r => r.id === recId);
+  if (!rec) { alert('recommendation not found.'); return; }
+  const newBook = {
+    title: rec.book_title,
+    author: rec.book_author || '',
+    coverUrl: rec.book_cover_url || '',
+    genre: rec.book_genre || '',
+    status: 'want',
+    rating: 0,
+    addedAt: new Date().toISOString(),
+    sourceFriendId: rec.sender_id,
+    readings: [],
+  };
+  try {
+    const inserted = await booksAPI.insert(newBook);
+    books.unshift(inserted);
+    save();
+    // Auto-dismiss the recommendation since it's been actioned
+    await recommendsAPI.dismiss(recId);
+    renderReadingRoom();
+    refreshReadingRoomDot();
+  } catch (e) {
+    alert('couldn\'t add: ' + (e.message || e));
+  }
+}
+
+async function dismissRecommendation(recId) {
+  try {
+    await recommendsAPI.dismiss(recId);
+    renderReadingRoom();
+    refreshReadingRoomDot();
+  } catch (e) {
+    alert('couldn\'t dismiss: ' + (e.message || e));
+  }
+}
+
+// Open the peek modal for a recommendation — same modal as the friend-book peek but uses the rec snapshot
+async function rrPeekRec(recId) {
+  const recs = await recommendsAPI.fetchInbox();
+  const rec = recs.find(r => r.id === recId);
+  if (!rec) return;
+  const sender = await _resolveFriendProfile(rec.sender_id) || { id: rec.sender_id, handle: '?' };
+
+  document.getElementById('rr-peek-title').textContent = rec.book_title;
+
+  const coverHtml = rec.book_cover_url
+    ? '<div style="width:84px;height:126px;border-radius:6px;background-image:url(\'' + rec.book_cover_url + '\');background-size:cover;background-position:center;flex-shrink:0;box-shadow:var(--shadow);"></div>'
+    : '<div style="width:84px;height:126px;border-radius:6px;background:' + bookColor(rec.book_title) + ';flex-shrink:0;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;text-align:center;padding:6px;font-weight:500;">' + rec.book_title + '</div>';
+
+  const messageHtml = (rec.message || '').trim()
+    ? '<div style="background:var(--paper-2);border-left:2px solid var(--accent-2);padding:14px 16px;font-family:var(--font-display);font-style:italic;font-size:14px;line-height:1.7;color:var(--ink-2);border-radius:0 var(--radius) var(--radius) 0;margin-bottom:16px;">"' + rec.message + '"</div>'
+    : '';
+
+  const myKey = (rec.book_title + '|' + (rec.book_author || '')).toLowerCase();
+  const inLibrary = books.some(x => (x.title + '|' + x.author).toLowerCase() === myKey);
+  const tbrAction = inLibrary
+    ? '<span style="font-size:12px;color:var(--ink-3);font-style:italic;align-self:center;">already in your library</span>'
+    : '<button onclick="addToTbrFromRec(\'' + rec.id + '\'); closeModal(\'modal-rr-peek\');" style="font-family:var(--font-body);font-size:13px;padding:8px 18px;background:var(--accent);color:var(--paper);border:none;border-radius:99px;cursor:pointer;font-weight:500;">+ add to my tbr</button>';
+  const dismissBtn = '<button onclick="dismissRecommendation(\'' + rec.id + '\'); closeModal(\'modal-rr-peek\');" style="font-family:var(--font-body);font-size:13px;padding:8px 18px;background:none;border:1px solid var(--paper-3);color:var(--ink-3);border-radius:99px;cursor:pointer;">dismiss</button>';
+
+  document.getElementById('rr-peek-content').innerHTML =
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;font-size:13px;color:var(--ink-3);">'
+        + avatarHtml(sender, 32)
+        + '<div><strong style="color:var(--ink-2);font-weight:500;">@' + (sender.handle || '?') + '</strong> '
+        + '<span style="font-family:var(--font-display);font-style:italic;color:var(--accent);">📩 recommends</span></div>'
+      + '</div>'
+      + '<div style="display:flex;gap:18px;margin-bottom:16px;align-items:flex-start;">'
+        + coverHtml
+        + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-family:var(--font-display);font-size:20px;font-weight:500;line-height:1.2;margin-bottom:4px;">' + rec.book_title + '</div>'
+          + (rec.book_author ? '<div style="font-size:13px;color:var(--ink-2);margin-bottom:8px;">' + rec.book_author + '</div>' : '')
+          + (rec.book_genre ? '<span class="badge badge-genre">' + rec.book_genre.split(',')[0].trim() + '</span>' : '')
+        + '</div>'
+      + '</div>'
+      + messageHtml
+      + '<div style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;">' + dismissBtn + tbrAction + '</div>';
+
+  openModal('modal-rr-peek');
+}
+
 // Open the reading-room peek modal for a friend's book — full details + full review,
 // no truncation, with the same "add to my tbr" action as the feed card.
 async function rrPeekBook(friendBookId, friendUserId) {
@@ -3728,6 +4174,9 @@ async function rrPeekBook(friendBookId, friendUserId) {
     ? '<span style="font-size:12px;color:var(--ink-3);font-style:italic;align-self:center;">already in your library</span>'
     : '<button onclick="addToTbrFromFriend(\'' + b.id + '\', \'' + friend.id + '\', \'' + friend.handle + '\'); closeModal(\'modal-rr-peek\');" style="font-family:var(--font-body);font-size:13px;padding:8px 18px;background:var(--accent);color:var(--paper);border:none;border-radius:99px;cursor:pointer;font-weight:500;">+ add to my tbr</button>';
 
+  // Track the book id for the comment input handler to use
+  _peekBookId = b.id;
+
   document.getElementById('rr-peek-content').innerHTML =
       '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;font-size:13px;color:var(--ink-3);">'
         + avatarHtml(friend, 32)
@@ -3745,18 +4194,94 @@ async function rrPeekBook(friendBookId, friendUserId) {
       + '</div>'
       + (genrePills || tagPills ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">' + genrePills + tagPills + '</div>' : '')
       + thoughtsHtml
-      + '<div style="display:flex;justify-content:flex-end;">' + tbrAction + '</div>';
+      + '<div style="display:flex;justify-content:flex-end;margin-bottom:18px;">' + tbrAction + '</div>'
+      + _peekCommentsSectionShell();
 
   openModal('modal-rr-peek');
+  // Async load + render the comments thread
+  renderPeekComments(b.id);
+}
+
+// State for which book the open peek modal is showing — used by comment add/delete handlers
+let _peekBookId = null;
+
+// Static shell for the comments section in the peek modal
+function _peekCommentsSectionShell() {
+  return '<div class="peek-comments">'
+    + '<div class="peek-comments-title">comments</div>'
+    + '<div id="peek-comments-list" style="margin-bottom:12px;"><div style="font-size:12px;color:var(--ink-3);font-style:italic;">loading…</div></div>'
+    + '<div style="display:flex;gap:8px;align-items:flex-start;">'
+      + '<textarea id="peek-comment-input" placeholder="leave a comment…" maxlength="280" rows="2" style="flex:1;font-family:var(--font-body);font-size:13px;padding:8px 10px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;resize:vertical;"></textarea>'
+      + '<button onclick="submitPeekComment()" style="font-family:var(--font-body);font-size:12px;padding:8px 14px;background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-weight:500;align-self:stretch;">post</button>'
+    + '</div>'
+  + '</div>';
+}
+
+async function renderPeekComments(bookId) {
+  const wrap = document.getElementById('peek-comments-list');
+  if (!wrap) return;
+  const comments = await commentsAPI.listForBook(bookId);
+  if (!comments.length) {
+    wrap.innerHTML = '<div style="font-size:12px;color:var(--ink-3);font-style:italic;">no comments yet. be the first to chime in.</div>';
+    return;
+  }
+  // Resolve author profiles in parallel for avatars + handles
+  const authorProfiles = await Promise.all(comments.map(c => _resolveFriendProfile(c.author_id)));
+  const myUid = (await db.auth.getUser()).data.user?.id;
+  wrap.innerHTML = comments.map((c, i) => {
+    const profile = authorProfiles[i] || { id: c.author_id, handle: '?' };
+    const isMine = c.author_id === myUid;
+    const deleteBtn = isMine
+      ? ' <span onclick="deletePeekComment(\'' + c.id + '\')" style="color:var(--ink-3);cursor:pointer;font-size:11px;text-decoration:underline;margin-left:6px;">delete</span>'
+      : '';
+    return '<div class="peek-comment">'
+      + avatarHtml(profile, 28)
+      + '<div class="peek-comment-body">'
+        + '<div class="peek-comment-meta"><strong>@' + (profile.handle || '?') + '</strong> · ' + _relTime(c.created_at) + deleteBtn + '</div>'
+        + '<div class="peek-comment-text">' + (c.text || '') + '</div>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+async function submitPeekComment() {
+  if (!_peekBookId) return;
+  const input = document.getElementById('peek-comment-input');
+  const text = (input.value || '').trim();
+  if (!text) return;
+  try {
+    await commentsAPI.create({ bookId: _peekBookId, text });
+    input.value = '';
+    renderPeekComments(_peekBookId);
+    // Refresh the feed in the background so the badge count updates
+    renderReadingRoom();
+  } catch (e) {
+    alert('couldn\'t post: ' + (e.message || e));
+  }
+}
+
+async function deletePeekComment(commentId) {
+  try {
+    await commentsAPI.remove(commentId);
+    if (_peekBookId) renderPeekComments(_peekBookId);
+    renderReadingRoom();
+  } catch (e) {
+    alert('couldn\'t delete: ' + (e.message || e));
+  }
 }
 
 // Refresh the burgundy notification dot on the sidebar nav based on incoming pending count
 async function refreshReadingRoomDot() {
   try {
-    const all = await friendsAPI.list();
+    // Count pending friend requests AND unseen recommendations — either lights the dot
+    const [all, recs] = await Promise.all([
+      friendsAPI.list(),
+      recommendsAPI.fetchInbox(),
+    ]);
     const incoming = all.filter(f => f.status === 'pending' && !f.iAmRequester);
+    const unseenRecs = recs.filter(r => !r.seen_at);
     const dot = document.getElementById('rr-nav-dot');
-    if (dot) dot.style.display = incoming.length ? 'inline-block' : 'none';
+    if (dot) dot.style.display = (incoming.length || unseenRecs.length) ? 'inline-block' : 'none';
   } catch (e) {
     console.warn('reading room dot refresh failed:', e);
   }
@@ -5568,8 +6093,14 @@ function renderDashboard() {
   }
   dashCurr.innerHTML = dnfNudge + currHtml;
 
-  // Heatmap
-  document.getElementById('dash-heatmap').innerHTML = buildHeatmap(String(yr));
+  // Heatmap (hideable via customisation settings)
+  const heatmapSection = document.getElementById('dash-heatmap-section');
+  if (isBlockHidden('reading_heatmap')) {
+    if (heatmapSection) heatmapSection.style.display = 'none';
+  } else {
+    if (heatmapSection) heatmapSection.style.display = '';
+    document.getElementById('dash-heatmap').innerHTML = buildHeatmap(String(yr));
+  }
 
   // Stat cards
   document.getElementById('dash-stats').innerHTML = `
@@ -5768,17 +6299,18 @@ async function deleteGoal(id) {
 }
 
 // ── VIEW BOOK ──────────────────────────────────────────────
-// Cache of user_id → handle for source-friend attribution lookups
-const _friendHandleCache = {};
-async function _resolveFriendHandle(userId) {
+// Cache of user_id → public_profile (handle + avatar) for attribution + display
+const _friendProfileCache = {};
+async function _resolveFriendProfile(userId) {
   if (!userId) return null;
-  if (_friendHandleCache[userId]) return _friendHandleCache[userId];
-  const { data } = await db.from('public_profiles').select('handle').eq('id', userId).maybeSingle();
-  if (data && data.handle) {
-    _friendHandleCache[userId] = data.handle;
-    return data.handle;
-  }
+  if (_friendProfileCache[userId]) return _friendProfileCache[userId];
+  const { data } = await db.from('public_profiles').select('*').eq('id', userId).maybeSingle();
+  if (data) { _friendProfileCache[userId] = data; return data; }
   return null;
+}
+async function _resolveFriendHandle(userId) {
+  const p = await _resolveFriendProfile(userId);
+  return p && p.handle ? p.handle : null;
 }
 
 function viewBook(id) {
@@ -5817,6 +6349,7 @@ function viewBook(id) {
     ${sourceSlot}
     <div style="display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;">
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="openRecommendBook('${b.id}')" style="font-family:var(--font-body);font-size:12px;padding:6px 12px;background:none;border:1px solid var(--paper-3);color:var(--ink-2);border-radius:99px;cursor:pointer;">📩 recommend to friend</button>
         <button onclick="openLendBook('${b.id}')" style="font-family:var(--font-body);font-size:12px;padding:6px 12px;background:none;border:1px solid var(--paper-3);color:var(--ink-2);border-radius:99px;cursor:pointer;">📖 ${b.lentTo?'update loan':'lend to friend'}</button>
         ${b.status==='read'?`<button onclick="openLogReread('${b.id}')" style="font-family:var(--font-body);font-size:12px;padding:6px 12px;background:none;border:1px solid var(--paper-3);color:var(--ink-2);border-radius:99px;cursor:pointer;">↻ log read</button>`:''}
       </div>
@@ -5839,6 +6372,105 @@ function viewBook(id) {
   }
 }
 // Lend a book to a friend — opens the sub-modal preloaded with this book id and any existing loan
+// ─────────────────────────────────────────────────────────────
+// RECOMMEND TO FRIEND — sub-modal flow opened from view-book modal
+// ─────────────────────────────────────────────────────────────
+let _recommendingBook = null;
+let _recommendingFriendId = null;
+
+async function openRecommendBook(bookId) {
+  const b = books.find(x => x.id === bookId);
+  if (!b) return;
+  _recommendingBook = b;
+  _recommendingFriendId = null;
+  document.getElementById('recommend-book-summary').textContent = '"' + b.title + '"' + (b.author ? ' · ' + b.author : '') + ' — pick a friend to send this to.';
+  document.getElementById('recommend-friend-input').value = '';
+  document.getElementById('recommend-message-input').value = '';
+  document.getElementById('recommend-char-count').textContent = '0 / 280';
+  document.getElementById('recommend-friend-suggestions').style.display = 'none';
+  _setRecommendSendEnabled(false);
+  closeModal('modal-view');
+  openModal('modal-recommend-book');
+  setTimeout(() => document.getElementById('recommend-friend-input').focus(), 50);
+}
+
+function _setRecommendSendEnabled(enabled) {
+  const btn = document.getElementById('recommend-send-btn');
+  if (!btn) return;
+  btn.disabled = !enabled;
+  btn.style.opacity = enabled ? '1' : '0.4';
+  btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+}
+
+function onRecommendMessageInput() {
+  const input = document.getElementById('recommend-message-input');
+  const count = document.getElementById('recommend-char-count');
+  count.textContent = (input.value.length || 0) + ' / 280';
+  count.style.color = input.value.length > 260 ? '#b85' : 'var(--ink-3)';
+}
+
+async function onRecommendFriendInput() {
+  const raw = document.getElementById('recommend-friend-input').value.trim().toLowerCase().replace(/^@/, '');
+  const sugg = document.getElementById('recommend-friend-suggestions');
+  // Typing invalidates any prior selection
+  _recommendingFriendId = null;
+  _setRecommendSendEnabled(false);
+  if (!raw || raw.length < 1) { sugg.style.display = 'none'; return; }
+  try {
+    const all = await friendsAPI.list();
+    const accepted = all.filter(f => f.status === 'accepted');
+    const matches = accepted
+      .filter(f => (f.otherProfile.handle || '').toLowerCase().includes(raw))
+      .slice(0, 8);
+    if (!matches.length) {
+      sugg.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--ink-3);font-style:italic;">no friends matching that handle.</div>';
+      sugg.style.display = 'block';
+      return;
+    }
+    sugg.innerHTML = matches.map(f => {
+      const handle = f.otherProfile.handle || '?';
+      return '<div onclick="pickRecommendFriend(\'' + f.otherUserId + '\', \'' + handle + '\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--paper-3);" onmouseover="this.style.background=\'var(--paper-2)\'" onmouseout="this.style.background=\'transparent\'">'
+        + avatarHtml(f.otherProfile, 28)
+        + '<span style="font-size:13px;color:var(--ink-2);">@' + handle + '</span>'
+      + '</div>';
+    }).join('');
+    sugg.style.display = 'block';
+  } catch (e) {
+    sugg.style.display = 'none';
+  }
+}
+
+function pickRecommendFriend(friendId, handle) {
+  _recommendingFriendId = friendId;
+  document.getElementById('recommend-friend-input').value = '@' + handle;
+  document.getElementById('recommend-friend-suggestions').style.display = 'none';
+  _setRecommendSendEnabled(true);
+}
+
+async function sendRecommendation() {
+  if (!_recommendingBook || !_recommendingFriendId) return;
+  const message = document.getElementById('recommend-message-input').value || '';
+  const btn = document.getElementById('recommend-send-btn');
+  const originalText = btn.textContent;
+  btn.textContent = 'sending…';
+  _setRecommendSendEnabled(false);
+  try {
+    await recommendsAPI.send({
+      recipientId: _recommendingFriendId,
+      book: _recommendingBook,
+      message,
+    });
+    closeModal('modal-recommend-book');
+    _recommendingBook = null;
+    _recommendingFriendId = null;
+  } catch (e) {
+    btn.textContent = originalText;
+    _setRecommendSendEnabled(true);
+    const msg = (e && e.message) || String(e);
+    alert(/duplicate|unique/i.test(msg) ? 'you\'ve already sent them this one.' : ('couldn\'t send: ' + msg));
+  }
+}
+
 let _lendingBookId = null;
 async function openLendBook(bookId) {
   const b = books.find(x => x.id === bookId);

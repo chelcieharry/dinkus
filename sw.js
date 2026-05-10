@@ -1,6 +1,6 @@
 // dinkus — service worker. caches the app for offline use.
 // bump CACHE_NAME whenever you want phones to fetch fresh assets.
-const CACHE_NAME = 'dinkus-v30';
+const CACHE_NAME = 'dinkus-v33';
 const PRECACHE = [
   './',
   './reading-tracker.html',
