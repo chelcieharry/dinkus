@@ -2533,14 +2533,27 @@ const CHALLENGES = {
       const checks = [];
       const year = parseInt(b.published||0);
       const now = new Date().getFullYear();
+      const tags = (b.tags||[]).map(t => (t||'').toLowerCase());
+      // Tag-driven (most specific) — push these first so they win the "first match" tie-break
+      if (tags.some(t => t.includes('debut'))) checks.push('debut');
+      if (tags.some(t => t.includes('award') || t.includes('prize') || t.includes('shortlist'))) checks.push('award_winner');
+      if (tags.some(t => t.includes('re-read') || t.includes('reread')) || (b.readings && b.readings.length > 0)) checks.push('reread');
+      if (tags.some(t => t.includes('translation'))) checks.push('translated');
+      // Author identity
+      if ((b.gender||'').toLowerCase().includes('non-binary')) checks.push('nonbinary');
+      if (/indigenous|first nations|aboriginal|native american/i.test(b.race||b.nationality||'')) checks.push('indigenous');
+      // Friend-sourced
+      if (b.sourceFriendId) checks.push('rec_friend');
+      // Born year — only if the user has set their birthday in profile
+      const birthYear = (typeof profile !== 'undefined' && profile && profile.birthday) ? profile.birthday.slice(0, 4) : '';
+      if (birthYear && year && String(year) === birthYear) checks.push('born_year');
+      // Year / pages / title — broad fallback prompts
       if (year && now - year >= 20) checks.push('old20');
       if ((b.title||'').trim().split(/\s+/).length === 1) checks.push('one_word');
       const colours = ['red','blue','green','gold','silver','black','white','purple','crimson','scarlet','amber','rose','violet'];
       if (colours.some(c=>(b.title||'').toLowerCase().includes(c))) checks.push('colour_cover');
       if ((b.pages||0) < 200 && (b.pages||0) > 0) checks.push('under200');
       if ((b.pages||0) > 700) checks.push('over700');
-      if ((b.tags||[]).some(t=>t.toLowerCase().includes('translation'))) checks.push('translated');
-      if ((b.gender||'').toLowerCase().includes('non-binary')) checks.push('nonbinary');
       return checks.length ? checks[0] : null;
     }
   }
@@ -2868,7 +2881,7 @@ function renderVisualLibrary() {
   if (filterGenre) filtered = filtered.filter(b => (b.genre||'').includes(filterGenre));
   const lens = document.getElementById('lib-lens')?.value || '';
   if (lens === 'poc') filtered = filtered.filter(b => b.race && !b.race.toLowerCase().includes('white'));
-  else if (lens === 'black') filtered = filtered.filter(b => /\bblack\b/i.test(b.race||''));
+  else if (lens === 'black') filtered = filtered.filter(b => /\bblack\b|african american/i.test(b.race||''));
   else if (lens === 'queer') filtered = filtered.filter(b =>
     /non.?binary|trans|queer|enby|genderqueer/i.test(b.gender||'')
     || (b.tags||[]).some(t => /^queer author/i.test(t.trim())));
@@ -3655,6 +3668,20 @@ const ONBOARDING_STEPS = {
     <button id="onboarding-handle-submit" class="welcome-btn welcome-btn-primary" onclick="submitOnboardingHandle()" disabled style="opacity:0.4;cursor:not-allowed;">claim it &amp; continue</button>
     <p class="welcome-footer" style="margin-top:24px;">per aspera ad libros.</p>`,
 
+  birthday: () => `
+    <h1 class="welcome-title">when's your birthday?</h1>
+    <div class="welcome-asterisks">* * *</div>
+    <p class="welcome-blurb">optional. only used to wish you well on the day,<br>and to tick the "published in your birth year" reading prompt.</p>
+    <div style="display:flex;justify-content:center;margin:28px 0 8px;">
+      <input type="date" id="onboarding-birthday-input" max="${new Date().toISOString().split('T')[0]}" style="font-family:var(--font-body);font-size:14px;padding:10px 14px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;color:var(--ink);">
+    </div>
+    <div id="onboarding-birthday-status" style="font-size:12px;color:var(--ink-3);font-style:italic;min-height:18px;line-height:1.5;text-align:center;margin-bottom:18px;">we won't share it. ever.</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="welcome-btn welcome-btn-primary" onclick="submitOnboardingBirthday()">save &amp; continue</button>
+      <button class="welcome-btn welcome-btn-ghost" onclick="skipOnboardingBirthday()">skip &middot; I'd rather not</button>
+    </div>
+    <p class="welcome-footer" style="margin-top:24px;">per aspera ad libros.</p>`,
+
   home: () => `
     <h1 class="welcome-title">welcome to dinkus</h1>
     <div class="welcome-asterisks">* * *</div>
@@ -3838,11 +3865,13 @@ async function submitOnboardingHandle() {
     const updated = await profileAPI.update({ handle: v.handle });
     profile = updated || { ...profile, handle: v.handle };
     if (typeof setGreeting === 'function') setGreeting();
-    // Now advance — if they have data already, just exit onboarding; otherwise go to the three paths
+    // Advance to next onboarding step — birthday for new users, or exit if they're already established
     const isEmpty = (!books || books.length === 0) && (!goals || goals.length === 0);
     const onboarded = profile && profile.preferences && profile.preferences.onboarded === true;
     if (onboarded || !isEmpty) {
       document.body.classList.remove('onboarding');
+    } else if (!profile.birthday) {
+      showOnboardingStep('birthday');
     } else {
       showOnboardingStep('home');
     }
@@ -3855,6 +3884,55 @@ async function submitOnboardingHandle() {
       _setOnboardingHandleSubmit(false);
     } else {
       _setOnboardingHandleStatus('the registry coughed. try again?', 'err');
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// ONBOARDING BIRTHDAY — optional. saves to profile.birthday or skips.
+// ─────────────────────────────────────────────────────────────
+async function submitOnboardingBirthday() {
+  const input = document.getElementById('onboarding-birthday-input');
+  const status = document.getElementById('onboarding-birthday-status');
+  const value = (input.value || '').trim();
+  if (!value) {
+    if (status) { status.textContent = 'pick a date — or skip below.'; status.style.color = '#b85'; }
+    return;
+  }
+  try {
+    const updated = await profileAPI.update({ birthday: value });
+    profile = updated || { ...profile, birthday: value };
+    showOnboardingStep('home');
+  } catch (e) {
+    if (status) { status.textContent = 'couldn\'t save — try again?'; status.style.color = '#b85'; }
+  }
+}
+
+function skipOnboardingBirthday() {
+  showOnboardingStep('home');
+}
+
+// Save birthday from settings page (date input → onchange)
+async function saveProfileBirthday() {
+  const input = document.getElementById('profile-birthday-input');
+  const status = document.getElementById('profile-birthday-status');
+  const value = (input.value || '').trim();
+  // Empty = clear
+  if (value === (profile.birthday || '')) {
+    if (status) status.textContent = '';
+    return;
+  }
+  try {
+    const updated = await profileAPI.update({ birthday: value || null });
+    profile = updated || { ...profile, birthday: value || null };
+    if (status) {
+      status.textContent = value ? 'saved · we\'ll mark the day.' : 'birthday cleared.';
+      status.style.color = 'var(--accent)';
+    }
+  } catch (e) {
+    if (status) {
+      status.textContent = 'couldn\'t save — try again?';
+      status.style.color = '#b85';
     }
   }
 }
@@ -3888,6 +3966,11 @@ async function renderSettings() {
       </div>
       <div id="profile-handle-status" style="font-size:12px;color:var(--ink-3);margin-top:8px;font-style:italic;min-height:18px;line-height:1.5;"></div>
       <div style="font-size:11px;color:var(--ink-3);margin-top:2px;font-style:italic;">lowercase, 3–20 chars, letters/numbers/underscore. used in the dashboard greeting and the reading room.</div>
+
+      <div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin:18px 0 6px;font-weight:500;">your birthday <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-3);">(optional)</span></div>
+      <input type="date" id="profile-birthday-input" value="${(profile && profile.birthday) || ''}" max="${new Date().toISOString().split('T')[0]}" onchange="saveProfileBirthday()" style="font-family:var(--font-body);font-size:14px;padding:8px 12px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;color:var(--ink);max-width:200px;">
+      <div id="profile-birthday-status" style="font-size:12px;color:var(--ink-3);margin-top:6px;font-style:italic;min-height:18px;line-height:1.5;"></div>
+      <div style="font-size:11px;color:var(--ink-3);font-style:italic;">we won't share it. used to wish you well, and to tick the "published in your birth year" reading prompt.</div>
     </div>
 
     <div class="stat-block" style="margin-bottom:18px;">
@@ -4609,8 +4692,13 @@ const POLICY_PRIVACY = `
     <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">what we collect</h3>
     <ul style="padding-left:22px;margin-bottom:8px;">
       <li>the email address you sign in with (so we know it's you next time)</li>
-      <li>the reading data you create: book titles, authors, ratings, dates, thoughts, reading sessions, tags, goals, journal entries, BOTY picks, and tarot draws</li>
-      <li>if you opt in, an Anthropic API key for the matchmaker feature</li>
+      <li>your handle, set by you (lowercase, 3–20 chars, used to find you in the reading room)</li>
+      <li>optionally, your birthday (used to wish you well and tick the "published in your birth year" reading prompt)</li>
+      <li>the reading data you create: book titles, authors, ratings, dates, thoughts, reading sessions, tags, goals, journal entries, BOTY picks, tarot draws, all-time favourites, customisation preferences</li>
+      <li>your friendships: who you've sent, accepted, or declined friend requests with</li>
+      <li>recommendations you send or receive: the sender, recipient, a snapshot of the book at the time, and your optional note</li>
+      <li>comments you post on books in the reading room</li>
+      <li>if you mark one of your books as lent: the free-text name you typed and the date</li>
     </ul>
 
     <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">what we don't collect</h3>
@@ -4620,8 +4708,15 @@ const POLICY_PRIVACY = `
     <p>your data sits in a Postgres database hosted by Supabase in the EU (London region). sign-in code emails are sent through Resend.</p>
 
     <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">who else sees it</h3>
-    <p>nobody but you. row-level security in the database means each user's authenticated session can only read their own rows. the operator (chelcie) has admin access to the database for maintenance, but does not read individual users' data.</p>
-    <p style="margin-top:8px;">friends you've accepted in the reading room can see your currently-reading and last 5 finished books — that's the only data shared, and only with people you've explicitly accepted. nothing leaves dinkus to any third party.</p>
+    <p>your handle and avatar (initials, derived from your handle) are visible to any other signed-in user via the friend search — that's how "find a friend by handle" works. nothing else of yours is exposed there.</p>
+    <p style="margin-top:8px;"><strong>friends you've accepted</strong> can see, in the reading room:</p>
+    <ul style="padding-left:22px;margin-top:6px;margin-bottom:8px;">
+      <li>your currently-reading books and your last 5 finished books — with your rating and thoughts on those finished ones</li>
+      <li>comments you post on books that are visible to them</li>
+      <li>recommendations you send specifically to them (sender's handle + book snapshot + optional note)</li>
+    </ul>
+    <p style="margin-top:8px;"><strong>friends never see</strong>: your tbr, your dnf list, the rest of your library, your goals, your journal entries, your BOTY picks, your tarot history, your all-time favourites, your birthday, your settings, or your loan log.</p>
+    <p style="margin-top:8px;">nothing leaves dinkus to any third party. the operator (chelcie) has admin access to the database for maintenance, but does not read individual users' data.</p>
 
     <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">your rights (GDPR)</h3>
     <ul style="padding-left:22px;margin-bottom:8px;">
@@ -4655,7 +4750,7 @@ const POLICY_TERMS = `
     <p>sign in with an email address you control. don't share your account, don't impersonate someone else, don't try to access other people's accounts.</p>
 
     <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">acceptable use</h3>
-    <p>log books, write reviews, track your reading. don't store anything illegal, don't use the app to harass anyone, don't try to overload or exploit the system. accounts that abuse the app may be suspended or removed (we'd tell you why).</p>
+    <p>log books, write reviews, track your reading. when you comment on friends' books or send recommendations, do it kindly — no harassment, no abuse, no unwanted messaging. don't store anything illegal. don't try to overload or exploit the system. accounts that abuse the app may be suspended or removed (we'd tell you why).</p>
 
     <h3 style="font-family:var(--font-display);font-style:italic;font-size:16px;margin:20px 0 8px;">your data, your responsibility</h3>
     <p>you own what you write. don't include things you wouldn't be comfortable being in a database — we don't read it, but databases get backed up, hacked, copied (generally true of all online services). the export csv button is your friend.</p>
@@ -6329,7 +6424,22 @@ const DINKUS_WELCOME_WORD = {
   origin: "a typesetter's gentle break. sometimes called an asterism. the namesake of this app.",
 };
 
+// On the user's birthday (month + day match), they see this instead of the rotation.
+const NATALITIAL_BIRTHDAY_WORD = {
+  word: 'natalitial',
+  pos: 'adjective',
+  def: 'relating to a birthday or to one’s birth.',
+  origin: 'latin natalis. archaic, uncommon, exactly the word for today. <em>p.s. happy birthday.</em>',
+};
+
 function wordOfTheDay() {
+  // Birthday takes priority — if today's MM-DD matches the user's saved birthday, surface natalitial.
+  if (profile && profile.birthday) {
+    const today = new Date();
+    const todayMD = String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+    const bdMD = (profile.birthday || '').slice(5, 10);  // YYYY-MM-DD → MM-DD
+    if (bdMD && bdMD === todayMD) return NATALITIAL_BIRTHDAY_WORD;
+  }
   // First visit on this browser? Welcome them with the namesake.
   if (!localStorage.getItem('rj_seen_dinkus_word')) {
     localStorage.setItem('rj_seen_dinkus_word', '1');
