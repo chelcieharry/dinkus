@@ -373,6 +373,24 @@ body.onboarding #welcome-screen { display: flex; }
 .prophecy-mist.revealed .prophecy-mist-veil { opacity: 0; pointer-events: none; }
 .prophecy-text { font-family: var(--font-display); font-style: italic; font-size: 17px; color: var(--ink); line-height: 1.6; max-width: 460px; letter-spacing: 0.01em; }
 
+/* All-time favourites — tile list + add pill + autocomplete picker */
+.favourites-grid { display: flex; flex-direction: column; gap: 10px; }
+.favourite-tile { display: flex; align-items: center; gap: 12px; background: var(--paper-2); border-radius: var(--radius); padding: 10px 12px; }
+.favourite-cover { width: 38px; height: 56px; border-radius: 4px; background-size: cover; background-position: center; flex-shrink: 0; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; color: white; font-size: 8px; text-align: center; padding: 3px; font-weight: 500; line-height: 1.15; cursor: pointer; }
+.favourite-info { flex: 1; min-width: 0; }
+.favourite-title { font-weight: 500; font-size: 13px; color: var(--ink); line-height: 1.3; margin-bottom: 2px; cursor: pointer; }
+.favourite-title:hover { color: var(--accent); }
+.favourite-author { font-size: 12px; color: var(--ink-3); }
+.favourite-remove { font-family: var(--font-body); font-size: 18px; line-height: 1; color: var(--ink-3); background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 50%; transition: all 0.15s; }
+.favourite-remove:hover { color: #8b3a3a; background: var(--paper); }
+.favourite-add-row { margin-top: 4px; }
+.favourite-add-pill { font-family: var(--font-body); font-size: 13px; padding: 8px 16px; background: none; border: 1px dashed var(--accent-2); color: var(--accent); border-radius: 99px; cursor: pointer; font-weight: 500; transition: all 0.15s; }
+.favourite-add-pill:hover { background: var(--accent-light); border-style: solid; }
+.favourite-picker { background: var(--paper); border: 1px solid var(--paper-3); border-radius: var(--radius); overflow: hidden; }
+.favourite-picker input { font-family: var(--font-body); font-size: 14px; padding: 10px 12px; border: none; outline: none; width: 100%; background: var(--paper); }
+.favourite-suggestions { max-height: 280px; overflow-y: auto; border-top: 1px solid var(--paper-3); }
+.favourite-suggestions:empty { display: none; }
+
 /* The reading room — recommendations block (distinct cards pinned above the feed) */
 .rr-recs-block { margin-bottom: 24px; display: flex; flex-direction: column; gap: 14px; }
 .rr-rec { background: var(--paper-2); border: 1px solid var(--accent-2); border-radius: var(--radius); padding: 14px; transition: box-shadow 0.15s; }
@@ -536,7 +554,7 @@ body.onboarding #welcome-screen { display: flex; }
 .goal-fill { height: 100%; border-radius: 3px; }
 
 /* Modals */
-.modal-backdrop { position: fixed; inset: 0; background: rgba(26,23,20,0.6); z-index: 100; display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.modal-backdrop { position: fixed; inset: 0; background: rgba(26,23,20,0.6); z-index: 250; display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
 .modal-backdrop.open { opacity: 1; pointer-events: all; }
 .modal { background: var(--paper); border-radius: var(--radius-lg); width: 100%; max-width: 620px; padding: 32px; box-shadow: var(--shadow-lg); transform: translateY(12px); transition: transform 0.25s; flex-shrink: 0; }
 .modal-backdrop.open .modal { transform: translateY(0); }
@@ -837,6 +855,10 @@ body.onboarding #welcome-screen { display: flex; }
 
   /* iOS auto-zooms on focus when input font-size < 16px. Force >= 16px on mobile. */
   input, textarea, select { font-size: 16px !important; }
+
+  /* Modals — extra bottom breathing room on mobile so content doesn't sit against the screen edge,
+     especially when the keyboard is up over the comment input. */
+  .modal-backdrop { padding: 24px 12px 80px; }
 
   /* Bigger star tap targets on mobile — quarter zones go from ~10px to ~14px */
   .quarter-stars .star-wrap { width: 56px; height: 56px; }
@@ -1279,7 +1301,7 @@ body.onboarding #welcome-screen { display: flex; }
   <div class="topbar">
     <div><h2 class="page-title">Reading stats</h2><p class="page-subtitle">data, darling. the numbers don't lie.</p></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <select id="stats-mode" style="font-family:var(--font-body);font-size:13px;padding:7px 12px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;" onchange="onStatsModeChange()"><option value="year">year overview</option><option value="month">by month</option></select>
+      <select id="stats-mode" style="font-family:var(--font-body);font-size:13px;padding:7px 12px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;" onchange="onStatsModeChange()"><option value="year">year overview</option><option value="month">by month</option><option value="all">all time</option></select>
       <select id="stats-year" style="font-family:var(--font-body);font-size:13px;padding:7px 12px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;" onchange="renderStats()"></select>
       <select id="stats-month" style="font-family:var(--font-body);font-size:13px;padding:7px 12px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;display:none;" onchange="renderStats()"><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select>
     </div>
@@ -1818,7 +1840,10 @@ async function saveJournalField(year, field, value) {
 function onStatsModeChange() {
   const mode = document.getElementById('stats-mode').value;
   const monthSel = document.getElementById('stats-month');
+  const yearSel = document.getElementById('stats-year');
   if (monthSel) monthSel.style.display = mode === 'month' ? '' : 'none';
+  // Year selector is irrelevant in all-time view
+  if (yearSel) yearSel.style.display = mode === 'all' ? 'none' : '';
   if (mode === 'month' && monthSel) {
     monthSel.value = String(new Date().getMonth()+1).padStart(2,'0');
   }
@@ -2006,6 +2031,287 @@ function renderYearStats(year) {
 
 
 // ─────────────────────────────────────────────────────────────
+// ALL-TIME STATS — aggregated across every year. Same layout as year stats with:
+//   • books per month  →  books per year (mini-bars)
+//   • BOTY grid        →  all-time favourites picker
+//   • year in review   →  hidden
+// ─────────────────────────────────────────────────────────────
+function renderAllTimeStats() {
+  const yb = books.filter(function(b){ return b.status === 'read' && b.finished; });
+  const content = document.getElementById('stats-content');
+  if (!yb.length) {
+    content.innerHTML = '<div class="empty-state"><p>nothing finished yet. log a book and the picture starts to fill in.</p></div>';
+    return;
+  }
+
+  // Books per year (replaces books per month)
+  const yearCounts = {};
+  yb.forEach(function(b){ const y=(b.finished||'').slice(0,4); if(y) yearCounts[y]=(yearCounts[y]||0)+1; });
+  const yearKeys = Object.keys(yearCounts).sort();
+  const maxPY = Math.max.apply(null, Object.values(yearCounts).concat([1]));
+  const yearBars = yearKeys.map(function(y){
+    const n = yearCounts[y];
+    const h = Math.max(4, Math.round(n/maxPY*60));
+    return '<div class="mini-bar-wrap" title="'+y+': '+n+' books">'
+      +'<div class="mini-bar" style="height:'+h+'px;min-height:4px;"></div>'
+      +'<span class="mini-bar-label">'+y.slice(2)+'</span></div>';
+  }).join('');
+
+  const genres = {};
+  yb.forEach(function(b){ (b.genre||'').split(',').forEach(function(g){ const t=g.trim(); if(t) genres[t]=(genres[t]||0)+1; }); });
+  const topGenres = Object.entries(genres).sort(function(a,b){return b[1]-a[1];}).slice(0,7);
+
+  const fmtCount = {audio:0,hardback:0,paperback:0,ebook:0};
+  yb.forEach(function(b){ if(b.format&&fmtCount[b.format]!==undefined) fmtCount[b.format]++; });
+
+  const dnfCount = books.filter(function(b){ return b.status === 'dnf' || (!b.finished && /dnf/i.test(b.thoughts||'')); }).length;
+  const graveyardBlurb = dnfCount === 0
+    ? 'graveyard\'s clean. ⚰️'
+    : dnfCount === 1 ? 'one headstone all time'
+    : dnfCount + ' headstones, all time.';
+
+  const totalPages = yb.reduce(function(s,b){return s+(b.pages||0);},0);
+  const auHrs = yb.filter(function(b){return b.format==='audio';}).reduce(function(s,b){return s+(b.length||0);},0);
+  const rated = yb.filter(function(b){return b.rating>0;});
+  const avgRating = rated.length ? (rated.reduce(function(s,b){return s+b.rating;},0)/rated.length).toFixed(2) : '—';
+  const topRated = yb.filter(function(b){return b.rating>0;}).sort(function(a,b){return b.rating-a.rating;}).slice(0,7);
+
+  const authorCounts = {};
+  yb.forEach(function(b){ if(b.author) authorCounts[b.author]=(authorCounts[b.author]||0)+1; });
+  const topAuthor = Object.entries(authorCounts).sort(function(a,b){return b[1]-a[1];})[0];
+
+  const fmtLabel = {audio:'Audiobook',hardback:'Hardback',paperback:'Paperback',ebook:'Ebook'};
+
+  const fmtBars = Object.entries(fmtCount).map(function(e){
+    const f=e[0],n=e[1];
+    return n ? '<div class="horiz-bar-row"><div class="horiz-bar-label">'+fmtLabel[f]+'</div>'
+      +'<div class="horiz-bar-track"><div class="horiz-bar-fill" style="width:'+Math.round(n/yb.length*100)+'%;background:var(--accent-2);"></div></div>'
+      +'<div class="horiz-bar-count">'+n+'</div></div>' : '';
+  }).join('');
+
+  const genreBars = topGenres.map(function(e){
+    const g=e[0],n=e[1];
+    return '<div class="horiz-bar-row"><div class="horiz-bar-label">'+g+'</div>'
+      +'<div class="horiz-bar-track"><div class="horiz-bar-fill" style="width:'+Math.round(n/yb.length*100)+'%;background:var(--purple);"></div></div>'
+      +'<div class="horiz-bar-count">'+n+'</div></div>';
+  }).join('');
+
+  const topRatedRows = topRated.map(function(b){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--paper-3);cursor:pointer;" onclick="viewBook(\''+b.id+'\')">'
+      +'<div style="flex:1;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+b.title+'</div>'
+      +'<div style="font-size:12px;color:var(--accent);font-weight:500;flex-shrink:0;">&#9733; '+b.rating+'</div></div>';
+  }).join('');
+
+  const topAuthorHtml = topAuthor
+    ? '<div class="stat-block" style="grid-column:1/-1"><div class="stat-block-title">most read author of all time</div>'
+      +'<div style="display:flex;align-items:center;gap:16px;padding:8px 0;">'
+      +'<div style="font-family:var(--font-display);font-size:22px;font-weight:500;">'+topAuthor[0]+'</div>'
+      +'<div style="font-size:13px;color:var(--ink-3);">'+topAuthor[1]+' book'+(topAuthor[1]===1?'':'s')+' across the years</div>'
+      +'</div></div>'
+    : '';
+
+  // Diversity (all-time)
+  const femCount = yb.filter(function(b){return (b.gender||'').toLowerCase().includes('female');}).length;
+  const nbCount  = yb.filter(function(b){return (b.gender||'').toLowerCase().includes('non-binary');}).length;
+  const nonWhite = yb.filter(function(b){return b.race&&!b.race.toLowerCase().includes('white');}).length;
+  const withRace = yb.filter(function(b){return !!b.race;}).length;
+
+  function divBar(field, label, colors) {
+    const counts = {};
+    yb.forEach(function(b){ const v=(b[field]||'').trim(); if(v) counts[v]=(counts[v]||0)+1; });
+    const entries = Object.entries(counts).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+    const total = entries.reduce(function(s,e){return s+e[1];},0);
+    if (!entries.length) return '';
+    return '<div class="stat-block"><div class="stat-block-title">'+label+'</div>'
+      + entries.map(function(e,i){
+          const v=e[0],n=e[1];
+          return '<div class="horiz-bar-row"><div class="horiz-bar-label">'+v+'</div>'
+            +'<div class="horiz-bar-track"><div class="horiz-bar-fill" style="width:'+Math.round(n/total*100)+'%;background:'+colors[i%colors.length]+';"></div></div>'
+            +'<div class="horiz-bar-count">'+Math.round(n/total*100)+'%</div></div>';
+        }).join('')
+      + '</div>';
+  }
+
+  const diversityHtml = '<div class="stat-block" style="margin-top:24px;">'
+    + '<div class="stat-block-title">who you read 🌍 · all time</div>'
+    + '<div style="font-size:12px;color:var(--ink-3);margin-bottom:16px;">aggregated across every year you\'ve logged.</div>'
+    + '<div class="stats-grid" style="margin-bottom:16px;">'
+    + '<div class="stat-card" style="--accent-color:#e879a0"><div class="stat-label">female authors</div><div class="stat-value">'+Math.round(femCount/yb.length*100)+'%</div><div class="stat-sub">'+femCount+' of '+yb.length+'</div></div>'
+    + '<div class="stat-card" style="--accent-color:var(--purple)"><div class="stat-label">non-white authors</div><div class="stat-value">'+(withRace?Math.round(nonWhite/withRace*100):0)+'%</div><div class="stat-sub">of books with data</div></div>'
+    + (nbCount ? '<div class="stat-card" style="--accent-color:#2a6b7c"><div class="stat-label">non-binary authors</div><div class="stat-value">'+nbCount+'</div><div class="stat-sub">all time</div></div>' : '')
+    + '<div class="stat-card"><div class="stat-label">race data</div><div class="stat-value">'+Math.round(withRace/yb.length*100)+'%</div><div class="stat-sub">coverage</div></div>'
+    + '</div>'
+    + '<div class="stats-three-col">'
+    + divBar('gender','author gender',['#e879a0','var(--purple)','#2a6b7c','var(--gold)'])
+    + divBar('race','author race / ethnicity',['var(--accent-2)','var(--green)','var(--gold)','var(--purple)','#e879a0'])
+    + divBar('nationality','author nationality',['var(--green)','var(--accent-2)','var(--gold)','var(--purple)','#2a6b7c'])
+    + '</div></div>';
+
+  // Customisation respects same toggles
+  const showYear    = !isBlockHidden('books_per_month');  // same id, just different chart
+  const showFormats = !isBlockHidden('formats');
+  const showAuthors = !isBlockHidden('authors_stats');
+
+  let yearFormatsRow = '';
+  if (showYear && showFormats) {
+    yearFormatsRow = '<div class="stats-two-col">'
+      + '<div class="stat-block"><div class="stat-block-title">Books per year</div><div class="mini-bars">'+yearBars+'</div></div>'
+      + '<div class="stat-block"><div class="stat-block-title">Formats</div>'+fmtBars+'</div>'
+      + '</div>';
+  } else if (showYear) {
+    yearFormatsRow = '<div class="stat-block" style="margin-bottom:20px;"><div class="stat-block-title">Books per year</div><div class="mini-bars">'+yearBars+'</div></div>';
+  } else if (showFormats) {
+    yearFormatsRow = '<div class="stat-block" style="margin-bottom:20px;"><div class="stat-block-title">Formats</div>'+fmtBars+'</div>';
+  }
+
+  // Assemble
+  content.innerHTML = ''
+    + '<div class="stats-grid" style="margin-bottom:24px;grid-template-columns:repeat(5,1fr);">'
+    + '<div class="stat-card"><div class="stat-label">Books, all time</div><div class="stat-value">'+yb.length+'</div></div>'
+    + '<div class="stat-card"><div class="stat-label">Pages</div><div class="stat-value">'+totalPages.toLocaleString()+'</div><div class="stat-sub">avg '+(yb.length?Math.round(totalPages/yb.length):0)+'/book</div></div>'
+    + '<div class="stat-card"><div class="stat-label">Avg rating</div><div class="stat-value">'+avgRating+'</div><div class="stat-sub">'+rated.length+' rated</div></div>'
+    + '<div class="stat-card"><div class="stat-label">Audio hours</div><div class="stat-value">'+(Math.round(auHrs)||'—')+'</div></div>'
+    + '<div class="stat-card" style="--accent-color:#6b6156"><div class="stat-label">🪦 laid to rest</div><div class="stat-value">'+dnfCount+'</div><div class="stat-sub">'+graveyardBlurb+'</div></div>'
+    + '</div>'
+    + yearFormatsRow
+    + '<div class="stats-two-col">'
+    + '<div class="stat-block"><div class="stat-block-title">Genres</div>'+genreBars+'</div>'
+    + '<div class="stat-block"><div class="stat-block-title">Top rated, ever</div>'+topRatedRows+'</div>'
+    + '</div>'
+    + '<div class="stats-two-col">' + topAuthorHtml + '</div>'
+    + (showAuthors ? diversityHtml : '')
+    + buildAllTimeFavouritesBlock();
+
+  // The favourites block is a shell — populate it now that the DOM exists
+  renderFavouritesList();
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// ALL-TIME FAVOURITES — picker + tile list, replaces BOTY in all-time view.
+// Stored as a boolean flag on books (is_all_time_favourite).
+// ─────────────────────────────────────────────────────────────
+function buildAllTimeFavouritesBlock() {
+  return '<div class="stat-block" style="margin-top:24px;">'
+    + '<div class="stat-block-title">favourite books, of all time</div>'
+    + '<div style="font-size:12px;color:var(--ink-3);margin-bottom:14px;">the ones you\'d hand-press into someone else\'s palm. add as many as you like — drop one if it ages out.</div>'
+    + '<div id="favourites-list-wrap"></div>'
+  + '</div>';
+}
+
+function renderFavouritesList() {
+  const wrap = document.getElementById('favourites-list-wrap');
+  if (!wrap) return;
+  const favs = books
+    .filter(function(b){ return b.isAllTimeFavourite; })
+    .sort(function(a,b){ return (b.addedAt||'').localeCompare(a.addedAt||''); });
+
+  let html = '<div class="favourites-grid">';
+  if (favs.length) {
+    html += favs.map(function(b){
+      const cover = b.coverUrl
+        ? '<div class="favourite-cover" style="background-image:url(\''+b.coverUrl+'\');" onclick="viewBook(\''+b.id+'\')"></div>'
+        : '<div class="favourite-cover" style="background:'+bookColor(b.title)+';" onclick="viewBook(\''+b.id+'\')">'+b.title+'</div>';
+      return '<div class="favourite-tile">'
+        + cover
+        + '<div class="favourite-info">'
+          + '<div class="favourite-title" onclick="viewBook(\''+b.id+'\')">'+b.title+'</div>'
+          + '<div class="favourite-author">'+(b.author||'')+'</div>'
+        + '</div>'
+        + '<button class="favourite-remove" onclick="removeFavourite(\''+b.id+'\')" title="remove from favourites">×</button>'
+      + '</div>';
+    }).join('');
+  } else {
+    html += '<div style="font-size:12px;color:var(--ink-3);font-style:italic;padding:6px 0;">no favourites yet. start typing below to add the first.</div>';
+  }
+  // The add pill / picker
+  html += '<div class="favourite-add-row">'
+    + '<button id="favourite-add-pill" class="favourite-add-pill" onclick="openFavouritePicker()">+ favourite book</button>'
+    + '<div id="favourite-picker" class="favourite-picker hidden">'
+      + '<input type="text" id="favourite-search-input" placeholder="search your library…" oninput="onFavouriteSearchInput()" autocomplete="off">'
+      + '<div id="favourite-suggestions" class="favourite-suggestions"></div>'
+    + '</div>'
+  + '</div>';
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+function openFavouritePicker() {
+  document.getElementById('favourite-add-pill').classList.add('hidden');
+  document.getElementById('favourite-picker').classList.remove('hidden');
+  setTimeout(function(){ document.getElementById('favourite-search-input').focus(); }, 0);
+  document.getElementById('favourite-search-input').value = '';
+  document.getElementById('favourite-suggestions').innerHTML = '';
+}
+
+function closeFavouritePicker() {
+  document.getElementById('favourite-add-pill').classList.remove('hidden');
+  document.getElementById('favourite-picker').classList.add('hidden');
+  document.getElementById('favourite-suggestions').innerHTML = '';
+}
+
+function onFavouriteSearchInput() {
+  const raw = (document.getElementById('favourite-search-input').value || '').trim().toLowerCase();
+  const sugg = document.getElementById('favourite-suggestions');
+  if (!raw || raw.length < 2) { sugg.innerHTML = ''; return; }
+  // Match any book in the user's library by title/author. Exclude already-favourited.
+  const matches = books
+    .filter(function(b){ return !b.isAllTimeFavourite; })
+    .filter(function(b){
+      return (b.title||'').toLowerCase().includes(raw) || (b.author||'').toLowerCase().includes(raw);
+    })
+    .slice(0, 8);
+  if (!matches.length) {
+    sugg.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--ink-3);font-style:italic;">no matching books in your library.</div>';
+    return;
+  }
+  sugg.innerHTML = matches.map(function(b){
+    const bg = b.coverUrl
+      ? 'background-image:url(\''+b.coverUrl+'\');background-size:cover;background-position:center;'
+      : 'background:'+bookColor(b.title)+';';
+    return '<div onclick="addFavourite(\''+b.id+'\')" style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--paper-3);" onmouseover="this.style.background=\'var(--paper-2)\'" onmouseout="this.style.background=\'transparent\'">'
+      + '<div style="width:28px;height:42px;border-radius:3px;'+bg+'flex-shrink:0;"></div>'
+      + '<div style="min-width:0;flex:1;">'
+        + '<div style="font-size:13px;color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(b.title||'')+'</div>'
+        + '<div style="font-size:11px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(b.author||'')+'</div>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+async function addFavourite(bookId) {
+  try {
+    const updated = await booksAPI.update(bookId, { isAllTimeFavourite: true });
+    const i = books.findIndex(function(b){ return b.id === bookId; });
+    if (i !== -1) books[i] = Object.assign({}, books[i], updated);
+    save();
+    closeFavouritePicker();
+    renderFavouritesList();
+  } catch (e) {
+    alert('couldn\'t add to favourites: ' + (e.message || e));
+  }
+}
+
+async function removeFavourite(bookId) {
+  try {
+    const updated = await booksAPI.update(bookId, { isAllTimeFavourite: false });
+    const i = books.findIndex(function(b){ return b.id === bookId; });
+    if (i !== -1) books[i] = Object.assign({}, books[i], updated);
+    save();
+    renderFavouritesList();
+  } catch (e) {
+    alert('couldn\'t remove: ' + (e.message || e));
+  }
+}
+
+// Hook into renderAllTimeStats — render the favourites list after the main HTML is set
+// (we wrap renderAllTimeStats indirectly by calling renderFavouritesList from a setTimeout below)
+// Cleaner: just call renderFavouritesList() from a small delay or after content set.
+// Easiest: monkey-patch renderAllTimeStats end. Done by calling renderFavouritesList() every time
+// the stats page renders in 'all' mode — handled via showPage / renderStats.
+
+
+// ─────────────────────────────────────────────────────────────
 // MONTHLY STATS VIBE ENGINE
 // ─────────────────────────────────────────────────────────────
 function getMonthVibe(monthBooks) {
@@ -2073,7 +2379,9 @@ function renderStats() {
   const year = sel.value || cy;
   const mode = modeSel ? modeSel.value : 'year';
 
-  if (mode === 'month') {
+  if (mode === 'all') {
+    renderAllTimeStats();
+  } else if (mode === 'month') {
     renderMonthStats(year);
   } else {
     renderYearStats(year);
@@ -2829,6 +3137,7 @@ function _dbToBook(row) {
     spiceLevel: row.spice_level || 0,
     lentTo: row.lent_to || '',
     lentDate: row.lent_date || '',
+    isAllTimeFavourite: !!row.is_all_time_favourite,
   };
 }
 
@@ -2865,6 +3174,7 @@ function _bookToDb(book, userId) {
   if (book.spiceLevel !== undefined) out.spice_level = book.spiceLevel || null;
   if (book.lentTo !== undefined) out.lent_to = book.lentTo || '';
   if (book.lentDate !== undefined) out.lent_date = book.lentDate || null;
+  if (book.isAllTimeFavourite !== undefined) out.is_all_time_favourite = !!book.isAllTimeFavourite;
   return out;
 }
 
