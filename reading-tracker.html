@@ -391,6 +391,27 @@ body.onboarding #welcome-screen { display: flex; }
 .favourite-suggestions { max-height: 280px; overflow-y: auto; border-top: 1px solid var(--paper-3); }
 .favourite-suggestions:empty { display: none; }
 
+/* Friend profile modal — opens on @handle / avatar tap */
+.fp-header { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 18px; }
+.fp-handle { font-family: var(--font-display); font-style: italic; font-size: 22px; color: var(--ink); }
+.fp-archetype { background: var(--paper-2); padding: 14px 18px; border-radius: var(--radius); border-left: 3px solid var(--accent-2); }
+.fp-archetype-name { font-family: var(--font-display); font-size: 13px; color: var(--accent); font-style: italic; font-weight: 500; margin-bottom: 4px; }
+.fp-archetype-desc { font-size: 13px; color: var(--ink-2); line-height: 1.65; }
+.fp-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); margin-bottom: 10px; font-weight: 500; }
+.fp-section-sub { text-transform: none; letter-spacing: 0; color: var(--ink-3); }
+.fp-empty { font-size: 12px; color: var(--ink-3); font-style: italic; padding: 4px 0 10px; }
+.fp-book-row { display: flex; gap: 12px; align-items: center; padding: 8px 0; cursor: pointer; border-bottom: 1px solid var(--paper-3); transition: background 0.15s; border-radius: 4px; padding-left: 6px; padding-right: 6px; }
+.fp-book-row:hover { background: var(--paper-2); }
+.fp-book-row:last-child { border-bottom: none; }
+.fp-book-cover { width: 38px; height: 56px; border-radius: 4px; flex-shrink: 0; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; color: white; font-size: 8px; text-align: center; padding: 3px; font-weight: 500; line-height: 1.15; }
+.fp-book-info { flex: 1; min-width: 0; }
+.fp-book-title { font-size: 13px; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-book-author { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-book-ratings { font-size: 11px; color: var(--accent); margin-top: 2px; }
+/* Tappable handles + avatars — visual cue without being loud */
+.tap-profile { cursor: pointer; transition: opacity 0.15s; }
+.tap-profile:hover { opacity: 0.75; }
+
 /* The reading room — recommendations block (distinct cards pinned above the feed) */
 .rr-recs-block { margin-bottom: 24px; display: flex; flex-direction: column; gap: 14px; }
 .rr-rec { background: var(--paper-2); border: 1px solid var(--accent-2); border-radius: var(--radius); padding: 14px; transition: box-shadow 0.15s; }
@@ -979,6 +1000,17 @@ body.onboarding #welcome-screen { display: flex; }
 </div>
 
 <!-- Sign-out confirm modal (replaces the native browser confirm) -->
+<!-- Friend profile modal — opens when you tap a friend's @handle or avatar -->
+<div class="modal-backdrop" id="modal-friend-profile">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="friend-profile-title">friend</h3>
+      <button class="modal-close" onclick="closeModal('modal-friend-profile')">×</button>
+    </div>
+    <div id="friend-profile-content"></div>
+  </div>
+</div>
+
 <!-- Reading-room peek modal — opens when you tap a friend's event in the feed -->
 <div class="modal-backdrop" id="modal-rr-peek">
   <div class="modal" style="max-width:520px;">
@@ -1732,6 +1764,19 @@ function getYearVibe(yb, year) {
     return { emoji: '📚📚', label: 'series completionist era', blurb: 'you tracked through '+seriesCount+' different series. the commitment. the lore retention. iconic.' };
   if (litfic >= 8)
     return { emoji: '🖊️', label: 'literary year', blurb: litfic+' literary fiction reads. mercury was clearly not in retrograde for you.' };
+  // Non-romance reader vibes — counted on yb's per-book genres (same shape as existing matchers)
+  const nonfic = genres.filter(g => g.includes('non-fiction') || g.includes('business') || g.includes('self-help') || g.includes('biography') || g.includes('autobiography') || g.includes('psychology')).length;
+  if (nonfic >= 8)
+    return { emoji: '📖', label: 'a year of widening', blurb: nonfic+' non-fiction stack reads — memoir, business, psychology. fiction is fine. the world is louder.' };
+  const historical = genres.filter(g => g.includes('historical')).length;
+  if (historical >= 6)
+    return { emoji: '🏰', label: 'a year in the past', blurb: historical+' historical novels. you live partly elsewhere. probably some scandals you have opinions on.' };
+  const awardTagged = yb.filter(b => (b.tags||[]).some(t => /award|prize|shortlist|longlist|debut|bestseller/i.test(t))).length;
+  if (awardTagged >= 6)
+    return { emoji: '🏆', label: 'longlist devotee', blurb: awardTagged+' books on the cultural radar this year — debuts, prize lists, the books getting debated. your tbr is half-noticed before pub day.' };
+  const magicalRealism = genres.filter(g => g.includes('magical realism')).length;
+  if (magicalRealism >= 4)
+    return { emoji: '🌀', label: 'a year of slightly-off rooms', blurb: magicalRealism+' magical realism reads. you don’t need the world explained. you prefer it slanted.' };
   if (dnfs >= 3)
     return { emoji: '✂️', label: 'ruthless with her time', blurb: dnfs+' DNFs this year. life is finite. she knows it. she acts on it.' };
   if (uniqueAuthors >= count * 0.85)
@@ -2375,6 +2420,15 @@ function getMonthVibe(monthBooks) {
     return { emoji: '🔥', label: 'absolutely feral reading pace', blurb: count + ' books in one month. per aspera ad astra. mostly ad astra in this case.' };
   if (hasLGBTQ >= 2 && romantasyRatio < 0.3)
     return { emoji: '🏳️‍🌈📖', label: 'queer lit appreciation month', blurb: 'strong showing for queer lit. the canon is being rewritten and you\'re taking notes.' };
+  const hasNonfic = genres.filter(g => g.includes('non-fiction') || g.includes('business') || g.includes('self-help') || g.includes('biography') || g.includes('autobiography') || g.includes('psychology')).length;
+  const hasHistorical = genres.filter(g => g.includes('historical')).length;
+  const hasMagicalRealism = genres.filter(g => g.includes('magical realism')).length;
+  if (hasNonfic >= 3)
+    return { emoji: '📖', label: 'practical scholar month', blurb: hasNonfic+' non-fiction reads in one month. you came to learn. the bookmark is full of folded corners.' };
+  if (hasHistorical >= 3)
+    return { emoji: '🏰', label: 'an episode of historical residency', blurb: hasHistorical+' historical novels. you may now narrate any wikipedia article about regency aristocrats with conviction.' };
+  if (hasMagicalRealism >= 2 && hasLitfic >= 1)
+    return { emoji: '🌀📕', label: 'slightly-off rooms month', blurb: 'magical realism, literary fiction. the boundary between real and not is just decoration this month.' };
   if (hasLitfic >= 3 && avgRating > 4)
     return { emoji: '🖊️🥂', label: 'literary excellence era', blurb: 'high literary content, high ratings. she came to read BOOKS this month.' };
   if (hasDark >= 3)
@@ -4187,9 +4241,15 @@ function _friendRowHtml(f, kind) {
   } else {
     actions = '<button onclick="removeFriend(\'' + f.id + '\', \'unfriended\')" style="font-family:var(--font-body);font-size:12px;padding:5px 12px;background:none;color:var(--ink-3);border:1px solid var(--paper-3);border-radius:99px;cursor:pointer;">unfollow</button>';
   }
+  // For accepted friends, avatar + handle tap opens the profile modal (RLS lets us see their books).
+  // For pending rows, leave non-tappable since RLS would block.
+  const otherUid = f.otherUserId || '';
+  const profileOpen = (kind === 'accepted' && otherUid)
+    ? ' class="tap-profile" onclick="openFriendProfile(\'' + otherUid + '\')"'
+    : '';
   return '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--paper-3);">'
-    + avatar
-    + '<div style="flex:1;font-size:13px;color:var(--ink-2);">@' + handle + '</div>'
+    + '<span' + profileOpen + '>' + avatar + '</span>'
+    + '<div' + profileOpen + ' style="flex:1;font-size:13px;color:var(--ink-2);">@' + handle + '</div>'
     + '<div style="display:flex;gap:6px;">' + actions + '</div>'
   + '</div>';
 }
@@ -4384,10 +4444,11 @@ function _rrRecHtml(rec, sender) {
     : '<button class="rr-event-tbr-btn" onclick="event.stopPropagation(); addToTbrFromRec(\'' + rec.id + '\')">+ add to my tbr</button>';
   const dismissBtn = '<button onclick="event.stopPropagation(); dismissRecommendation(\'' + rec.id + '\')" style="font-family:var(--font-body);font-size:12px;padding:5px 12px;background:none;border:1px solid var(--paper-3);color:var(--ink-3);border-radius:99px;cursor:pointer;">dismiss</button>';
 
+  const senderId = sender.id || rec.sender_id || '';
   return '<div class="rr-rec" style="cursor:pointer;" onclick="rrPeekRec(\'' + rec.id + '\')">'
     + '<div class="rr-rec-header">'
-      + avatarHtml(sender, 32)
-      + '<div class="rr-rec-meta"><strong>@' + handle + '</strong> <span class="rr-rec-verb">📩 recommends</span></div>'
+      + '<span class="tap-profile" onclick="event.stopPropagation(); openFriendProfile(\'' + senderId + '\')">' + avatarHtml(sender, 32) + '</span>'
+      + '<div class="rr-rec-meta"><strong class="tap-profile" onclick="event.stopPropagation(); openFriendProfile(\'' + senderId + '\')">@' + handle + '</strong> <span class="rr-rec-verb">📩 recommends</span></div>'
     + '</div>'
     + '<div class="rr-rec-book">'
       + cover
@@ -4436,16 +4497,22 @@ function _rrEventHtml(e, myKeys, commentCount, myUid) {
     : '';
 
   // Header — "you · reading/finished" for your own; "@handle is reading/finished" for friends
+  // For friend events, @handle is tappable (opens profile) — stopPropagation so the card click doesn't also fire
   const metaInner = isMine
     ? '<strong>you</strong> <span class="rr-verb">' + meVerb + '</span> <span class="rr-event-own-tag">· your reading</span>'
-    : '<strong>@' + handle + '</strong> <span class="rr-verb">' + verb + '</span>';
+    : '<strong class="tap-profile" onclick="event.stopPropagation(); openFriendProfile(\'' + (friend.id || '') + '\')">@' + handle + '</strong> <span class="rr-verb">' + verb + '</span>';
 
   const actionsRow = (tbrAction || commentBadge)
     ? '<div class="rr-event-actions">' + tbrAction + commentBadge + '</div>'
     : '';
 
+  // Avatar tap also opens profile (for friend events only). Wrap with a click-blocker.
+  const avatarBlock = isMine
+    ? avatarHtml(friend, 36)
+    : '<span class="tap-profile" onclick="event.stopPropagation(); openFriendProfile(\'' + (friend.id || '') + '\')">' + avatarHtml(friend, 36) + '</span>';
+
   return '<div class="rr-event' + (isMine ? ' rr-event-mine' : '') + '" style="cursor:pointer;" onclick="rrPeekBook(' + peekArgs + ')">'
-    + avatarHtml(friend, 36)
+    + avatarBlock
     + '<div class="rr-event-body">'
       + '<div class="rr-event-meta">' + metaInner + '</div>'
       + '<div class="rr-event-book">'
@@ -4544,6 +4611,123 @@ async function dismissRecommendation(recId) {
   } catch (e) {
     alert('couldn\'t dismiss: ' + (e.message || e));
   }
+}
+
+// ─────────────────────────────────────────────────────────────
+// FRIEND PROFILE MODAL — opens when you tap a friend's @handle or avatar.
+// Shows: their archetype (one dinkus-coded sentence), what they're currently
+// reading, and "the shared shelf" — books that exist in both your libraries.
+// ─────────────────────────────────────────────────────────────
+async function openFriendProfile(friendUserId) {
+  if (!friendUserId) return;
+  // Block opening on yourself — that's just your library
+  const myUid = (await db.auth.getUser()).data.user?.id;
+  if (friendUserId === myUid) return;
+
+  const fp = await _resolveFriendProfile(friendUserId);
+  if (!fp) { alert('couldn\'t find that profile.'); return; }
+
+  // Fetch their currently+read books (RLS allows this for accepted friends only)
+  const { data: rows, error } = await db.from('books').select('*').eq('user_id', friendUserId);
+  if (error) {
+    console.error('friend profile load failed:', error);
+    alert('couldn\'t open that profile right now.');
+    return;
+  }
+  const theirBooks = (rows || []).map(_dbToBook);
+
+  // Archetype from their data — reuses pickArchetype which works on any book list
+  const archetype = pickArchetype(theirBooks);
+
+  // Currently reading (1-3)
+  const currentlyReading = theirBooks
+    .filter(b => b.status === 'currently')
+    .sort((a,b) => (b.started||'').localeCompare(a.started||''))
+    .slice(0, 3);
+
+  // The shared shelf — match by lowercased title+author
+  const myKeysMap = new Map();
+  books.forEach(b => myKeysMap.set((b.title + '|' + b.author).toLowerCase(), b));
+  const common = [];
+  theirBooks.forEach(b => {
+    const key = (b.title + '|' + b.author).toLowerCase();
+    if (myKeysMap.has(key)) common.push({ mine: myKeysMap.get(key), theirs: b });
+  });
+  // Sort by most-recently-finished on either side
+  common.sort((a,b) => {
+    const ad = a.theirs.finished || a.mine.finished || '';
+    const bd = b.theirs.finished || b.mine.finished || '';
+    return bd.localeCompare(ad);
+  });
+
+  document.getElementById('friend-profile-title').textContent = '@' + (fp.handle || '?');
+
+  const archetypeBlock = '<div class="fp-archetype">'
+    + '<div class="fp-archetype-name">' + (archetype.name || '') + '</div>'
+    + '<div class="fp-archetype-desc">' + (archetype.desc || '') + '</div>'
+  + '</div>';
+
+  const currHeader = '<div class="fp-section-title">currently reading</div>';
+  const currBody = currentlyReading.length
+    ? currentlyReading.map(_fpFriendBookRow).join('')
+    : '<div class="fp-empty">nothing on the go right now.</div>';
+
+  const sharedHeader = '<div class="fp-section-title">the shared shelf <span class="fp-section-sub">' + (common.length ? '· ' + common.length + ' book' + (common.length===1?'':'s') : '') + '</span></div>';
+  const sharedBody = common.length
+    ? common.slice(0, 20).map(_fpSharedRow).join('')
+      + (common.length > 20 ? '<div class="fp-empty">+ ' + (common.length - 20) + ' more in common.</div>' : '')
+    : '<div class="fp-empty">no overlap yet. the venn diagram has one foot in the door.</div>';
+
+  document.getElementById('friend-profile-content').innerHTML =
+      '<div class="fp-header">'
+        + avatarHtml(fp, 72)
+        + '<div class="fp-handle">@' + (fp.handle || '?') + '</div>'
+      + '</div>'
+      + archetypeBlock
+      + '<div class="oracle-dinkus">* * *</div>'
+      + currHeader + currBody
+      + '<div class="oracle-dinkus">* * *</div>'
+      + sharedHeader + sharedBody;
+
+  openModal('modal-friend-profile');
+}
+
+// Friend's book row (currently reading) — tap to open the peek modal
+function _fpFriendBookRow(b) {
+  const bg = b.coverUrl
+    ? 'background-image:url(\'' + b.coverUrl + '\');background-size:cover;background-position:center;'
+    : 'background:' + bookColor(b.title) + ';';
+  const fallback = b.coverUrl ? '' : (b.title || '');
+  return '<div class="fp-book-row" onclick="closeModal(\'modal-friend-profile\'); rrPeekBook(\'' + b.id + '\', \'' + (b.user_id || '') + '\')">'
+    + '<div class="fp-book-cover" style="' + bg + '">' + fallback + '</div>'
+    + '<div class="fp-book-info">'
+      + '<div class="fp-book-title">' + (b.title || '') + '</div>'
+      + '<div class="fp-book-author">' + (b.author || '') + '</div>'
+    + '</div>'
+  + '</div>';
+}
+
+// Shared shelf row — tap to view YOUR copy of the book
+function _fpSharedRow(pair) {
+  const m = pair.mine, t = pair.theirs;
+  const bg = m.coverUrl
+    ? 'background-image:url(\'' + m.coverUrl + '\');background-size:cover;background-position:center;'
+    : 'background:' + bookColor(m.title) + ';';
+  const fallback = m.coverUrl ? '' : (m.title || '');
+  const myR = m.rating ? '★'.repeat(Math.floor(m.rating)) + (m.rating%1 ? '½' : '') : null;
+  const theirR = t.rating ? '★'.repeat(Math.floor(t.rating)) + (t.rating%1 ? '½' : '') : null;
+  let rating = '';
+  if (myR && theirR) rating = '<div class="fp-book-ratings">you ' + myR + ' · them ' + theirR + '</div>';
+  else if (myR) rating = '<div class="fp-book-ratings">you ' + myR + ' · they haven\'t rated</div>';
+  else if (theirR) rating = '<div class="fp-book-ratings">them ' + theirR + ' · you haven\'t rated</div>';
+  return '<div class="fp-book-row" onclick="closeModal(\'modal-friend-profile\'); viewBook(\'' + m.id + '\')">'
+    + '<div class="fp-book-cover" style="' + bg + '">' + fallback + '</div>'
+    + '<div class="fp-book-info">'
+      + '<div class="fp-book-title">' + (m.title || '') + '</div>'
+      + '<div class="fp-book-author">' + (m.author || '') + '</div>'
+      + rating
+    + '</div>'
+  + '</div>';
 }
 
 // Open the peek modal for a recommendation — same modal as the friend-book peek but uses the rec snapshot
@@ -5900,16 +6084,36 @@ function getYear(b) { return (b.finished||'').slice(0,4) || (b.started||'').slic
 // ─────────────────────────────────────────────────────────────
 
 // Helper: filter to read books finished in last N days (also includes archived readings)
-function _recentReadings(days) {
+// Books finished within `days` days. If a `minCount` floor is passed and the
+// window yields fewer, backfill with the most recent finishes regardless of date —
+// so slow readers still get a meaningful vibe rather than the empty-set fallback.
+function _recentReadings(days, minCount) {
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
   const cutStr = cutoff.toISOString().split('T')[0];
   const out = [];
+  const seenIds = new Set();
   books.forEach(b => {
-    if (b.status === 'read' && (b.finished||'') >= cutStr) out.push(b);
+    if (b.status === 'read' && (b.finished||'') >= cutStr) { out.push(b); seenIds.add(b.id); }
     (b.readings || []).forEach(r => {
       if ((r.finished||'') >= cutStr) out.push({...b, ...r});
     });
   });
+  if (minCount && out.length < minCount) {
+    // Top up from older finishes — sort all finished books by date desc and take whatever we need
+    const all = [];
+    books.forEach(b => {
+      if (b.status === 'read' && b.finished) all.push(b);
+      (b.readings || []).forEach(r => { if (r.finished) all.push({...b, ...r}); });
+    });
+    all.sort((a,b) => (b.finished||'').localeCompare(a.finished||''));
+    for (const b of all) {
+      if (out.length >= minCount) break;
+      if (!seenIds.has(b.id)) {
+        out.push(b);
+        seenIds.add(b.id);
+      }
+    }
+  }
   return out;
 }
 
@@ -6026,10 +6230,28 @@ const TAROT_DECK = [
     meaning:'a body has dropped in chapter one and you are already on it. nobody trusts you with twist spoilers. with reason.',
     prophecy:'a thriller will be unputdownable. cancel one (1) plan.',
     score: r => _ratio(r.recent60, b => _hasGenre(b,'mystery') || _hasGenre(b,'thriller') || _hasGenre(b,'crime')) > 0.3 ? 60 : 0 },
+  { id:'litfic_devotee', image:'tarot/litfic_devotee.webp', emoji:'✍️', name:'The Litfic Devotee',
+    meaning:'you read for the sentence as much as the story. literary fiction is the long game — slow openings, sharp endings, narrators you don’t fully trust. the metaphors do half the work.',
+    prophecy:'a quiet novel will outpace anything loud this month. surrender to the slow build.',
+    score: r => _ratio(r.recent60, b => _hasGenre(b,'literary') || _hasGenre(b,'magical realism')) > 0.25 ? 65 : 0 },
+  { id:'pragmatist', image:'tarot/pragmatist.webp', emoji:'📖', name:'The Pragmatist',
+    meaning:'you read to learn. non-fiction, memoir, business, psychology — pages with footnotes, frameworks, lives lived loud. fiction is fine. but the world is more interesting.',
+    prophecy:'a single line in a non-fiction book will change a small habit. don’t fight it.',
+    score: r => _ratio(r.recent60, b => _hasGenre(b,'non-fiction') || _hasGenre(b,'business') || _hasGenre(b,'self-help') || _hasGenre(b,'biography') || _hasGenre(b,'autobiography') || _hasGenre(b,'psychology')) > 0.25 ? 65 : 0 },
+  { id:'longlist_devotee', image:'tarot/longlist_devotee.webp', emoji:'🏆', name:'The Longlist Devotee',
+    meaning:'you read what wins, what nearly wins, what gets debated. the booker, the women’s prize, the giller — your tbr is half-noticed before pub day. cultural literacy as a hobby.',
+    prophecy:'next year’s booker longlist will have at least three on your shelf already.',
+    score: r => { const n = r.recent60.filter(b => _hasTag(b,'award') || _hasTag(b,'debut') || _hasTag(b,'bestseller') || _hasTag(b,'prize') || _hasTag(b,'shortlist')).length; return n >= 3 ? 60 : 0; } },
+  { id:'time_traveller', image:'tarot/time_traveller.webp', emoji:'🏰', name:'The Time Traveller',
+    meaning:'you live partly in the past. wars, courts, scandals, plague years. the present feels like a draft. the period detail is the point.',
+    prophecy:'a historical novel set in a time you’ve never cared about will get you. fully.',
+    score: r => _ratio(r.recent60, b => _hasGenre(b,'historical')) > 0.2 ? 60 : 0 },
   { id:'beginners_tarot', image:'tarot/beginners_tarot.webp', emoji:'🌱', name:'The Beginner\u2019s Tarot',
     meaning:'the deck doesn\u2019t know you yet. the shelves are filling. soon the patterns will speak.',
     prophecy:'log a few more books. the oracle is patient. the universe is taking notes.',
-    score: r => r.recent60.length < 5 ? 100 : 0 },
+    // Only truly-new readers — fewer than 5 books logged total. The recent60 window
+    // now backfills with older finishes so slow readers get a real vibe instead of this.
+    score: r => books.filter(b => b.status === 'read').length < 5 ? 100 : 0 },
 ];
 
 const ARCHETYPES = [
@@ -6081,6 +6303,15 @@ const ARCHETYPES = [
   { id:'genre_fluid', name:'the genre-fluid',
     desc:'no shelf claims you fully. literary one week, dystopia the next, dark academia on a wednesday. you contain multitudes. literally, statistically, possibly chaotically.',
     test: all => { if (all.length < 20) return 0; const counts={}; all.forEach(b=>(b.genre||'').split(',').forEach(g=>{const t=g.trim();if(t)counts[t]=(counts[t]||0)+1;})); const total=Object.values(counts).reduce((s,n)=>s+n,0); if (!total) return 0; const max=Math.max(...Object.values(counts)); return max/total < 0.25 ? 55 : 0; } },
+  { id:'litfic_confessor', name:'the litfic confessor',
+    desc:'you read for the prose. literary fiction is the staple, not the side. unreliable narrators are friends, not red flags. you can spot a metaphor at fifty paces.',
+    test: all => _ratio(all, b => _hasGenre(b,'literary') || _hasGenre(b,'magical realism')) > 0.3 ? 65 : 0 },
+  { id:'practical_scholar', name:'the practical scholar',
+    desc:'memoir, business, psychology, biography — you read to widen the world, not just to escape it. the fiction shelf is fine. it’s also not running the show.',
+    test: all => _ratio(all, b => _hasGenre(b,'non-fiction') || _hasGenre(b,'business') || _hasGenre(b,'self-help') || _hasGenre(b,'biography') || _hasGenre(b,'autobiography') || _hasGenre(b,'psychology')) > 0.25 ? 60 : 0 },
+  { id:'time_traveller_arch', name:'the time traveller',
+    desc:'you read the past. wars, courts, plague years, the long-ago domestic. you know the difference between regency and edwardian. you have feelings about wolf hall.',
+    test: all => _ratio(all, b => _hasGenre(b,'historical')) > 0.25 ? 60 : 0 },
 ];
 
 const VOCABULARY_PHRASES = [
@@ -6092,6 +6323,13 @@ const VOCABULARY_PHRASES = [
   ['dnf','DNF'], ['fated mates','fated mates'], ['found family','found family'],
   ['devoured','devoured'], ['brilliant','brilliant'], ['beautiful','beautiful'],
   ['gorgeous','gorgeous'], ['stunning','stunning'], ['heartbreak','heartbreak'],
+  // Non-romance lexicon — for litfic / mystery / non-fiction / debut-tracker observations
+  ['unreliable narrator','unreliable narrator'], ['harrowing','harrowing'],
+  ['tender','tender'], ['underrated','underrated'], ['luminous','luminous'],
+  ['elegiac','elegiac'], ['lyrical','lyrical'], ['propulsive','propulsive'],
+  ['compulsive','compulsive'], ['translation','translation'],
+  ['debut','debut'], ['essay','essay'], ['footnote','footnote'],
+  ['gut-punch','gut-punch'], ['twist','twist'], ['masterclass','masterclass'],
 ];
 
 function pickTarot(today) {
@@ -6103,9 +6341,11 @@ function pickTarot(today) {
 
 function shuffleTarot(today) {
   const ctx = {
+    // recent14/30 stay as pure time windows (used by recency-sensitive cards).
+    // recent60 has a 6-book floor so slow readers still get a meaningful vibe.
     recent14: _recentReadings(14),
     recent30: _recentReadings(30),
-    recent60: _recentReadings(60),
+    recent60: _recentReadings(60, 6),
   };
   ctx.dnfRate = (() => {
     const recent = books.filter(b => b.started && (b.started||'') >= (new Date(Date.now()-60*86400000)).toISOString().split('T')[0]);
@@ -6207,6 +6447,22 @@ function extractTropes(all) {
   if (vocab['cried']) observations.push('"cried" shows up ' + vocab['cried'] + ' times in your reviews. one of those was probably a feel-good book. that one\u2019s on you.');
   if (vocab['narrator']) observations.push('"narrator" appears in ' + vocab['narrator'] + ' reviews. the right voice can make or break a book and you have feelings about it.');
   if (vocab['devoured']) observations.push('"devoured" used ' + vocab['devoured'] + ' times. we will not be unpacking that today.');
+  // Non-romance vocab observations — only fire when the word actually shows up
+  if (vocab['unreliable narrator']) observations.push('"unreliable narrator" — ' + vocab['unreliable narrator'] + ' times. you don\u2019t want to be told the truth straight. you want it slanted. correct.');
+  if (vocab['harrowing']) observations.push('"harrowing" used ' + vocab['harrowing'] + ' times. you keep reading the heavy ones. respect.');
+  if (vocab['tender'] && vocab['tender'] >= 2) observations.push('"tender" \u2014 ' + vocab['tender'] + ' times. you read for the soft parts. document accordingly.');
+  if (vocab['debut'] && vocab['debut'] >= 2) observations.push('"debut" shows up ' + vocab['debut'] + ' times. you back first novels before the trade press catches up.');
+  if (vocab['underrated']) observations.push('"underrated" \u2014 ' + vocab['underrated'] + ' times. you are someone\u2019s favourite recommendation engine.');
+  if (vocab['translation']) observations.push('"translation" appears ' + vocab['translation'] + ' times. reading across borders is the whole hobby.');
+  if (vocab['twist'] && vocab['twist'] >= 2) observations.push('"twist" \u2014 ' + vocab['twist'] + ' times. the page-turn is your love language.');
+  if (vocab['masterclass']) observations.push('"masterclass" used ' + vocab['masterclass'] + ' times. you don\u2019t hand that word out lightly.');
+  // Tag-based observations for diverse-mc / award-tracker / debut-hunter readers
+  const blackMcCount = all.filter(b => (b.tags||[]).some(t => /black\s*mc/i.test(t))).length;
+  if (blackMcCount >= 3) observations.push('"black mc" tagged in ' + blackMcCount + ' books. the canon expanded under your watch. on purpose.');
+  const awardCount = all.filter(b => (b.tags||[]).some(t => /award|prize|shortlist|longlist/i.test(t))).length;
+  if (awardCount >= 3) observations.push(awardCount + ' books tagged award / prize / shortlist. you read what gets debated. the booker dinner is jealous.');
+  const debutCount = all.filter(b => (b.tags||[]).some(t => /^debut$/i.test(t))).length;
+  if (debutCount >= 3) observations.push(debutCount + ' debut tags. you\u2019re someone\u2019s next favourite author\u2019s first reader.');
 
   return { topTags, topVocab, observations };
 }
@@ -6238,6 +6494,11 @@ function buildProphecies(all) {
     if (g.includes('litrpg')) out.push('you will start a litrpg you swear is just for fun and find yourself five books deep by november. princess donut accepts your fate.');
     else if (g.includes('romance') || g.includes('fantasy')) out.push('a 600+ page romantasy is in your future. surrender now. save your wrists later.');
     else if (g.includes('literary')) out.push('a literary novel will gut you in the third quarter. you\u2019ve been warned.');
+    else if (g.includes('historical')) out.push('you\u2019ll fall into a period you didn\u2019t know you cared about. then you\u2019ll read three more on the same era. predictable.');
+    else if (g.includes('mystery') || g.includes('thriller') || g.includes('crime')) out.push('one twist will land so hard you\u2019ll have to text someone immediately. they will not have read it. you will spoil it anyway.');
+    else if (g.includes('non-fiction') || g.includes('business') || g.includes('self-help') || g.includes('psychology')) out.push('a single chapter will rewire one small habit. don\u2019t announce it on a podcast.');
+    else if (g.includes('biography') || g.includes('autobiography')) out.push('a memoir will make you reconsider someone you thought you understood. probably yourself.');
+    else if (g.includes('magical realism')) out.push('a book will refuse to explain itself. you\u2019ll love it for that.');
   }
 
   // dnf prediction
