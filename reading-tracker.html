@@ -233,6 +233,28 @@ body.onboarding #welcome-screen { display: flex; }
 .nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
 .nav-group.active .nav-icon, .nav-item.active .nav-icon { opacity: 1; }
 
+/* New-version banner — appears bottom-center when the service worker detects an update */
+#update-banner {
+  position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 12px;
+  background: var(--ink); color: var(--paper);
+  padding: 10px 12px 10px 16px; border-radius: 99px;
+  font-family: var(--font-body); font-size: 13px;
+  box-shadow: var(--shadow-lg);
+  z-index: 700;
+  animation: ub-slide-up 0.3s ease;
+}
+#update-banner button {
+  font-family: var(--font-body); font-size: 12px;
+  padding: 5px 12px; background: var(--accent); color: var(--paper);
+  border: none; border-radius: 99px; cursor: pointer; font-weight: 500;
+}
+@keyframes ub-slide-up { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (max-width: 720px) {
+  #update-banner { left: 12px; right: 12px; transform: none; bottom: calc(76px + env(safe-area-inset-bottom, 0)); }
+  @keyframes ub-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+}
+
 /* Sub-tab bar — equidistant underlined tabs with sliding brown highlight */
 #subtabs { display: none; padding: 18px 36px 0; border-bottom: 1px solid var(--paper-3); }
 .subtab { flex: 1 1 0; min-width: 0; font-family: var(--font-body); font-size: 13px; padding: 8px 4px 12px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--ink-3); cursor: pointer; white-space: nowrap; transition: color 0.15s, border-color 0.15s; text-align: center; margin-bottom: -1px; /* overlap container bottom border */ }
@@ -8177,7 +8199,48 @@ function markDNFPrompt(id) {
 // old caches via the activate handler.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW register failed:', e));
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      // Whenever a new SW is found installing, watch for it to finish
+      // and surface a "new version" banner so the user can refresh in-place.
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        if (!newSW) return;
+        newSW.addEventListener('statechange', () => {
+          // Only show banner if there's a current controller — otherwise this is a first install
+          if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+            _showUpdateBanner();
+          }
+        });
+      });
+      // Poll every 30 min for updates while the app is open
+      setInterval(() => { reg.update().catch(() => {}); }, 30 * 60 * 1000);
+    }).catch(e => console.warn('SW register failed:', e));
+
+    // When a new SW takes control, reload once so the user lands on fresh code
+    let _swReloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (_swReloading) return;
+      _swReloading = true;
+      window.location.reload();
+    });
+  });
+}
+
+// Inject and show the "new version" banner (built once per page lifetime)
+function _showUpdateBanner() {
+  if (document.getElementById('update-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'update-banner';
+  banner.innerHTML = '<span>a new version of dinkus is ready</span>'
+    + '<button onclick="_applyUpdate()">refresh</button>'
+    + '<button onclick="document.getElementById(\'update-banner\').remove()" style="background:none;color:rgba(255,255,255,0.7);" aria-label="dismiss">×</button>';
+  document.body.appendChild(banner);
+}
+
+function _applyUpdate() {
+  navigator.serviceWorker.getRegistration().then(reg => {
+    if (reg && reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    else window.location.reload();
   });
 }
 </script>

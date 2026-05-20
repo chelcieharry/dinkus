@@ -1,6 +1,6 @@
 // dinkus — service worker. caches the app for offline use.
 // bump CACHE_NAME whenever you want phones to fetch fresh assets.
-const CACHE_NAME = 'dinkus-v45';
+const CACHE_NAME = 'dinkus-v46';
 const PRECACHE = [
   './',
   './reading-tracker.html',
@@ -13,6 +13,11 @@ const PRECACHE = [
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(PRECACHE)));
   self.skipWaiting();
+});
+
+// Allow the page to ask a waiting SW to activate immediately (used by the "refresh" banner)
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
