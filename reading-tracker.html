@@ -430,6 +430,9 @@ body.onboarding #welcome-screen { display: flex; }
 .rr-pending-handle { flex: 1; font-size: 13px; color: var(--ink-2); }
 .rr-feed { display: flex; flex-direction: column; gap: 18px; }
 .rr-event { display: flex; gap: 14px; background: var(--paper-2); border-radius: var(--radius); padding: 14px; }
+/* Your own events in the feed — subtle left border so they're recognisably yours */
+.rr-event-mine { border-left: 3px solid var(--accent-2); }
+.rr-event-own-tag { font-family: var(--font-display); font-style: italic; font-size: 11px; color: var(--ink-3); margin-left: 4px; }
 .rr-event-body { flex: 1; min-width: 0; }
 .rr-event-meta { font-size: 12px; color: var(--ink-3); margin-bottom: 8px; }
 .rr-event-meta strong { color: var(--ink-2); font-weight: 500; }
@@ -1655,6 +1658,28 @@ body.onboarding #welcome-screen { display: flex; }
 </div>
 
 <script>
+// Dedupe a book list by author. Returns an array of unique-author identity objects:
+// { author (display name), gender, race, nationality }. Used by every diversity stat
+// so a Brandon Sanderson re-read doesn't double-count as "more white male reading."
+function uniqueAuthorsFrom(bookList) {
+  const map = new Map();
+  bookList.forEach(function(b){
+    const key = (b.author || '').trim().toLowerCase();
+    if (!key) return;
+    let entry = map.get(key);
+    if (!entry) {
+      entry = { author: b.author, gender: '', race: '', nationality: '' };
+      map.set(key, entry);
+    }
+    // First non-empty value wins for each identity field (in case different books
+    // by the same author have inconsistent tagging)
+    if (!entry.gender && b.gender) entry.gender = b.gender;
+    if (!entry.race && b.race) entry.race = b.race;
+    if (!entry.nationality && b.nationality) entry.nationality = b.nationality;
+  });
+  return Array.from(map.values());
+}
+
 function getYearVibe(yb, year) {
   if (!yb.length) return null;
   const count = yb.length;
@@ -1944,15 +1969,18 @@ function renderYearStats(year) {
       +'</div></div>'
     : '';
 
-  // Diversity block
-  const femCount = yb.filter(function(b){return (b.gender||'').toLowerCase().includes('female');}).length;
-  const nbCount  = yb.filter(function(b){return (b.gender||'').toLowerCase().includes('non-binary');}).length;
-  const nonWhite = yb.filter(function(b){return b.race&&!b.race.toLowerCase().includes('white');}).length;
-  const withRace = yb.filter(function(b){return !!b.race;}).length;
+  // Diversity block \u2014 counted per unique author, not per book.
+  // (Sanderson re-reads don't tip you further "white male" \u2014 they're still one author.)
+  const yearAuthors = uniqueAuthorsFrom(yb);
+  const authorTotal = yearAuthors.length;
+  const femCount = yearAuthors.filter(function(a){return (a.gender||'').toLowerCase().includes('female');}).length;
+  const nbCount  = yearAuthors.filter(function(a){return (a.gender||'').toLowerCase().includes('non-binary');}).length;
+  const nonWhite = yearAuthors.filter(function(a){return a.race&&!a.race.toLowerCase().includes('white');}).length;
+  const withRace = yearAuthors.filter(function(a){return !!a.race;}).length;
 
   function divBar(field, label, colors) {
     const counts = {};
-    yb.forEach(function(b){ const v=(b[field]||'').trim(); if(v) counts[v]=(counts[v]||0)+1; });
+    yearAuthors.forEach(function(a){ const v=(a[field]||'').trim(); if(v) counts[v]=(counts[v]||0)+1; });
     const entries = Object.entries(counts).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
     const total = entries.reduce(function(s,e){return s+e[1];},0);
     if (!entries.length) return '';
@@ -1968,12 +1996,12 @@ function renderYearStats(year) {
 
   const diversityHtml = '<div class="stat-block" style="margin-top:24px;">'
     + '<div class="stat-block-title">who you read in '+year+' \uD83C\uDF0D</div>'
-    + '<div style="font-size:12px;color:var(--ink-3);margin-bottom:16px;">the canon is a suggestion. here\'s who actually made the cut.</div>'
+    + '<div style="font-size:12px;color:var(--ink-3);margin-bottom:16px;">counted per unique author, not per book. ' + authorTotal + ' distinct voice' + (authorTotal===1?'':'s') + ' this year.</div>'
     + '<div class="stats-grid" style="margin-bottom:16px;">'
-    + '<div class="stat-card" style="--accent-color:#e879a0"><div class="stat-label">female authors</div><div class="stat-value">'+Math.round(femCount/yb.length*100)+'%</div><div class="stat-sub">'+femCount+' of '+yb.length+'</div></div>'
-    + '<div class="stat-card" style="--accent-color:var(--purple)"><div class="stat-label">non-white authors</div><div class="stat-value">'+(withRace?Math.round(nonWhite/withRace*100):0)+'%</div><div class="stat-sub">of books with data</div></div>'
-    + (nbCount ? '<div class="stat-card" style="--accent-color:#2a6b7c"><div class="stat-label">non-binary authors</div><div class="stat-value">'+nbCount+'</div><div class="stat-sub">book'+(nbCount!==1?'s':'')+' this year</div></div>' : '')
-    + '<div class="stat-card"><div class="stat-label">race data</div><div class="stat-value">'+Math.round(withRace/yb.length*100)+'%</div><div class="stat-sub">coverage</div></div>'
+    + '<div class="stat-card" style="--accent-color:#e879a0"><div class="stat-label">female authors</div><div class="stat-value">'+(authorTotal?Math.round(femCount/authorTotal*100):0)+'%</div><div class="stat-sub">'+femCount+' of '+authorTotal+'</div></div>'
+    + '<div class="stat-card" style="--accent-color:var(--purple)"><div class="stat-label">non-white authors</div><div class="stat-value">'+(withRace?Math.round(nonWhite/withRace*100):0)+'%</div><div class="stat-sub">of authors with data</div></div>'
+    + (nbCount ? '<div class="stat-card" style="--accent-color:#2a6b7c"><div class="stat-label">non-binary authors</div><div class="stat-value">'+nbCount+'</div><div class="stat-sub">author'+(nbCount!==1?'s':'')+' this year</div></div>' : '')
+    + '<div class="stat-card"><div class="stat-label">race data</div><div class="stat-value">'+(authorTotal?Math.round(withRace/authorTotal*100):0)+'%</div><div class="stat-sub">coverage</div></div>'
     + '</div>'
     + '<div class="stats-three-col">'
     + divBar('gender','author gender',['#e879a0','var(--purple)','#2a6b7c','var(--gold)'])
@@ -2110,15 +2138,17 @@ function renderAllTimeStats() {
       +'</div></div>'
     : '';
 
-  // Diversity (all-time)
-  const femCount = yb.filter(function(b){return (b.gender||'').toLowerCase().includes('female');}).length;
-  const nbCount  = yb.filter(function(b){return (b.gender||'').toLowerCase().includes('non-binary');}).length;
-  const nonWhite = yb.filter(function(b){return b.race&&!b.race.toLowerCase().includes('white');}).length;
-  const withRace = yb.filter(function(b){return !!b.race;}).length;
+  // Diversity (all-time) — per unique author, not per book.
+  const allAuthors = uniqueAuthorsFrom(yb);
+  const authorTotal = allAuthors.length;
+  const femCount = allAuthors.filter(function(a){return (a.gender||'').toLowerCase().includes('female');}).length;
+  const nbCount  = allAuthors.filter(function(a){return (a.gender||'').toLowerCase().includes('non-binary');}).length;
+  const nonWhite = allAuthors.filter(function(a){return a.race&&!a.race.toLowerCase().includes('white');}).length;
+  const withRace = allAuthors.filter(function(a){return !!a.race;}).length;
 
   function divBar(field, label, colors) {
     const counts = {};
-    yb.forEach(function(b){ const v=(b[field]||'').trim(); if(v) counts[v]=(counts[v]||0)+1; });
+    allAuthors.forEach(function(a){ const v=(a[field]||'').trim(); if(v) counts[v]=(counts[v]||0)+1; });
     const entries = Object.entries(counts).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
     const total = entries.reduce(function(s,e){return s+e[1];},0);
     if (!entries.length) return '';
@@ -2134,12 +2164,12 @@ function renderAllTimeStats() {
 
   const diversityHtml = '<div class="stat-block" style="margin-top:24px;">'
     + '<div class="stat-block-title">who you read 🌍 · all time</div>'
-    + '<div style="font-size:12px;color:var(--ink-3);margin-bottom:16px;">aggregated across every year you\'ve logged.</div>'
+    + '<div style="font-size:12px;color:var(--ink-3);margin-bottom:16px;">counted per unique author across every year. ' + authorTotal + ' distinct voice' + (authorTotal===1?'':'s') + '.</div>'
     + '<div class="stats-grid" style="margin-bottom:16px;">'
-    + '<div class="stat-card" style="--accent-color:#e879a0"><div class="stat-label">female authors</div><div class="stat-value">'+Math.round(femCount/yb.length*100)+'%</div><div class="stat-sub">'+femCount+' of '+yb.length+'</div></div>'
-    + '<div class="stat-card" style="--accent-color:var(--purple)"><div class="stat-label">non-white authors</div><div class="stat-value">'+(withRace?Math.round(nonWhite/withRace*100):0)+'%</div><div class="stat-sub">of books with data</div></div>'
+    + '<div class="stat-card" style="--accent-color:#e879a0"><div class="stat-label">female authors</div><div class="stat-value">'+(authorTotal?Math.round(femCount/authorTotal*100):0)+'%</div><div class="stat-sub">'+femCount+' of '+authorTotal+'</div></div>'
+    + '<div class="stat-card" style="--accent-color:var(--purple)"><div class="stat-label">non-white authors</div><div class="stat-value">'+(withRace?Math.round(nonWhite/withRace*100):0)+'%</div><div class="stat-sub">of authors with data</div></div>'
     + (nbCount ? '<div class="stat-card" style="--accent-color:#2a6b7c"><div class="stat-label">non-binary authors</div><div class="stat-value">'+nbCount+'</div><div class="stat-sub">all time</div></div>' : '')
-    + '<div class="stat-card"><div class="stat-label">race data</div><div class="stat-value">'+Math.round(withRace/yb.length*100)+'%</div><div class="stat-sub">coverage</div></div>'
+    + '<div class="stat-card"><div class="stat-label">race data</div><div class="stat-value">'+(authorTotal?Math.round(withRace/authorTotal*100):0)+'%</div><div class="stat-sub">coverage</div></div>'
     + '</div>'
     + '<div class="stats-three-col">'
     + divBar('gender','author gender',['#e879a0','var(--purple)','#2a6b7c','var(--gold)'])
@@ -2423,9 +2453,11 @@ function renderMonthStats(year) {
     return '<tr onclick="viewBook(\''+b.id+'\')" style="cursor:pointer;"><td><div class="tbl-title">'+b.title+'</div>'+(b.series?'<div class="tbl-meta">'+b.series+(b.seriesNum?' #'+b.seriesNum:'')+'</div>':'')+'</td><td class="tbl-author">'+b.author+'</td><td><span class="badge badge-'+fkey+'">'+(fmtLabel[fkey]||'')+'</span></td><td class="tbl-meta" style="color:var(--accent)">'+stars+'</td></tr>';
   }).join('');
 
+  // Per unique author for the month too \u2014 consistent with year + all-time views
+  const monthAuthors = uniqueAuthorsFrom(mb);
   function divBarMonth(field, label, colors) {
     const counts = {};
-    mb.forEach(b=>{ const v=(b[field]||'').trim(); if(v) counts[v]=(counts[v]||0)+1; });
+    monthAuthors.forEach(a => { const v=(a[field]||'').trim(); if(v) counts[v]=(counts[v]||0)+1; });
     const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
     const total = entries.reduce((s,e)=>s+e[1],0);
     if (!entries.length) return '';
@@ -2441,7 +2473,7 @@ function renderMonthStats(year) {
 
   const monthDiversityHtml = '<div class="stat-block" style="margin-top:24px;">'
     + '<div class="stat-block-title">who you read in '+monthName+' \uD83C\uDF0D</div>'
-    + '<div style="font-size:12px;color:var(--ink-3);margin-bottom:16px;">small samples, honest signal.</div>'
+    + '<div style="font-size:12px;color:var(--ink-3);margin-bottom:16px;">per unique author. ' + monthAuthors.length + ' distinct voice' + (monthAuthors.length===1?'':'s') + ' this month.</div>'
     + '<div class="stats-three-col">'
     + divBarMonth('gender','author gender',['#e879a0','var(--purple)','#2a6b7c','var(--gold)'])
     + divBarMonth('race','author race / ethnicity',['var(--accent-2)','var(--green)','var(--gold)','var(--purple)','#e879a0'])
@@ -4255,57 +4287,70 @@ async function renderReadingRoom() {
       .then(() => { if (typeof refreshReadingRoomDot === 'function') refreshReadingRoomDot(); });
   }
 
-  // Empty-state — no friends AND no recs
-  if (!accepted.length && !recs.length) {
+  // Get my user id so I can include my own books in the feed
+  const myUid = (await db.auth.getUser()).data.user?.id;
+  const myProfile = { id: myUid, handle: (profile && profile.handle) || 'you', avatar_url: profile && profile.avatar_url };
+
+  // Empty-state — no friends, no recs, AND no own activity to show
+  const haveOwnActivity = books.some(b => b.status === 'currently' || b.status === 'read');
+  if (!accepted.length && !recs.length && !haveOwnActivity) {
     html += '<div class="rr-empty"><p>the room is empty.</p>'
       + '<p style="font-size:14px;">find people by handle in <a onclick="showSettings()" style="cursor:pointer;">settings → your friends</a>.</p></div>';
     wrap.innerHTML = html;
     return;
   }
 
-  // No friends yet but they sent recommendations? Render what we have.
-  if (!accepted.length) {
-    wrap.innerHTML = html;
-    return;
-  }
-
-  // Fetch friends' books — RLS only returns currently + read for accepted friends
+  // Fetch friends' books (if any friends) — RLS only returns currently + read
+  let friendRows = [];
   const friendIds = accepted.map(f => f.otherUserId);
-  const { data: rows, error } = await db.from('books').select('*').in('user_id', friendIds);
-  if (error) {
-    console.error('reading room load failed:', error);
-    wrap.innerHTML = html + '<div class="rr-empty"><p>the room won\'t open. try again in a moment.</p></div>';
-    return;
+  if (friendIds.length) {
+    const { data: rows, error } = await db.from('books').select('*').in('user_id', friendIds);
+    if (error) {
+      console.error('reading room load failed:', error);
+      wrap.innerHTML = html + '<div class="rr-empty"><p>the room won\'t open. try again in a moment.</p></div>';
+      return;
+    }
+    friendRows = rows || [];
   }
 
-  const friendMap = {};
-  accepted.forEach(f => { friendMap[f.otherUserId] = f.otherProfile; });
+  const userMap = { [myUid]: myProfile };
+  accepted.forEach(f => { userMap[f.otherUserId] = f.otherProfile; });
 
-  // Build event list — currently reading per friend, last 5 finishes per friend
+  // Build event list — currently reading + last 5 finishes per person (mine + friends)
   const events = [];
-  const finishedByFriend = {};
-  (rows || []).forEach(r => {
-    const friend = friendMap[r.user_id];
-    if (!friend) return;
+  const finishedByUser = {};
+  // Friends' books from supabase
+  friendRows.forEach(r => {
+    const u = userMap[r.user_id];
+    if (!u) return;
     const book = _dbToBook(r);
     if (book.status === 'currently') {
-      events.push({ type: 'currently', book, friend, date: book.started || book.addedAt || '' });
+      events.push({ type: 'currently', book, friend: u, date: book.started || book.addedAt || '' });
     } else if (book.status === 'read') {
-      finishedByFriend[r.user_id] = finishedByFriend[r.user_id] || [];
-      finishedByFriend[r.user_id].push(book);
+      finishedByUser[r.user_id] = finishedByUser[r.user_id] || [];
+      finishedByUser[r.user_id].push(book);
     }
   });
-  Object.entries(finishedByFriend).forEach(([fid, fbooks]) => {
-    fbooks.sort((a,b) => (b.finished || '').localeCompare(a.finished || ''));
-    const friend = friendMap[fid];
-    fbooks.slice(0, 5).forEach(b => {
-      events.push({ type: 'finished', book: b, friend, date: b.finished || b.addedAt || '' });
+  // My own books from the in-memory cache
+  books.forEach(b => {
+    if (b.status === 'currently') {
+      events.push({ type: 'currently', book: b, friend: myProfile, date: b.started || b.addedAt || '' });
+    } else if (b.status === 'read') {
+      finishedByUser[myUid] = finishedByUser[myUid] || [];
+      finishedByUser[myUid].push(b);
+    }
+  });
+  Object.entries(finishedByUser).forEach(([uid, ubooks]) => {
+    ubooks.sort((a,b) => (b.finished || '').localeCompare(a.finished || ''));
+    const u = userMap[uid];
+    ubooks.slice(0, 5).forEach(b => {
+      events.push({ type: 'finished', book: b, friend: u, date: b.finished || b.addedAt || '' });
     });
   });
   events.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
 
   if (!events.length) {
-    html += '<div class="rr-empty"><p>your friends are quiet right now. check back soon.</p></div>';
+    html += '<div class="rr-empty"><p>the room is quiet. log something or check back soon.</p></div>';
     wrap.innerHTML = html;
     return;
   }
@@ -4317,7 +4362,7 @@ async function renderReadingRoom() {
   const myKeys = new Set(books.map(b => (b.title + '|' + b.author).toLowerCase()));
 
   html += '<div class="rr-feed">';
-  html += events.map(e => _rrEventHtml(e, myKeys, (commentMap[e.book.id] || []).length)).join('');
+  html += events.map(e => _rrEventHtml(e, myKeys, (commentMap[e.book.id] || []).length, myUid)).join('');
   html += '</div>';
   wrap.innerHTML = html;
 }
@@ -4356,10 +4401,12 @@ function _rrRecHtml(rec, sender) {
   + '</div>';
 }
 
-function _rrEventHtml(e, myKeys, commentCount) {
+function _rrEventHtml(e, myKeys, commentCount, myUid) {
   const { book: b, friend, type } = e;
+  const isMine = myUid && friend && friend.id === myUid;
   const handle = friend.handle || '?';
   const verb = type === 'currently' ? 'is reading' : 'finished';
+  const meVerb = type === 'currently' ? 'reading' : 'finished';
   const peekArgs = "'" + b.id + "', '" + (friend.id || '') + "'";
   const cover = b.coverUrl
     ? '<div class="rr-event-cover" style="background-image:url(\'' + b.coverUrl + '\');"></div>'
@@ -4372,11 +4419,15 @@ function _rrEventHtml(e, myKeys, commentCount) {
     ? '<div class="rr-event-thoughts">' + b.thoughts.trim().slice(0, 280) + (b.thoughts.length > 280 ? '… <span style="color:var(--accent);font-style:normal;font-size:11px;">tap for more</span>' : '') + '</div>'
     : '';
 
-  const key = (b.title + '|' + b.author).toLowerCase();
-  const inLibrary = myKeys.has(key);
-  const tbrAction = inLibrary
-    ? '<span class="rr-event-already">already in your library</span>'
-    : '<button class="rr-event-tbr-btn" onclick="event.stopPropagation(); addToTbrFromFriend(\'' + b.id + '\', \'' + (friend.id || '') + '\', \'' + (friend.handle || '') + '\')">+ add to my tbr</button>';
+  // No tbr action on your own books — they're already in your library
+  let tbrAction = '';
+  if (!isMine) {
+    const key = (b.title + '|' + b.author).toLowerCase();
+    const inLibrary = myKeys.has(key);
+    tbrAction = inLibrary
+      ? '<span class="rr-event-already">already in your library</span>'
+      : '<button class="rr-event-tbr-btn" onclick="event.stopPropagation(); addToTbrFromFriend(\'' + b.id + '\', \'' + (friend.id || '') + '\', \'' + (friend.handle || '') + '\')">+ add to my tbr</button>';
+  }
 
   // 💬 N comment badge — opens peek modal (where the thread lives) on tap
   const cc = commentCount || 0;
@@ -4384,11 +4435,19 @@ function _rrEventHtml(e, myKeys, commentCount) {
     ? '<span class="rr-event-comment-badge">💬 ' + cc + '</span>'
     : '';
 
-  // Whole card opens the peek modal; the tbr button stops propagation so it doesn't double-fire
-  return '<div class="rr-event" style="cursor:pointer;" onclick="rrPeekBook(' + peekArgs + ')">'
+  // Header — "you · reading/finished" for your own; "@handle is reading/finished" for friends
+  const metaInner = isMine
+    ? '<strong>you</strong> <span class="rr-verb">' + meVerb + '</span> <span class="rr-event-own-tag">· your reading</span>'
+    : '<strong>@' + handle + '</strong> <span class="rr-verb">' + verb + '</span>';
+
+  const actionsRow = (tbrAction || commentBadge)
+    ? '<div class="rr-event-actions">' + tbrAction + commentBadge + '</div>'
+    : '';
+
+  return '<div class="rr-event' + (isMine ? ' rr-event-mine' : '') + '" style="cursor:pointer;" onclick="rrPeekBook(' + peekArgs + ')">'
     + avatarHtml(friend, 36)
     + '<div class="rr-event-body">'
-      + '<div class="rr-event-meta"><strong>@' + handle + '</strong> <span class="rr-verb">' + verb + '</span></div>'
+      + '<div class="rr-event-meta">' + metaInner + '</div>'
       + '<div class="rr-event-book">'
         + cover
         + '<div class="rr-event-info">'
@@ -4396,7 +4455,7 @@ function _rrEventHtml(e, myKeys, commentCount) {
           + '<div class="rr-event-author">' + b.author + '</div>'
           + ratingHtml
           + thoughtsHtml
-          + '<div class="rr-event-actions">' + tbrAction + commentBadge + '</div>'
+          + actionsRow
         + '</div>'
       + '</div>'
       + '<div class="rr-event-when">' + _relTime(e.date) + '</div>'
