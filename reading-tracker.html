@@ -233,12 +233,11 @@ body.onboarding #welcome-screen { display: flex; }
 .nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
 .nav-group.active .nav-icon, .nav-item.active .nav-icon { opacity: 1; }
 
-/* Sub-tab bar — appears at the top of .main when the active nav group has more than one page */
-#subtabs { display: none; gap: 6px; padding: 18px 36px 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-#subtabs::-webkit-scrollbar { display: none; }
-.subtab { font-family: var(--font-body); font-size: 13px; padding: 7px 16px; background: none; border: 1px solid var(--paper-3); color: var(--ink-3); border-radius: 99px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
-.subtab:hover { color: var(--ink-2); border-color: var(--accent-2); }
-.subtab.active { background: var(--accent); color: var(--paper); border-color: var(--accent); font-weight: 500; }
+/* Sub-tab bar — equidistant underlined tabs with sliding brown highlight */
+#subtabs { display: none; padding: 18px 36px 0; border-bottom: 1px solid var(--paper-3); }
+.subtab { flex: 1 1 0; min-width: 0; font-family: var(--font-body); font-size: 13px; padding: 8px 4px 12px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--ink-3); cursor: pointer; white-space: nowrap; transition: color 0.15s, border-color 0.15s; text-align: center; margin-bottom: -1px; /* overlap container bottom border */ }
+.subtab:hover { color: var(--ink-2); }
+.subtab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
 
 /* Customisation — toggle switch (paper-coloured) */
 .custom-toggle input { display: none; }
@@ -1205,7 +1204,7 @@ body.onboarding #welcome-screen { display: flex; }
     <div id="dash-word"></div>
     <div class="section" id="dash-curr-section">
       <div class="section-header">
-        <span class="section-title">Currently reading</span>
+        <span class="section-title">currently reading</span>
         <span class="section-link" onclick="openAddBook('currently')">+ start a new book</span>
       </div>
       <div id="dash-curr-copy"></div>
@@ -1217,7 +1216,7 @@ body.onboarding #welcome-screen { display: flex; }
     <div class="stats-grid" id="dash-stats"></div>
     <div class="section">
       <div class="section-header">
-        <span class="section-title">Recently finished</span>
+        <span class="section-title">recently finished</span>
         <span class="section-link" onclick="showPage('library')">full library →</span>
       </div>
       <div id="dash-recent"></div>
@@ -1229,7 +1228,7 @@ body.onboarding #welcome-screen { display: flex; }
 <div id="page-library" class="hidden">
   <div class="topbar">
     <div>
-      <h2 class="page-title">The shelves</h2>
+      <h2 class="page-title">the shelves</h2>
       <p class="page-subtitle" id="lib-count"></p>
     </div>
     <button class="btn-add" onclick="openAddBook('read')">+ log a book</button>
@@ -1286,7 +1285,7 @@ body.onboarding #welcome-screen { display: flex; }
 <!-- Series -->
 <div id="page-series" class="hidden">
   <div class="topbar">
-    <div><h2 class="page-title">Series tracker</h2><p class="page-subtitle" id="series-count">every arc, every obsession</p></div>
+    <div><h2 class="page-title">series tracker</h2><p class="page-subtitle" id="series-count">every arc, every obsession</p></div>
   </div>
   <div class="content">
     <div class="search-row">
@@ -1294,7 +1293,7 @@ body.onboarding #welcome-screen { display: flex; }
       <select id="series-filter" onchange="renderSeries()">
         <option value="all">All series</option>
         <option value="complete">Fully read</option>
-        <option value="inprogress">In progress</option>
+        <option value="inprogress">in progress</option>
       </select>
     </div>
     <div id="series-grid"></div>
@@ -1304,7 +1303,7 @@ body.onboarding #welcome-screen { display: flex; }
 <!-- Stats -->
 <div id="page-stats" class="hidden">
   <div class="topbar">
-    <div><h2 class="page-title">Reading stats</h2><p class="page-subtitle">data, darling. the numbers don't lie.</p></div>
+    <div><h2 class="page-title">reading stats</h2><p class="page-subtitle">data, darling. the numbers don't lie.</p></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <select id="stats-mode" style="font-family:var(--font-body);font-size:13px;padding:7px 12px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;" onchange="onStatsModeChange()"><option value="year">year overview</option><option value="month">by month</option><option value="all">all time</option></select>
       <select id="stats-year" style="font-family:var(--font-body);font-size:13px;padding:7px 12px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;" onchange="renderStats()"></select>
@@ -1346,10 +1345,20 @@ body.onboarding #welcome-screen { display: flex; }
   </div>
 </div>
 
+<!-- Your own profile — first sub-tab under "you". Mirrors the friend profile structure with archetype + patterns. -->
+<div id="page-profile" class="hidden">
+  <div class="topbar">
+    <div><h2 class="page-title">profile</h2><p class="page-subtitle">your reader-shape, observed from the data you've fed the deck.</p></div>
+  </div>
+  <div class="content">
+    <div id="profile-content"></div>
+  </div>
+</div>
+
 <div id="page-goals" class="hidden">
   <div class="topbar">
     <div><h2 class="page-title">goals</h2><p class="page-subtitle">goals: because vague intentions are for people who haven't read enough dystopias</p></div>
-    <button class="btn-add" onclick="openAddGoal()">+ Add goal</button>
+    <button class="btn-add" onclick="openAddGoal()">+ add goal</button>
   </div>
   <div class="content">
     <div id="goals-grid-wrap"></div>
@@ -1421,7 +1430,7 @@ body.onboarding #welcome-screen { display: flex; }
 
     <!-- Page 1 — the book itself -->
     <div class="book-page active" data-page="1">
-      <div class="form-section-title">Search &amp; autofill</div>
+      <div class="form-section-title">search &amp; autofill</div>
       <div class="form-row" style="align-items:flex-end;gap:10px;">
         <div class="field" style="flex:1;">
           <label>Search by title</label>
@@ -1434,7 +1443,7 @@ body.onboarding #welcome-screen { display: flex; }
         <button type="button" onclick="openIsbnScanner()" style="font-family:var(--font-body);font-size:13px;padding:9px 14px;background:var(--paper-2);border:1px solid var(--paper-3);color:var(--ink-2);border-radius:var(--radius);cursor:pointer;white-space:nowrap;flex-shrink:0;">📷 scan</button>
       </div>
       <div class="divider"></div>
-      <div class="form-section-title">The book itself</div>
+      <div class="form-section-title">the book itself</div>
       <div class="form-row" style="align-items:center;gap:14px;margin-bottom:12px;">
         <div id="f-cover-preview" style="width:60px;aspect-ratio:2/3;border-radius:6px;background:var(--paper-3);background-size:cover;background-position:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ink-4);">📕</div>
         <div style="flex:1;font-size:11px;color:var(--ink-3);">Cover auto-fills from the search above. Paste a URL below to override.</div>
@@ -1486,13 +1495,13 @@ body.onboarding #welcome-screen { display: flex; }
 
     <!-- Page 2 — your experience -->
     <div class="book-page" data-page="2">
-      <div class="form-section-title">Your experience</div>
+      <div class="form-section-title">your experience</div>
       <div class="form-row cols-2">
         <div class="field">
           <label>Status</label>
           <select id="f-status" onchange="handleStatusChange()">
             <option value="read">Read</option>
-            <option value="currently">Currently reading</option>
+            <option value="currently">currently reading</option>
             <option value="want">want to read</option>
             <option value="dnf">DNF</option>
           </select>
@@ -1544,7 +1553,7 @@ body.onboarding #welcome-screen { display: flex; }
 
     <!-- Page 3 — tags + author demographics -->
     <div class="book-page" data-page="3">
-      <div class="form-section-title">Tags &amp; author</div>
+      <div class="form-section-title">tags &amp; author</div>
       <div class="form-row">
         <div class="field" style="flex:1;"><label>Tags</label><input type="text" id="f-tags" placeholder="type new, or click below" oninput="handleTagsChange()"></div>
       </div>
@@ -1570,7 +1579,7 @@ body.onboarding #welcome-screen { display: flex; }
       </div>
 
       <div class="divider"></div>
-      <div class="form-section-title">Author</div>
+      <div class="form-section-title">author</div>
       <div class="form-row cols-2">
         <div class="field">
           <label>Nationality</label>
@@ -5337,20 +5346,21 @@ const NAV_GROUPS = [
     { id: 'readingRoom',  label: 'the reading room' },
   ]},
   { id: 'you',      label: 'you',      pages: [
+    { id: 'profile',      label: 'profile' },
     { id: 'oracle',       label: 'your reading' },
     { id: 'goals',        label: 'goals' },
     { id: 'settings',     label: 'settings' },
   ]},
 ];
 
-const PAGES = ['dashboard','library','stats','want','series','oracle','readingRoom','goals','friendsList'];
+const PAGES = ['dashboard','library','stats','want','series','oracle','readingRoom','goals','friendsList','profile'];
 // Per-group memory of the last sub-page visited, so re-tapping a group lands you back where you were
 const _groupLastPage = {
   home: 'dashboard',
   library: 'library',
   stats: 'stats',
   friends: 'friendsList',
-  you: 'oracle',
+  you: 'profile',
 };
 
 function _groupForPage(pageId) {
@@ -5407,6 +5417,7 @@ function showPage(name) {
   if (name==='oracle') renderOracle();
   if (name==='readingRoom') renderReadingRoom();
   if (name==='friendsList') renderFriendsListPage();
+  if (name==='profile') renderProfile();
   if (name==='settings') renderSettings();
 }
 
@@ -6670,15 +6681,8 @@ async function renderOracle() {
 
   const today = new Date().toISOString().split('T')[0];
   const card = pickTarot(today);
-  const arch = pickArchetype(all);
-  const tropes = extractTropes(all);
   const prophecy = dailyProphecy(all);
   const prophecyRevealed = isProphecyRevealedToday();
-
-  // Patterns: just the witty observations as flowing italic prose. No lists.
-  const obsHtml = tropes.observations.length
-    ? tropes.observations.map(o => '<div class="observation">' + o + '</div>').join('')
-    : '<div class="observation" style="opacity:0.7;">the patterns are still forming. log a few more reviews and the deck will have things to say.</div>';
 
   // Tarot section
   const cardArt = card.image
@@ -6703,23 +6707,6 @@ async function renderOracle() {
     + '<div class="tarot-caption">drawn from the last sixty days of reading \u00b7 tap to draw, tap again to reset.</div>'
   + '</div>';
 
-  // Archetype section \u2014 no patron saints, just name + descriptor
-  const archetypeSection = '<div class="oracle-section">'
-    + '<div class="oracle-section-title">your archetype</div>'
-    + '<div class="oracle-section-sub">a longer view than the tarot \u2014 calculated from everything you\u2019ve logged.</div>'
-    + '<div class="archetype-card">'
-      + '<div class="archetype-name">' + arch.name + '</div>'
-      + '<div class="archetype-desc">' + arch.desc + '</div>'
-    + '</div>'
-  + '</div>';
-
-  // Patterns section \u2014 flowing observations, no lists
-  const patternsSection = '<div class="oracle-section">'
-    + '<div class="oracle-section-title">the patterns</div>'
-    + '<div class="oracle-section-sub">the words you reach for, the tags you keep coming back to. observed without judgement.</div>'
-    + '<div class="patterns-prose">' + obsHtml + '</div>'
-  + '</div>';
-
   // Prophecy section \u2014 single misty card, tap to reveal, persists for the day
   const prophecyText = prophecy || 'the deck is quiet today. log a few more books and try again tomorrow.';
   const prophecySection = '<div class="oracle-section">'
@@ -6734,11 +6721,45 @@ async function renderOracle() {
     + '</div>'
   + '</div>';
 
-  // Assemble with dinkus dividers between each section
-  wrap.innerHTML = tarotSection
-    + _oracleDinkus() + archetypeSection
-    + _oracleDinkus() + patternsSection
-    + _oracleDinkus() + prophecySection;
+  // Tarot + prophecy only — archetype and patterns moved to the profile sub-tab under "you".
+  wrap.innerHTML = tarotSection + _oracleDinkus() + prophecySection;
+}
+
+// Render the user's own profile sub-page — mirrors the friend profile layout
+// with archetype + patterns (moved here from "your reading"). Tarot/prophecy stay there.
+async function renderProfile() {
+  const wrap = document.getElementById('profile-content');
+  if (!wrap) return;
+  const all = books.filter(b => b.status === 'read' || b.status === 'currently' || b.status === 'dnf');
+
+  if (all.length < 3) {
+    wrap.innerHTML = '<div class="empty-state"><p>your archetype takes shape with data. log a few more books and the deck will have things to say.</p></div>';
+    return;
+  }
+
+  const arch = pickArchetype(all);
+  const tropes = extractTropes(all);
+  const handle = (profile && profile.handle) || '?';
+
+  const obsHtml = tropes.observations.length
+    ? tropes.observations.map(o => '<div class="observation">' + o + '</div>').join('')
+    : '<div class="observation" style="opacity:0.7;">the patterns are still forming. log a few more reviews and the deck will have things to say.</div>';
+
+  wrap.innerHTML =
+      '<div class="fp-header">'
+        + avatarHtml(profile, 72)
+        + '<div class="fp-handle">@' + handle + '</div>'
+      + '</div>'
+      + '<div class="fp-archetype">'
+        + '<div class="fp-archetype-name">' + arch.name + '</div>'
+        + '<div class="fp-archetype-desc">' + arch.desc + '</div>'
+      + '</div>'
+      + '<div class="oracle-dinkus">* * *</div>'
+      + '<div class="oracle-section">'
+        + '<div class="oracle-section-title">the patterns</div>'
+        + '<div class="oracle-section-sub">the words you reach for, the tags you keep coming back to. observed without judgement.</div>'
+        + '<div class="patterns-prose">' + obsHtml + '</div>'
+      + '</div>';
 }
 
 // ── DASHBOARD ──────────────────────────────────────────────
