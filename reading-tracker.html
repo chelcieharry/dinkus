@@ -523,6 +523,46 @@ body.onboarding #welcome-screen { display: flex; }
 .bc-club-meta-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--ink-3); }
 .bc-invite-code { font-family: var(--font-display); font-style: italic; font-size: 13px; color: var(--accent); letter-spacing: 0.15em; background: var(--paper-2); padding: 5px 12px; border-radius: 4px; cursor: pointer; }
 .bc-invite-code:hover { background: var(--paper-3); }
+.bc-invite-btn { font-family: var(--font-body); font-size: 12px; color: var(--paper); background: var(--accent); border: none; border-radius: 99px; padding: 6px 14px; cursor: pointer; font-weight: 500; }
+.bc-invite-btn:hover { opacity: 0.92; }
+/* Invite-to-club modal — friends list + link share */
+.bc-iv-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); font-weight: 500; margin-bottom: 12px; }
+.bc-iv-friend-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--paper-3); }
+.bc-iv-friend-row:last-of-type { border-bottom: none; }
+.bc-iv-handle { flex: 1; font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bc-iv-action-btn { font-family: var(--font-body); font-size: 12px; padding: 5px 12px; background: var(--accent); color: var(--paper); border: none; border-radius: 99px; cursor: pointer; font-weight: 500; }
+.bc-iv-action-btn:disabled { opacity: 0.5; cursor: default; }
+.bc-iv-status { font-size: 11px; color: var(--ink-3); font-style: italic; }
+.bc-iv-divider { display: flex; align-items: center; gap: 12px; margin: 22px 0 14px; }
+.bc-iv-divider::before, .bc-iv-divider::after { content: ''; flex: 1; height: 1px; background: var(--paper-3); }
+.bc-iv-divider span { font-size: 11px; color: var(--ink-3); font-style: italic; text-transform: lowercase; letter-spacing: 0.04em; }
+.bc-iv-link-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.bc-iv-link-row .bc-invite-code { font-size: 14px; padding: 7px 14px; }
+/* Incoming club invitations (shown on book clubs landing + reading room) */
+.bc-inv-block { background: var(--paper-2); border: 1px solid var(--paper-3); border-left: 3px solid var(--accent-2); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; }
+.bc-inv-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-3); margin-bottom: 8px; }
+.bc-inv-meta strong { color: var(--ink-2); font-weight: 500; }
+.bc-inv-title { font-family: var(--font-display); font-style: italic; font-size: 18px; color: var(--ink); line-height: 1.25; margin-bottom: 4px; }
+.bc-inv-desc { font-size: 12px; color: var(--ink-3); line-height: 1.55; margin-bottom: 10px; }
+.bc-inv-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.bc-inv-actions button { font-family: var(--font-body); font-size: 12px; padding: 6px 14px; border-radius: 99px; cursor: pointer; font-weight: 500; border: none; }
+.bc-inv-join { background: var(--accent); color: var(--paper); }
+.bc-inv-dismiss { background: none; color: var(--ink-3); border: 1px solid var(--paper-3) !important; }
+/* Archive section on the club page */
+.bc-arch-card { background: var(--paper-2); border: 1px solid var(--paper-3); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+.bc-arch-header { display: flex; gap: 14px; align-items: flex-start; }
+.bc-arch-cover { width: 56px; height: 84px; border-radius: 4px; flex-shrink: 0; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; font-size: 9px; text-align: center; padding: 3px; font-weight: 500; line-height: 1.15; box-shadow: var(--shadow); }
+.bc-arch-info { flex: 1; min-width: 0; }
+.bc-arch-title { font-family: var(--font-display); font-size: 16px; font-weight: 500; line-height: 1.2; color: var(--ink); margin-bottom: 3px; }
+.bc-arch-author { font-size: 12px; color: var(--ink-3); margin-bottom: 6px; }
+.bc-arch-dates { font-size: 11px; color: var(--ink-3); font-style: italic; }
+.bc-arch-subhead { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); font-weight: 500; margin: 14px 0 8px; }
+.bc-arch-quote { font-family: var(--font-display); font-style: italic; font-size: 13px; color: var(--ink-2); line-height: 1.6; padding: 6px 0; border-left: 2px solid var(--accent-2); padding-left: 10px; margin: 6px 0; }
+.bc-arch-quote-attr { display: block; font-style: normal; font-family: var(--font-body); font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+.bc-arch-rating-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 12px; color: var(--ink-2); }
+.bc-arch-rating-handle { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bc-arch-rating-stars { color: var(--accent); font-size: 12px; }
+.bc-arch-rating-stars.unrated { color: var(--ink-3); font-style: italic; font-size: 11px; }
 .bc-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); margin: 24px 0 12px; font-weight: 500; }
 .bc-current-book { display: flex; gap: 14px; align-items: flex-start; background: var(--paper-2); border: 1px solid var(--paper-3); border-radius: var(--radius); padding: 16px; }
 .bc-current-cover { width: 64px; height: 96px; border-radius: 4px; flex-shrink: 0; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; text-align: center; padding: 4px; font-weight: 500; line-height: 1.2; box-shadow: var(--shadow); }
@@ -1192,6 +1232,17 @@ body.onboarding #welcome-screen { display: flex; }
       <button class="modal-close" onclick="closeModal('modal-club-settings')">×</button>
     </div>
     <div id="club-settings-content"></div>
+  </div>
+</div>
+
+<!-- Book club: invite a friend (or share the link) -->
+<div class="modal-backdrop" id="modal-invite-to-club">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="invite-to-club-title">invite to the club</h3>
+      <button class="modal-close" onclick="closeModal('modal-invite-to-club')">×</button>
+    </div>
+    <div id="invite-to-club-content"></div>
   </div>
 </div>
 
@@ -4061,6 +4112,94 @@ const clubsAPI = {
     const { error } = await db.from('book_clubs').delete().eq('id', clubId);
     if (error) throw error;
   },
+
+  // ─── Invitations ───────────────────────────────────────────
+  // Send an in-app invitation to one of my dinkus friends. RLS: I must be a club member.
+  // The unique(club_id, invitee_id) constraint prevents duplicate invites.
+  async invite(clubId, inviteeId) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const { data, error } = await db.from('book_club_invitations').insert({
+      club_id: clubId, inviter_id: userId, invitee_id: inviteeId,
+    }).select().single();
+    if (error) {
+      if (/duplicate|unique/i.test(error.message || '')) throw new Error('already invited');
+      throw error;
+    }
+    return data;
+  },
+
+  // Incoming invitations (TO me), with inviter profile + club details joined for display.
+  // The book_clubs SELECT policy includes an invitee-exists branch so we can read the
+  // club row even before joining.
+  async listInvitations() {
+    const userId = await _currentUserId();
+    if (!userId) return [];
+    const { data: rows, error } = await db.from('book_club_invitations')
+      .select('*').eq('invitee_id', userId).order('created_at', { ascending: false });
+    if (error) { console.error('club invitations list failed:', error); return []; }
+    if (!rows || !rows.length) return [];
+    const clubIds = [...new Set(rows.map(r => r.club_id))];
+    const inviterIds = [...new Set(rows.map(r => r.inviter_id))];
+    const [{ data: profiles }, { data: clubs }] = await Promise.all([
+      db.from('public_profiles').select('*').in('id', inviterIds),
+      db.from('book_clubs').select('id,name,description').in('id', clubIds),
+    ]);
+    const profMap = {}, clubMap = {};
+    (profiles || []).forEach(p => { profMap[p.id] = p; });
+    (clubs || []).forEach(c => { clubMap[c.id] = c; });
+    return rows.map(r => ({
+      ...r,
+      inviter: profMap[r.inviter_id] || { id: r.inviter_id, handle: '?', avatar_url: null },
+      club: clubMap[r.club_id] || { id: r.club_id, name: 'a book club', description: null },
+    }));
+  },
+
+  // Outstanding invites already sent FROM this club (used to filter the friend list in the invite modal)
+  async listInvitationsForClub(clubId) {
+    const { data, error } = await db.from('book_club_invitations')
+      .select('invitee_id').eq('club_id', clubId);
+    if (error) { console.error('club invitations for club failed:', error); return []; }
+    return (data || []).map(r => r.invitee_id);
+  },
+
+  // Accept via SECURITY DEFINER RPC. Inserts member row + deletes invitation atomically.
+  async acceptInvitation(invitationId) {
+    const { data, error } = await db.rpc('accept_club_invitation', { p_invitation_id: invitationId });
+    if (error) throw error;
+    return data;  // club_id
+  },
+
+  async dismissInvitation(invitationId) {
+    const { error } = await db.from('book_club_invitations').delete().eq('id', invitationId);
+    if (error) throw error;
+  },
+
+  async markInvitationsSeen(ids) {
+    if (!ids || !ids.length) return;
+    const { error } = await db.from('book_club_invitations')
+      .update({ seen_at: new Date().toISOString() })
+      .in('id', ids).is('seen_at', null);
+    if (error) console.warn('club invitations markSeen failed:', error);
+  },
+
+  // Cheap count for the reading-room dot
+  async countUnseenInvitations() {
+    const userId = await _currentUserId();
+    if (!userId) return 0;
+    const { count, error } = await db.from('book_club_invitations')
+      .select('id', { count: 'exact', head: true })
+      .eq('invitee_id', userId).is('seen_at', null);
+    if (error) { console.warn('invitations count failed:', error); return 0; }
+    return count || 0;
+  },
+
+  // Archive aggregate: ratings + thoughts per member for an archived club book
+  async getBookMemberTakes(clubBookId) {
+    const { data, error } = await db.rpc('get_club_book_member_takes', { p_club_book_id: clubBookId });
+    if (error) { console.warn('book member takes failed:', error); return []; }
+    return data || [];
+  },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -4891,15 +5030,31 @@ async function renderReadingRoom() {
   if (!wrap) return;
   wrap.innerHTML = '<div style="font-family:var(--font-display);font-style:italic;color:var(--ink-3);text-align:center;padding:40px;">peeking through the doorway…</div>';
 
-  // Pull friends, recommendations in parallel
-  const [all, recs] = await Promise.all([
+  // Pull friends, recommendations, club invitations in parallel
+  const [all, recs, clubInvitations] = await Promise.all([
     friendsAPI.list(),
     recommendsAPI.fetchInbox(),
+    clubsAPI.listInvitations(),
   ]);
   const incoming = all.filter(f => f.status === 'pending' && !f.iAmRequester);
   const accepted = all.filter(f => f.status === 'accepted');
 
   let html = '';
+
+  // Club invitations up top — same flavour as friend requests, separate card style
+  if (clubInvitations.length) {
+    html += '<div style="margin-bottom:18px;">';
+    html += '<div class="rr-pending-title">' + clubInvitations.length + ' club invitation' + (clubInvitations.length===1?'':'s') + '</div>';
+    html += clubInvitations.map(_clubInvitationHtml).join('');
+    html += '</div>';
+    // Mark seen so the dot clears next refresh
+    const unseen = clubInvitations.filter(i => !i.seen_at).map(i => i.id);
+    if (unseen.length) {
+      clubsAPI.markInvitationsSeen(unseen).then(() => {
+        if (typeof refreshReadingRoomDot === 'function') refreshReadingRoomDot();
+      });
+    }
+  }
 
   // Pending incoming requests up top
   if (incoming.length) {
@@ -5477,9 +5632,29 @@ async function renderClubsList() {
   const wrap = document.getElementById('bc-content');
   if (!wrap) return;
   wrap.innerHTML = '<div class="bc-empty">loading your clubs…</div>';
-  const clubs = await clubsAPI.listMine();
+  // Fetch invitations + clubs in parallel — invitations surface above the grid
+  const [invitations, clubs] = await Promise.all([
+    clubsAPI.listInvitations(),
+    clubsAPI.listMine(),
+  ]);
+
+  const invitationsBlock = invitations.length
+    ? '<div class="bc-iv-section-title">invitations · ' + invitations.length + '</div>'
+      + invitations.map(_clubInvitationHtml).join('')
+      + '<div style="height:14px;"></div>'
+    : '';
+
+  // Mark invitations as seen so the reading-room dot clears next refresh
+  const unseen = invitations.filter(i => !i.seen_at).map(i => i.id);
+  if (unseen.length) {
+    clubsAPI.markInvitationsSeen(unseen).then(() => {
+      if (typeof refreshReadingRoomDot === 'function') refreshReadingRoomDot();
+    });
+  }
+
   if (!clubs.length) {
-    wrap.innerHTML = '<div class="bc-empty">no clubs yet. start one and share the code, or join one with a code a friend gave you.'
+    wrap.innerHTML = invitationsBlock
+      + '<div class="bc-empty">no clubs yet. start one and share the code, or join one with a code a friend gave you.'
       + '<div class="bc-cta-row">'
       + '<button class="bc-cta-btn bc-cta-primary" onclick="openCreateClub()">+ start a club</button>'
       + '<button class="bc-cta-btn bc-cta-secondary" onclick="openJoinClub()">join with a code</button>'
@@ -5514,10 +5689,54 @@ async function renderClubsList() {
     + '</div>';
   }).join('');
 
-  wrap.innerHTML = '<div class="bc-clubs-grid">' + cards + '</div>'
+  wrap.innerHTML = invitationsBlock
+    + '<div class="bc-clubs-grid">' + cards + '</div>'
     + '<div style="margin-top:24px;text-align:center;font-size:12px;color:var(--ink-3);">'
     + '<button class="bc-cta-btn bc-cta-secondary" onclick="openJoinClub()" style="font-size:12px;padding:7px 14px;">+ join another club with a code</button>'
     + '</div>';
+}
+
+// Shared HTML helper — used by book clubs landing + reading room
+function _clubInvitationHtml(inv) {
+  const inviterHandle = (inv.inviter && inv.inviter.handle) || '?';
+  const clubName = (inv.club && inv.club.name) || 'a book club';
+  const clubDesc = (inv.club && inv.club.description) || '';
+  return '<div class="bc-inv-block">'
+    + '<div class="bc-inv-meta">'
+      + avatarHtml(inv.inviter, 24)
+      + '<span><strong>@' + _escapeHtml(inviterHandle) + '</strong> invited you to</span>'
+    + '</div>'
+    + '<div class="bc-inv-title">' + _escapeHtml(clubName) + '</div>'
+    + (clubDesc ? '<div class="bc-inv-desc">' + _escapeHtml(clubDesc) + '</div>' : '')
+    + '<div class="bc-inv-actions">'
+      + '<button class="bc-inv-join" onclick="acceptClubInvitation(\'' + inv.id + '\')">join</button>'
+      + '<button class="bc-inv-dismiss" onclick="dismissClubInvitation(\'' + inv.id + '\')">dismiss</button>'
+    + '</div>'
+  + '</div>';
+}
+
+async function acceptClubInvitation(invitationId) {
+  try {
+    const clubId = await clubsAPI.acceptInvitation(invitationId);
+    // Refresh state across reading room + clubs landing, then land on the new club
+    if (typeof refreshReadingRoomDot === 'function') refreshReadingRoomDot();
+    showPage('bookClubs');
+    openClub(clubId);
+  } catch (e) {
+    alert('couldn\'t join — ' + (e.message || e));
+  }
+}
+
+async function dismissClubInvitation(invitationId) {
+  try {
+    await clubsAPI.dismissInvitation(invitationId);
+    if (typeof refreshReadingRoomDot === 'function') refreshReadingRoomDot();
+    // Re-render whichever surface is on screen so the card vanishes
+    const bcPage = document.getElementById('page-bookClubs');
+    if (bcPage && !bcPage.classList.contains('hidden') && _viewingClubId === null) renderBookClubs();
+    const rrPage = document.getElementById('page-readingRoom');
+    if (rrPage && !rrPage.classList.contains('hidden') && typeof renderReadingRoom === 'function') renderReadingRoom();
+  } catch (e) { alert('couldn\'t dismiss — ' + (e.message || e)); }
 }
 
 function openClub(clubId) {
@@ -5561,7 +5780,7 @@ async function renderClubPage(clubId) {
 
   const current = books.find(b => !b.wrapped_at);
 
-  // Header block — name, description, invite code chip, meta, settings cog
+  // Header block — name, description, invite-member button, meta, settings cog
   const headerHtml = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
       + '<button class="bc-back" onclick="exitClub()">← all clubs</button>'
       + '<button class="bc-cog" onclick="openClubSettings(\'' + club.id + '\')" title="club settings" aria-label="club settings">⚙</button>'
@@ -5569,7 +5788,7 @@ async function renderClubPage(clubId) {
     + '<div class="bc-club-header">'
       + (club.description ? '<div class="bc-club-desc">' + club.description + '</div>' : '')
       + '<div class="bc-club-meta-row">'
-        + '<span title="tap to copy" class="bc-invite-code" onclick="copyInviteCode(\'' + club.invite_code + '\')">' + club.invite_code + '</span>'
+        + '<button class="bc-invite-btn" onclick="openInviteToClub(\'' + club.id + '\')">+ invite member</button>'
         + '<span>' + members.length + ' member' + (members.length === 1 ? '' : 's') + '</span>'
         + (club.cadence_weeks ? '<span style="font-style:italic;">every ' + club.cadence_weeks + ' week' + (club.cadence_weeks === 1 ? '' : 's') + '</span>' : '')
       + '</div>'
@@ -5617,7 +5836,93 @@ async function renderClubPage(clubId) {
       + '<div class="bc-comments">' + commentRows + '</div>';
   }
 
-  wrap.innerHTML = headerHtml + currentBlock + commentsBlock;
+  // Archive — past picks (wrapped_at not null). Each pick's quotes + ratings load async.
+  const archivePicks = books.filter(b => !!b.wrapped_at);
+  let archiveBlock = '';
+  if (archivePicks.length) {
+    archiveBlock = '<div class="bc-section-title">the archive · ' + archivePicks.length + '</div>'
+      + archivePicks.map(_archivePickHtml).join('');
+  }
+
+  wrap.innerHTML = headerHtml + currentBlock + commentsBlock + archiveBlock;
+
+  // Populate each archive card's takes asynchronously so the page renders fast.
+  // Each call hits a SECURITY DEFINER RPC that gates access by club membership.
+  archivePicks.forEach(b => {
+    clubsAPI.getBookMemberTakes(b.id).then(takes => _populateArchiveTakes(b.id, takes));
+  });
+}
+
+// Static skeleton for an archive pick — quotes/ratings get hydrated async.
+function _archivePickHtml(b) {
+  const bg = b.cover_url ? 'background-image:url(\'' + b.cover_url + '\');' : 'background:' + bookColor(b.title) + ';';
+  const fallback = b.cover_url ? '' : b.title;
+  const picked = b.picked_at ? new Date(b.picked_at).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
+  const wrapped = b.wrapped_at ? new Date(b.wrapped_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year: new Date(b.wrapped_at).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined }) : '';
+  return '<div class="bc-arch-card">'
+    + '<div class="bc-arch-header">'
+      + '<div class="bc-arch-cover" style="' + bg + '">' + _escapeHtml(fallback) + '</div>'
+      + '<div class="bc-arch-info">'
+        + '<div class="bc-arch-title">' + _escapeHtml(b.title || '') + '</div>'
+        + '<div class="bc-arch-author">' + _escapeHtml(b.author || '') + '</div>'
+        + (picked && wrapped ? '<div class="bc-arch-dates">picked ' + picked + ' → wrapped ' + wrapped + '</div>' : '')
+      + '</div>'
+    + '</div>'
+    + '<div id="bc-arch-quotes-' + b.id + '"></div>'
+    + '<div id="bc-arch-ratings-' + b.id + '"></div>'
+  + '</div>';
+}
+
+// Inject quotes + ratings into an archive card once we have the takes
+function _populateArchiveTakes(clubBookId, takes) {
+  const quotesSlot = document.getElementById('bc-arch-quotes-' + clubBookId);
+  const ratingsSlot = document.getElementById('bc-arch-ratings-' + clubBookId);
+  if (!quotesSlot && !ratingsSlot) return;  // user moved away from the club page
+
+  const quoted = (takes || []).filter(t => (t.thoughts || '').trim());
+  const rated = (takes || []).filter(t => t.rating && t.rating > 0);
+
+  // Quotes block — italic excerpt + attribution
+  if (quotesSlot && quoted.length) {
+    const html = '<div class="bc-arch-subhead">quotes from the group</div>'
+      + quoted.map(t => {
+        const txt = _truncateForQuote(t.thoughts, 200);
+        return '<div class="bc-arch-quote">"' + _escapeHtml(txt) + '"'
+          + '<span class="bc-arch-quote-attr">— @' + _escapeHtml(t.handle || '?') + '</span>'
+        + '</div>';
+      }).join('');
+    quotesSlot.innerHTML = html;
+  }
+
+  // Ratings block — everyone who has the book in their library, sorted by rating
+  if (ratingsSlot && (takes || []).length) {
+    const html = '<div class="bc-arch-subhead">ratings · ' + (takes || []).length + '</div>'
+      + (takes || []).map(t => {
+        const stars = (t.rating && t.rating > 0)
+          ? '<span class="bc-arch-rating-stars">' + renderStarsStatic(t.rating, true) + '</span>'
+          : '<span class="bc-arch-rating-stars unrated">unrated</span>';
+        return '<div class="bc-arch-rating-row">'
+          + avatarHtml({ handle: t.handle, avatar_url: t.avatar_url }, 24)
+          + '<span class="bc-arch-rating-handle">@' + _escapeHtml(t.handle || '?') + '</span>'
+          + stars
+        + '</div>';
+      }).join('');
+    ratingsSlot.innerHTML = html;
+  }
+
+  if (!quoted.length && !(takes || []).length) {
+    if (quotesSlot) quotesSlot.innerHTML = '<div class="bc-empty" style="padding:14px 0;font-size:12px;">no-one in the club has logged it in their library yet.</div>';
+  }
+}
+
+// Truncate a quote to ~N chars at a word boundary, append ellipsis if cut
+function _truncateForQuote(s, n) {
+  if (!s) return '';
+  s = s.trim();
+  if (s.length <= n) return s;
+  const cut = s.slice(0, n);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 80 ? cut.slice(0, lastSpace) : cut).trim() + '…';
 }
 
 function _clubCommentHtml(c, myUid) {
@@ -6117,6 +6422,88 @@ async function copyInviteLink(code) {
   }
 }
 
+// ─── Invite to club modal — friends list + share link ───────
+let _inviteToClubId = null;
+async function openInviteToClub(clubId) {
+  _inviteToClubId = clubId;
+  document.getElementById('invite-to-club-content').innerHTML = '<div class="bc-empty">loading…</div>';
+  openModal('modal-invite-to-club');
+  await _renderInviteToClub();
+}
+
+async function _renderInviteToClub() {
+  if (!_inviteToClubId) return;
+  const clubId = _inviteToClubId;
+  const wrap = document.getElementById('invite-to-club-content');
+  if (!wrap) return;
+  let club, members, friendships, outstandingInviteeIds;
+  try {
+    [club, members, friendships, outstandingInviteeIds] = await Promise.all([
+      clubsAPI.get(clubId),
+      clubsAPI.getMembers(clubId),
+      friendsAPI.list(),
+      clubsAPI.listInvitationsForClub(clubId),
+    ]);
+  } catch (e) { wrap.innerHTML = '<div class="bc-empty">couldn\'t load — try again?</div>'; return; }
+  if (!club) { wrap.innerHTML = '<div class="bc-empty">club not found.</div>'; return; }
+  document.getElementById('invite-to-club-title').textContent = 'invite to "' + (club.name || 'the club') + '"';
+
+  const memberIdSet = new Set(members.map(m => m.user_id));
+  const invitedSet = new Set(outstandingInviteeIds || []);
+
+  // Only accepted friends are inviteable
+  const accepted = friendships.filter(f => f.status === 'accepted');
+
+  // Friends section
+  let friendsBlock;
+  if (!accepted.length) {
+    friendsBlock = '<div class="bc-empty" style="padding:18px 0;">no friends on dinkus yet. share the link below to invite someone new.</div>';
+  } else {
+    const rows = accepted.map(f => {
+      const fid = f.otherUserId;
+      const handle = (f.otherProfile && f.otherProfile.handle) || '?';
+      const isMember = memberIdSet.has(fid);
+      const isInvited = invitedSet.has(fid);
+      let action;
+      if (isMember) action = '<span class="bc-iv-status">in this club</span>';
+      else if (isInvited) action = '<span class="bc-iv-status">invited</span>';
+      else action = '<button class="bc-iv-action-btn" onclick="inviteFriendToClub(\'' + fid + '\', \'' + _escapeHtml(handle).replace(/\\/g,'\\\\').replace(/'/g, "\\'") + '\')">+ invite</button>';
+      return '<div class="bc-iv-friend-row">'
+        + avatarHtml(f.otherProfile, 32)
+        + '<span class="bc-iv-handle">@' + handle + '</span>'
+        + action
+      + '</div>';
+    }).join('');
+    friendsBlock = '<div class="bc-iv-section-title">your friends</div>' + rows;
+  }
+
+  // Share-link section (still useful for non-dinkus invites)
+  const linkBlock = '<div class="bc-iv-divider"><span>or share a link</span></div>'
+    + '<div class="bc-iv-link-row">'
+      + '<span title="tap to copy" class="bc-invite-code" onclick="copyInviteCode(\'' + club.invite_code + '\')">' + club.invite_code + '</span>'
+      + '<button class="bc-set-link" onclick="copyInviteLink(\'' + club.invite_code + '\')">copy link</button>'
+    + '</div>'
+    + '<div style="font-size:11px;color:var(--ink-3);font-style:italic;margin-top:8px;line-height:1.55;">send the code or link to anyone — they\'ll be prompted to join (or sign up if new).</div>';
+
+  wrap.innerHTML = friendsBlock + linkBlock;
+}
+
+async function inviteFriendToClub(friendUserId, handle) {
+  if (!_inviteToClubId) return;
+  try {
+    await clubsAPI.invite(_inviteToClubId, friendUserId);
+    // Toast for feedback
+    const bar = document.createElement('div');
+    bar.textContent = 'invited @' + handle;
+    bar.style.cssText = 'position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:99px;font-size:12px;font-family:var(--font-body);z-index:9999;box-shadow:var(--shadow-lg);';
+    document.body.appendChild(bar);
+    setTimeout(() => bar.remove(), 1800);
+    await _renderInviteToClub();
+  } catch (e) {
+    alert('couldn\'t invite — ' + (e.message || e));
+  }
+}
+
 // ─── Pending invite-link join (?join=CODE captured at page load) ─────
 // Called after auth resolves. If there's a stashed code, peek for the club
 // and show the confirm-join modal. The modal's "join" calls _acceptPendingJoinCode.
@@ -6435,15 +6822,16 @@ async function deletePeekComment(commentId) {
 // Refresh the burgundy notification dot on the sidebar nav based on incoming pending count
 async function refreshReadingRoomDot() {
   try {
-    // Count pending friend requests AND unseen recommendations — either lights the dot
-    const [all, recs] = await Promise.all([
+    // Count pending friend requests + unseen recommendations + unseen club invitations — any of these lights the dot
+    const [all, recs, clubInvCount] = await Promise.all([
       friendsAPI.list(),
       recommendsAPI.fetchInbox(),
+      clubsAPI.countUnseenInvitations(),
     ]);
     const incoming = all.filter(f => f.status === 'pending' && !f.iAmRequester);
     const unseenRecs = recs.filter(r => !r.seen_at);
     const dot = document.getElementById('rr-nav-dot');
-    if (dot) dot.style.display = (incoming.length || unseenRecs.length) ? 'inline-block' : 'none';
+    if (dot) dot.style.display = (incoming.length || unseenRecs.length || clubInvCount) ? 'inline-block' : 'none';
   } catch (e) {
     console.warn('reading room dot refresh failed:', e);
   }
