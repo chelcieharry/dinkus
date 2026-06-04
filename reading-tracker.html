@@ -441,6 +441,16 @@ body.onboarding #welcome-screen { display: flex; }
 .fp-book-title { font-size: 13px; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fp-book-author { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fp-book-ratings { font-size: 11px; color: var(--accent); margin-top: 2px; }
+/* Friend profile tabs — sit just below the modal header, mirror the main sub-tab pattern */
+.fp-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--paper-3); margin: 0 0 18px; }
+.fp-tab { flex: 1 1 0; min-width: 0; padding: 8px 4px 12px; border: none; border-bottom: 2px solid transparent; color: var(--ink-3); text-align: center; margin-bottom: -1px; background: none; font-family: var(--font-body); font-size: 13px; cursor: pointer; }
+.fp-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+/* Friend library tab — toolbar above the cover grid */
+.fp-lib-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.fp-lib-toolbar input, .fp-lib-toolbar select { font-family: var(--font-body); font-size: 12px; padding: 7px 10px; background: var(--paper); border: 1px solid var(--paper-3); border-radius: var(--radius); color: var(--ink); outline: none; }
+.fp-lib-toolbar input { flex: 1 1 180px; min-width: 0; }
+.fp-lib-toolbar select { flex: 0 1 auto; }
+.fp-lib-count { font-size: 11px; color: var(--ink-3); font-style: italic; margin-bottom: 10px; }
 /* Tappable handles + avatars — visual cue without being loud */
 .tap-profile { cursor: pointer; transition: opacity 0.15s; }
 .tap-profile:hover { opacity: 0.75; }
@@ -1025,11 +1035,12 @@ body.onboarding #welcome-screen { display: flex; }
 <!-- Sign-out confirm modal (replaces the native browser confirm) -->
 <!-- Friend profile modal — opens when you tap a friend's @handle or avatar -->
 <div class="modal-backdrop" id="modal-friend-profile">
-  <div class="modal" style="max-width:520px;">
+  <div class="modal" style="max-width:560px;">
     <div class="modal-header">
       <h3 class="modal-title" id="friend-profile-title">friend</h3>
       <button class="modal-close" onclick="closeModal('modal-friend-profile')">×</button>
     </div>
+    <div id="friend-profile-tabs" class="fp-tabs"></div>
     <div id="friend-profile-content"></div>
   </div>
 </div>
@@ -4749,6 +4760,15 @@ async function dismissRecommendation(recId) {
 // Shows: their archetype (one dinkus-coded sentence), what they're currently
 // reading, and "the shared shelf" — books that exist in both your libraries.
 // ─────────────────────────────────────────────────────────────
+// Module-level state for the friend profile modal — populated by openFriendProfile,
+// read by the tab renderers. Reset each time the modal opens so old data doesn't leak.
+let _fpState = {
+  fp: null, theirBooks: [], theyShareLibrary: true,
+  archetype: null, currentlyReading: [], common: [],
+  activeTab: 'profile',
+  libSearch: '', libGenre: '', libSort: 'recent',
+};
+
 async function openFriendProfile(friendUserId) {
   if (!friendUserId) return;
   // Block opening on yourself — that's just your library
@@ -4776,16 +4796,13 @@ async function openFriendProfile(friendUserId) {
   }
   const theirBooks = (rows || []).map(_dbToBook);
 
-  // Archetype from their data — vibe label, not content. Show even when library hidden.
-  const archetype = pickArchetype(theirBooks);
-
-  // Currently reading (1-3) — this is reading-room activity, always shown
+  // Currently reading (1-3) — reading-room activity, always shown
   const currentlyReading = theirBooks
     .filter(b => b.status === 'currently')
     .sort((a,b) => (b.started||'').localeCompare(a.started||''))
     .slice(0, 3);
 
-  // The shared shelf — only computed when they share their library with us
+  // The shared shelf — overlap between MY books and theirs. Only computed when they share their library.
   let common = [];
   if (theyShareLibrary) {
     const myKeysMap = new Map();
@@ -4794,7 +4811,6 @@ async function openFriendProfile(friendUserId) {
       const key = (b.title + '|' + b.author).toLowerCase();
       if (myKeysMap.has(key)) common.push({ mine: myKeysMap.get(key), theirs: b });
     });
-    // Sort by most-recently-finished on either side
     common.sort((a,b) => {
       const ad = a.theirs.finished || a.mine.finished || '';
       const bd = b.theirs.finished || b.mine.finished || '';
@@ -4802,7 +4818,51 @@ async function openFriendProfile(friendUserId) {
     });
   }
 
+  // Stash everything on the state object — tabs read from this. Reset filters each open.
+  _fpState = {
+    fp, theirBooks, theyShareLibrary,
+    archetype: pickArchetype(theirBooks),
+    currentlyReading, common,
+    activeTab: 'profile',
+    libSearch: '', libGenre: '', libSort: 'recent',
+    friendUserId,
+  };
+
   document.getElementById('friend-profile-title').textContent = '@' + (fp.handle || '?');
+  _renderFriendProfileTabs();
+  _renderActiveFriendTab();
+  openModal('modal-friend-profile');
+}
+
+// Render the tab bar (profile | library). Active tab gets the accent underline.
+function _renderFriendProfileTabs() {
+  const wrap = document.getElementById('friend-profile-tabs');
+  if (!wrap) return;
+  const tabs = [
+    { id: 'profile', label: 'profile' },
+    { id: 'library', label: 'library' },
+  ];
+  wrap.innerHTML = tabs.map(t =>
+    '<button class="fp-tab' + (t.id === _fpState.activeTab ? ' active' : '') + '" onclick="switchFriendProfileTab(\'' + t.id + '\')">' + t.label + '</button>'
+  ).join('');
+}
+
+// Tab switcher — flips active tab + re-renders content area + re-renders tabs (for active state)
+function switchFriendProfileTab(tabId) {
+  if (tabId === _fpState.activeTab) return;
+  _fpState.activeTab = tabId;
+  _renderFriendProfileTabs();
+  _renderActiveFriendTab();
+}
+
+function _renderActiveFriendTab() {
+  if (_fpState.activeTab === 'library') _renderFriendLibraryTab();
+  else _renderFriendProfileTab();
+}
+
+// Profile tab — archetype + currently reading + the shared shelf (or private state)
+function _renderFriendProfileTab() {
+  const { fp, archetype, currentlyReading, common, theyShareLibrary } = _fpState;
 
   const archetypeBlock = '<div class="fp-archetype">'
     + '<div class="fp-archetype-name">' + (archetype.name || '') + '</div>'
@@ -4824,7 +4884,7 @@ async function openFriendProfile(friendUserId) {
     sharedBlock = '<div class="oracle-dinkus">* * *</div>' + sharedHeader + sharedBody;
   } else {
     sharedBlock = '<div class="oracle-dinkus">* * *</div>'
-      + '<div class="fp-section-title">the shelf</div>'
+      + '<div class="fp-section-title">the shared shelf</div>'
       + '<div class="fp-empty" style="font-style:italic;line-height:1.7;">@' + (fp.handle || 'they') + ' keeps their shelf private. you\'ll still catch their reading-room glimpses — currently reading, recently finished.</div>';
   }
 
@@ -4837,8 +4897,118 @@ async function openFriendProfile(friendUserId) {
       + '<div class="oracle-dinkus">* * *</div>'
       + currHeader + currBody
       + sharedBlock;
+}
 
-  openModal('modal-friend-profile');
+// Library tab — stripped-down browser: search + genre + sort + cover grid of read books
+function _renderFriendLibraryTab() {
+  const { fp, theirBooks, theyShareLibrary, libSearch, libGenre, libSort, friendUserId } = _fpState;
+  const wrap = document.getElementById('friend-profile-content');
+  if (!wrap) return;
+
+  // Privacy gate first — if they've hidden their library, show the private state and bail
+  if (!theyShareLibrary) {
+    wrap.innerHTML = '<div class="fp-empty" style="font-style:italic;line-height:1.7;padding:24px 6px;">@' + (fp.handle || 'they')
+      + ' keeps their shelf private. you\'ll still catch their reading-room glimpses — currently reading, recently finished.</div>';
+    return;
+  }
+
+  // Source set: only finished/read books. tbr and currently are shown elsewhere on the profile tab.
+  const readBooks = theirBooks.filter(b => b.status === 'read');
+
+  if (!readBooks.length) {
+    wrap.innerHTML = '<div class="fp-empty" style="padding:24px 6px;">no finished books to browse yet.</div>';
+    return;
+  }
+
+  // Collect genres present in their library for the dropdown
+  const genreSet = new Set();
+  readBooks.forEach(b => {
+    (b.genre || '').split(',').map(s => s.trim()).filter(Boolean).forEach(g => genreSet.add(g));
+  });
+  const genreOptions = [...genreSet].sort();
+
+  // Apply filters
+  let filtered = readBooks;
+  const q = (libSearch || '').toLowerCase().trim();
+  if (q) filtered = filtered.filter(b => (b.title + ' ' + b.author + ' ' + (b.genre||'')).toLowerCase().includes(q));
+  if (libGenre) filtered = filtered.filter(b => (b.genre || '').includes(libGenre));
+
+  // Sort
+  const sorted = [...filtered];
+  if (libSort === 'title') {
+    sorted.sort((a,b) => a.title.localeCompare(b.title));
+  } else if (libSort === 'recent') {
+    sorted.sort((a,b) => (b.finished||'0').localeCompare(a.finished||'0') || a.title.localeCompare(b.title));
+  } else if (libSort === 'rating-high') {
+    sorted.sort((a,b) => (b.rating||0)-(a.rating||0) || (b.finished||'0').localeCompare(a.finished||'0'));
+  } else if (libSort === 'longest') {
+    sorted.sort((a,b) => libBookPages(b) - libBookPages(a) || a.title.localeCompare(b.title));
+  } else if (libSort === 'shortest') {
+    sorted.sort((a,b) => {
+      const ap = libBookPages(a) || 99999, bp = libBookPages(b) || 99999;
+      return ap - bp || a.title.localeCompare(b.title);
+    });
+  } else {
+    // default: author surname
+    sorted.sort((a,b) => {
+      const cmp = authorSurname(a.author).localeCompare(authorSurname(b.author));
+      return cmp !== 0 ? cmp : a.title.localeCompare(b.title);
+    });
+  }
+
+  const safeQ = (libSearch || '').replace(/"/g, '&quot;');
+  const toolbar = '<div class="fp-lib-toolbar">'
+    + '<input type="text" id="fp-lib-search" placeholder="search the shelves…" value="' + safeQ + '" oninput="_onFpLibFilter(\'search\', this.value)">'
+    + '<select id="fp-lib-genre" onchange="_onFpLibFilter(\'genre\', this.value)">'
+      + '<option value="">all genres</option>'
+      + genreOptions.map(g => '<option value="' + g.replace(/"/g,'&quot;') + '"' + (g === libGenre ? ' selected' : '') + '>' + g + '</option>').join('')
+    + '</select>'
+    + '<select id="fp-lib-sort" onchange="_onFpLibFilter(\'sort\', this.value)">'
+      + '<option value="author"' + (libSort==='author'?' selected':'') + '>by author (a–z)</option>'
+      + '<option value="title"' + (libSort==='title'?' selected':'') + '>title (a–z)</option>'
+      + '<option value="recent"' + (libSort==='recent'?' selected':'') + '>recently finished</option>'
+      + '<option value="rating-high"' + (libSort==='rating-high'?' selected':'') + '>highest rated</option>'
+      + '<option value="longest"' + (libSort==='longest'?' selected':'') + '>longest first</option>'
+      + '<option value="shortest"' + (libSort==='shortest'?' selected':'') + '>shortest first</option>'
+    + '</select>'
+  + '</div>'
+  + '<div class="fp-lib-count">' + sorted.length + ' book' + (sorted.length===1?'':'s') + (q || libGenre ? ' · filtered' : '') + '</div>';
+
+  if (!sorted.length) {
+    wrap.innerHTML = toolbar + '<div class="fp-empty" style="padding:14px 0;">nothing matches that. try a different filter?</div>';
+    // Restore focus on search so typing stays smooth
+    setTimeout(() => { const i = document.getElementById('fp-lib-search'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 0);
+    return;
+  }
+
+  // Cover grid — taps open the reading-room peek (works for friend-owned books, not viewBook which is own-library only)
+  const grid = '<div class="cover-grid">' + sorted.map(b => {
+    const bg = b.coverUrl
+      ? 'background-image:url(\'' + b.coverUrl + '\');'
+      : 'background:' + bookColor(b.title) + ';';
+    const fallbackText = b.coverUrl ? '' : b.title;
+    return '<div class="cover-tile" onclick="rrPeekBook(\'' + b.id + '\', \'' + (friendUserId || '') + '\')" title="' + (b.title || '').replace(/"/g,'&quot;') + ' — ' + (b.author || '').replace(/"/g,'&quot;') + '">'
+      + '<div class="cover-tile-img" style="' + bg + '">' + fallbackText + '</div>'
+      + '<div class="cover-tile-title">' + b.title + '</div>'
+      + '<div class="cover-tile-author">' + b.author + '</div>'
+    + '</div>';
+  }).join('') + '</div>';
+
+  wrap.innerHTML = toolbar + grid;
+  // Keep keyboard focus on the search input so typing stays smooth across re-renders
+  if (document.activeElement && document.activeElement.id === 'fp-lib-search') return;
+  setTimeout(() => {
+    const i = document.getElementById('fp-lib-search');
+    if (i && libSearch) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+  }, 0);
+}
+
+// Handle filter changes — update state then re-render the library tab
+function _onFpLibFilter(kind, value) {
+  if (kind === 'search') _fpState.libSearch = value;
+  else if (kind === 'genre') _fpState.libGenre = value;
+  else if (kind === 'sort') _fpState.libSort = value;
+  _renderFriendLibraryTab();
 }
 
 // Friend's book row (currently reading) — tap to open the peek modal
