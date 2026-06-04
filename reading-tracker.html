@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#7c4f2a">
 <meta name="description" content="a reading journal. data dressed as divination.">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="dinkus">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
@@ -28,6 +29,13 @@ console.log('✓ dinkus → supabase connected');
 // AUTH GATE — checks session, shows sign-in screen or app
 // ─────────────────────────────────────────────────────────────
 function _setBodyAuthClass(session) {
+  // Supabase auth callbacks (initial session, recoverAndRefresh) can fire while we're
+  // still in the head — before <body> is parsed. Defer the class-flip until DOM is ready.
+  // The SW-triggered reload path hits this race deterministically because the cache is hot.
+  if (!document.body) {
+    document.addEventListener('DOMContentLoaded', () => _setBodyAuthClass(session), { once: true });
+    return;
+  }
   document.body.classList.remove('signed-in', 'signed-out');
   document.body.classList.add(session ? 'signed-in' : 'signed-out');
 }
