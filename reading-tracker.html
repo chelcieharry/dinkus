@@ -3466,8 +3466,17 @@ const friendsAPI = {
     const userId = await _currentUserId();
     if (!userId) throw new Error('not signed in');
     if (userId === addresseeId) throw new Error('cannot friend yourself');
+    // Carry my "share library by default" preference into the row up-front.
+    // The addressee column stays at the column default until they accept (or they can toggle it later).
+    const myDefault = (profile && profile.default_share_library !== undefined)
+      ? !!profile.default_share_library : true;
     const { data, error } = await db.from('friendships')
-      .insert({ requester_id: userId, addressee_id: addresseeId, status: 'pending' })
+      .insert({
+        requester_id: userId,
+        addressee_id: addresseeId,
+        status: 'pending',
+        requester_shares_library: myDefault,
+      })
       .select().single();
     if (error) {
       if (/duplicate|unique/i.test(error.message)) {
@@ -3479,10 +3488,29 @@ const friendsAPI = {
     return data;
   },
 
-  // Accept an incoming pending request
+  // Accept an incoming pending request. Apply MY default share-library preference
+  // for the addressee side (they can still tweak it per-friend later).
   async accept(friendshipId) {
+    const myDefault = (profile && profile.default_share_library !== undefined)
+      ? !!profile.default_share_library : true;
     const { data, error } = await db.from('friendships')
-      .update({ status: 'accepted', responded_at: new Date().toISOString() })
+      .update({
+        status: 'accepted',
+        responded_at: new Date().toISOString(),
+        addressee_shares_library: myDefault,
+      })
+      .eq('id', friendshipId)
+      .select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  // Toggle whether *I* share my library with this friend.
+  // The friendship row stores both sides; we update the column matching MY role.
+  async setMyLibraryShare(friendshipId, iAmRequester, share) {
+    const col = iAmRequester ? 'requester_shares_library' : 'addressee_shares_library';
+    const { data, error } = await db.from('friendships')
+      .update({ [col]: !!share })
       .eq('id', friendshipId)
       .select().single();
     if (error) throw error;
@@ -3516,6 +3544,12 @@ const friendsAPI = {
       f.otherUserId = otherId;
       f.iAmRequester = f.requester_id === userId;
       f.otherProfile = profMap[otherId] || { id: otherId, handle: '?', avatar_url: null };
+      // Library-share booleans derived from the right side of the row. Default to true if column missing
+      // (so the app still works pre-migration).
+      const reqShares = f.requester_shares_library !== false; // null/undefined → true
+      const addShares = f.addressee_shares_library !== false;
+      f.iShareWithThem  = f.iAmRequester ? reqShares : addShares;
+      f.theyShareWithMe = f.iAmRequester ? addShares : reqShares;
     });
     return rows;
   },
@@ -4010,6 +4044,29 @@ function skipOnboardingBirthday() {
   showOnboardingStep('home');
 }
 
+// Save the global "share library with new friends" default. Affects future friendships only.
+async function saveDefaultShareLibrary() {
+  const input = document.getElementById('default-share-library-input');
+  const status = document.getElementById('default-share-library-status');
+  if (!input) return;
+  const value = !!input.checked;
+  try {
+    const updated = await profileAPI.update({ default_share_library: value });
+    profile = updated || { ...profile, default_share_library: value };
+    if (status) {
+      status.textContent = value
+        ? 'saved · new friends will see your library by default.'
+        : 'saved · new friends won\'t see your library by default.';
+      status.style.color = 'var(--accent)';
+    }
+  } catch (e) {
+    if (status) {
+      status.textContent = 'couldn\'t save — try again?';
+      status.style.color = '#b85';
+    }
+  }
+}
+
 // Save birthday from settings page (date input → onchange)
 async function saveProfileBirthday() {
   const input = document.getElementById('profile-birthday-input');
@@ -4078,6 +4135,24 @@ async function renderSettings() {
       <div style="margin-top:14px;">
         <button onclick="resetHiddenBlocks()" style="font-family:var(--font-body);font-size:12px;padding:7px 14px;background:none;border:1px solid var(--paper-3);color:var(--ink-3);border-radius:var(--radius);cursor:pointer;">reset to defaults</button>
       </div>
+    </div>
+
+    <div class="stat-block" style="margin-bottom:18px;">
+      <div class="stat-block-title">privacy</div>
+      <div style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5;">
+        controls what new friends see by default. you can change it per-friend on the friends list.
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-top:1px solid var(--paper-3);">
+        <div style="flex:1;">
+          <div style="font-size:13px;color:var(--ink-2);font-weight:500;">share my library with new friends</div>
+          <div style="font-size:11px;color:var(--ink-3);font-style:italic;margin-top:2px;">when on, friends can see your full shelf, tbr, and ratings. when off, they only see your reading room activity — currently reading, recently finished.</div>
+        </div>
+        <label class="custom-toggle" style="display:inline-flex;align-items:center;cursor:pointer;flex-shrink:0;margin-top:2px;">
+          <input type="checkbox" id="default-share-library-input" ${(profile && profile.default_share_library === false) ? '' : 'checked'} onchange="saveDefaultShareLibrary()">
+          <span class="custom-toggle-slider"></span>
+        </label>
+      </div>
+      <div id="default-share-library-status" style="font-size:12px;color:var(--ink-3);margin-top:6px;font-style:italic;min-height:18px;line-height:1.5;"></div>
     </div>
 
     <div class="stat-block" style="margin-bottom:18px;">
@@ -4266,7 +4341,18 @@ function _friendRowHtml(f, kind) {
   } else if (kind === 'outgoing') {
     actions = '<button onclick="removeFriend(\'' + f.id + '\', \'cancelled\')" style="font-family:var(--font-body);font-size:12px;padding:5px 12px;background:none;color:var(--ink-3);border:1px solid var(--paper-3);border-radius:99px;cursor:pointer;">cancel</button>';
   } else {
-    actions = '<button onclick="removeFriend(\'' + f.id + '\', \'unfriended\')" style="font-family:var(--font-body);font-size:12px;padding:5px 12px;background:none;color:var(--ink-3);border:1px solid var(--paper-3);border-radius:99px;cursor:pointer;">unfollow</button>';
+    // Per-friend "do I share my library with them?" toggle — pill, subtle, tap to flip
+    const sharing = f.iShareWithThem !== false;
+    const libToggleLabel = sharing ? 'library shared' : 'library hidden';
+    const libToggleTitle = sharing
+      ? 'tap to hide your library from @' + handle
+      : 'tap to share your library with @' + handle;
+    const libToggle = '<button onclick="event.stopPropagation(); toggleMyLibraryShare(\'' + f.id + '\', ' + f.iAmRequester + ', ' + (!sharing) + ')" '
+      + 'title="' + libToggleTitle + '" '
+      + 'style="font-family:var(--font-body);font-size:11px;padding:4px 10px;background:none;color:var(--ink-3);border:1px solid var(--paper-3);border-radius:99px;cursor:pointer;white-space:nowrap;font-style:italic;">'
+      + libToggleLabel + '</button>';
+    actions = libToggle
+      + '<button onclick="removeFriend(\'' + f.id + '\', \'unfriended\')" style="font-family:var(--font-body);font-size:12px;padding:5px 12px;background:none;color:var(--ink-3);border:1px solid var(--paper-3);border-radius:99px;cursor:pointer;">unfollow</button>';
   }
   // For accepted friends, avatar + handle tap opens the profile modal (RLS lets us see their books).
   // For pending rows, leave non-tappable since RLS would block.
@@ -4274,11 +4360,21 @@ function _friendRowHtml(f, kind) {
   const profileOpen = (kind === 'accepted' && otherUid)
     ? ' class="tap-profile" onclick="openFriendProfile(\'' + otherUid + '\')"'
     : '';
-  return '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--paper-3);">'
+  return '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--paper-3);flex-wrap:wrap;">'
     + '<span' + profileOpen + '>' + avatar + '</span>'
-    + '<div' + profileOpen + ' style="flex:1;font-size:13px;color:var(--ink-2);">@' + handle + '</div>'
-    + '<div style="display:flex;gap:6px;">' + actions + '</div>'
+    + '<div' + profileOpen + ' style="flex:1;min-width:120px;font-size:13px;color:var(--ink-2);">@' + handle + '</div>'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">' + actions + '</div>'
   + '</div>';
+}
+
+// Toggle "do I share my library with this friend?" — flips the column matching MY role.
+async function toggleMyLibraryShare(friendshipId, iAmRequester, newValue) {
+  try {
+    await friendsAPI.setMyLibraryShare(friendshipId, !!iAmRequester, !!newValue);
+    renderFriendsList();
+  } catch (e) {
+    alert('couldn\'t update sharing: ' + (e.message || e));
+  }
 }
 
 async function acceptFriend(id) {
@@ -4654,6 +4750,15 @@ async function openFriendProfile(friendUserId) {
   const fp = await _resolveFriendProfile(friendUserId);
   if (!fp) { alert('couldn\'t find that profile.'); return; }
 
+  // Look up my friendship row with them — determines whether they've hidden their library from me.
+  // Default to "yes they share" if we can't find the row (defensive — shouldn't happen for accepted friends).
+  let theyShareLibrary = true;
+  try {
+    const allRows = await friendsAPI.list();
+    const myRow = allRows.find(r => r.otherUserId === friendUserId && r.status === 'accepted');
+    if (myRow) theyShareLibrary = myRow.theyShareWithMe !== false;
+  } catch (e) { /* fall back to share-true on error */ }
+
   // Fetch their currently+read books (RLS allows this for accepted friends only)
   const { data: rows, error } = await db.from('books').select('*').eq('user_id', friendUserId);
   if (error) {
@@ -4663,29 +4768,31 @@ async function openFriendProfile(friendUserId) {
   }
   const theirBooks = (rows || []).map(_dbToBook);
 
-  // Archetype from their data — reuses pickArchetype which works on any book list
+  // Archetype from their data — vibe label, not content. Show even when library hidden.
   const archetype = pickArchetype(theirBooks);
 
-  // Currently reading (1-3)
+  // Currently reading (1-3) — this is reading-room activity, always shown
   const currentlyReading = theirBooks
     .filter(b => b.status === 'currently')
     .sort((a,b) => (b.started||'').localeCompare(a.started||''))
     .slice(0, 3);
 
-  // The shared shelf — match by lowercased title+author
-  const myKeysMap = new Map();
-  books.forEach(b => myKeysMap.set((b.title + '|' + b.author).toLowerCase(), b));
-  const common = [];
-  theirBooks.forEach(b => {
-    const key = (b.title + '|' + b.author).toLowerCase();
-    if (myKeysMap.has(key)) common.push({ mine: myKeysMap.get(key), theirs: b });
-  });
-  // Sort by most-recently-finished on either side
-  common.sort((a,b) => {
-    const ad = a.theirs.finished || a.mine.finished || '';
-    const bd = b.theirs.finished || b.mine.finished || '';
-    return bd.localeCompare(ad);
-  });
+  // The shared shelf — only computed when they share their library with us
+  let common = [];
+  if (theyShareLibrary) {
+    const myKeysMap = new Map();
+    books.forEach(b => myKeysMap.set((b.title + '|' + b.author).toLowerCase(), b));
+    theirBooks.forEach(b => {
+      const key = (b.title + '|' + b.author).toLowerCase();
+      if (myKeysMap.has(key)) common.push({ mine: myKeysMap.get(key), theirs: b });
+    });
+    // Sort by most-recently-finished on either side
+    common.sort((a,b) => {
+      const ad = a.theirs.finished || a.mine.finished || '';
+      const bd = b.theirs.finished || b.mine.finished || '';
+      return bd.localeCompare(ad);
+    });
+  }
 
   document.getElementById('friend-profile-title').textContent = '@' + (fp.handle || '?');
 
@@ -4699,11 +4806,19 @@ async function openFriendProfile(friendUserId) {
     ? currentlyReading.map(_fpFriendBookRow).join('')
     : '<div class="fp-empty">nothing on the go right now.</div>';
 
-  const sharedHeader = '<div class="fp-section-title">the shared shelf <span class="fp-section-sub">' + (common.length ? '· ' + common.length + ' book' + (common.length===1?'':'s') : '') + '</span></div>';
-  const sharedBody = common.length
-    ? common.slice(0, 20).map(_fpSharedRow).join('')
-      + (common.length > 20 ? '<div class="fp-empty">+ ' + (common.length - 20) + ' more in common.</div>' : '')
-    : '<div class="fp-empty">no overlap yet. the venn diagram has one foot in the door.</div>';
+  let sharedBlock = '';
+  if (theyShareLibrary) {
+    const sharedHeader = '<div class="fp-section-title">the shared shelf <span class="fp-section-sub">' + (common.length ? '· ' + common.length + ' book' + (common.length===1?'':'s') : '') + '</span></div>';
+    const sharedBody = common.length
+      ? common.slice(0, 20).map(_fpSharedRow).join('')
+        + (common.length > 20 ? '<div class="fp-empty">+ ' + (common.length - 20) + ' more in common.</div>' : '')
+      : '<div class="fp-empty">no overlap yet. the venn diagram has one foot in the door.</div>';
+    sharedBlock = '<div class="oracle-dinkus">* * *</div>' + sharedHeader + sharedBody;
+  } else {
+    sharedBlock = '<div class="oracle-dinkus">* * *</div>'
+      + '<div class="fp-section-title">the shelf</div>'
+      + '<div class="fp-empty" style="font-style:italic;line-height:1.7;">@' + (fp.handle || 'they') + ' keeps their shelf private. you\'ll still catch their reading-room glimpses — currently reading, recently finished.</div>';
+  }
 
   document.getElementById('friend-profile-content').innerHTML =
       '<div class="fp-header">'
@@ -4713,8 +4828,7 @@ async function openFriendProfile(friendUserId) {
       + archetypeBlock
       + '<div class="oracle-dinkus">* * *</div>'
       + currHeader + currBody
-      + '<div class="oracle-dinkus">* * *</div>'
-      + sharedHeader + sharedBody;
+      + sharedBlock;
 
   openModal('modal-friend-profile');
 }
@@ -5365,8 +5479,8 @@ const NAV_GROUPS = [
     { id: 'stats',        label: 'stats' },
   ]},
   { id: 'friends',  label: 'friends',  pages: [
-    { id: 'friendsList',  label: 'friends' },
     { id: 'readingRoom',  label: 'the reading room' },
+    { id: 'friendsList',  label: 'friends' },
   ]},
   { id: 'you',      label: 'you',      pages: [
     { id: 'profile',      label: 'profile' },
@@ -5382,7 +5496,7 @@ const _groupLastPage = {
   home: 'dashboard',
   library: 'library',
   stats: 'stats',
-  friends: 'friendsList',
+  friends: 'readingRoom',
   you: 'profile',
 };
 
