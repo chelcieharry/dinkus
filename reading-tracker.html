@@ -4101,35 +4101,48 @@ const clubsAPI = {
     return data;
   },
 
+  // Shared field-mapping for pickBook + updateClubBook — both write the same columns
+  _clubBookPayload(book) {
+    const payload = {};
+    if (book.title !== undefined) payload.title = (book.title || '').trim().slice(0, 200);
+    if (book.author !== undefined) payload.author = (book.author || '').trim().slice(0, 200) || null;
+    if (book.coverUrl !== undefined) payload.cover_url = book.coverUrl || null;
+    if (book.googleBooksId !== undefined) payload.google_books_id = book.googleBooksId || null;
+    if (book.published !== undefined) payload.published = book.published || null;
+    if (book.format !== undefined) payload.format = book.format || null;
+    if (book.pages !== undefined) payload.pages = parseInt(book.pages) || null;
+    if (book.length !== undefined) payload.length = parseFloat(book.length) || null;
+    if (book.genre !== undefined) payload.genre = book.genre || null;
+    if (book.series !== undefined) payload.series = book.series || null;
+    if (book.seriesNum !== undefined) payload.series_num = book.seriesNum || null;
+    if (book.tags !== undefined) payload.tags = Array.isArray(book.tags) ? book.tags : null;
+    if (book.nationality !== undefined) payload.nationality = book.nationality || null;
+    if (book.gender !== undefined) payload.gender = book.gender || null;
+    if (book.race !== undefined) payload.race = book.race || null;
+    if (book.spiceLevel !== undefined) payload.spice_level = (parseInt(book.spiceLevel) || null);
+    return payload;
+  },
+
   // Pick a new book for the club with full metadata. Wrapped_at null = currently reading.
   // Members can copy this into their own books table via "+ add to my currently reading",
   // so we capture everything the standard library row holds (minus the review fields).
   async pickBook(clubId, book) {
     const userId = await _currentUserId();
     if (!userId) throw new Error('not signed in');
-    const payload = {
-      club_id: clubId,
-      title: (book.title || '').trim().slice(0, 200),
-      author: (book.author || '').trim().slice(0, 200) || null,
-      cover_url: book.coverUrl || null,
-      google_books_id: book.googleBooksId || null,
-      picked_by: userId,
-    };
-    // Sparse — only attach the new columns if the caller supplied them, so the
-    // INSERT keeps working even before push-2d-schema.sql is run.
-    if (book.published   !== undefined) payload.published   = book.published || null;
-    if (book.format      !== undefined) payload.format      = book.format || null;
-    if (book.pages       !== undefined) payload.pages       = parseInt(book.pages) || null;
-    if (book.length      !== undefined) payload.length      = parseFloat(book.length) || null;
-    if (book.genre       !== undefined) payload.genre       = book.genre || null;
-    if (book.series      !== undefined) payload.series      = book.series || null;
-    if (book.seriesNum   !== undefined) payload.series_num  = book.seriesNum || null;
-    if (book.tags        !== undefined) payload.tags        = Array.isArray(book.tags) ? book.tags : null;
-    if (book.nationality !== undefined) payload.nationality = book.nationality || null;
-    if (book.gender      !== undefined) payload.gender      = book.gender || null;
-    if (book.race        !== undefined) payload.race        = book.race || null;
-    if (book.spiceLevel  !== undefined) payload.spice_level = (parseInt(book.spiceLevel) || null);
+    const payload = Object.assign(
+      { club_id: clubId, picked_by: userId },
+      this._clubBookPayload(book)
+    );
     const { data, error } = await db.from('book_club_books').insert(payload).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  // Edit an existing club book — owner/co-owner. RLS covers the UPDATE via the
+  // "owners wrap up books" policy (which gates all updates on this table).
+  async updateClubBook(clubBookId, book) {
+    const payload = this._clubBookPayload(book);
+    const { data, error } = await db.from('book_club_books').update(payload).eq('id', clubBookId).select().single();
     if (error) throw error;
     return data;
   },
@@ -5941,7 +5954,10 @@ async function renderClubPage(clubId) {
           + '<div class="bc-current-title">' + (current.title || '') + '</div>'
           + '<div class="bc-current-author">' + (current.author || '') + '</div>'
           + (pickedAgo ? '<div class="bc-current-meta">picked ' + pickedAgo + '</div>' : '')
-          + (canManage ? '<div><span class="bc-wrap-link" onclick="wrapUpClubBook(\'' + current.id + '\', \'' + (current.title || '').replace(/'/g,"\\'") + '\')">wrap this one up →</span></div>' : '')
+          + (canManage ? '<div style="display:flex;gap:14px;flex-wrap:wrap;">'
+              + '<span class="bc-wrap-link" onclick="wrapUpClubBook(\'' + current.id + '\', \'' + (current.title || '').replace(/'/g,"\\'") + '\')">wrap this one up →</span>'
+              + '<span class="bc-wrap-link" onclick="openEditClubBook(\'' + current.id + '\')">edit details →</span>'
+            + '</div>' : '')
           + '<div style="margin-top:10px;">' + addBtn + '</div>'
         + '</div>'
       + '</div>';
@@ -6224,10 +6240,18 @@ async function submitJoinClub() {
   }
 }
 
-// ─── Pick a book for the club ────────────────────────────────
+// ─── Pick / edit a book for the club ─────────────────────────
+// Modal serves two flows controlled by _pickClubMode:
+//   'pick' — search → edit pane → insert new book_club_books row
+//   'edit' — open directly to edit pane prefilled from existing row → update
 let _pickClubForId = null;
+let _pickClubMode = 'pick';
+let _editingClubBookId = null;
+
 function openPickClubBook(clubId) {
   _pickClubForId = clubId;
+  _pickClubMode = 'pick';
+  _editingClubBookId = null;
   // Reset both panes
   document.getElementById('pick-club-search').value = '';
   document.getElementById('pick-club-results').innerHTML = '';
@@ -6235,8 +6259,56 @@ function openPickClubBook(clubId) {
   document.getElementById('pick-club-search-pane').classList.remove('hidden');
   document.getElementById('pick-club-edit-pane').classList.add('hidden');
   document.getElementById('pick-club-title').textContent = 'pick the next read';
+  _pickClubUpdateSubmitLabel();
   openModal('modal-pick-club-book');
   setTimeout(() => document.getElementById('pick-club-search').focus(), 50);
+}
+
+// Open the edit pane directly, prefilled from an existing club book row.
+// Owner/co-owner only — gated by the caller (renderClubPage hides the link otherwise).
+async function openEditClubBook(clubBookId) {
+  if (!_viewingClubId) return;
+  let cb;
+  try {
+    const list = await clubsAPI.getBooks(_viewingClubId);
+    cb = (list || []).find(b => b.id === clubBookId);
+  } catch (e) { alert('couldn\'t load — try again?'); return; }
+  if (!cb) { alert('that book isn\'t in this club anymore.'); return; }
+
+  _pickClubForId = _viewingClubId;
+  _pickClubMode = 'edit';
+  _editingClubBookId = clubBookId;
+  document.getElementById('pick-club-title').textContent = 'edit book details';
+  _pickClubShowEdit({
+    coverUrl: cb.cover_url || '',
+    title: cb.title || '',
+    author: cb.author || '',
+    published: cb.published || '',
+    format: cb.format || '',
+    pages: cb.pages || '',
+    length: cb.length || '',
+    genre: cb.genre || '',
+    series: cb.series || '',
+    seriesNum: cb.series_num || '',
+    tags: Array.isArray(cb.tags) ? cb.tags.join(', ') : '',
+    nationality: cb.nationality || '',
+    gender: cb.gender || '',
+    race: cb.race || '',
+    spiceLevel: cb.spice_level || '',
+  });
+  _pickClubUpdateSubmitLabel();
+  openModal('modal-pick-club-book');
+  setTimeout(() => document.getElementById('pce-title').focus(), 50);
+}
+
+// Adjust the submit button label + show/hide the back-to-search affordance
+function _pickClubUpdateSubmitLabel() {
+  const submitBtn = document.querySelector('#pick-club-edit-pane button[onclick="_pickClubSubmit()"]');
+  if (submitBtn) submitBtn.textContent = _pickClubMode === 'edit' ? 'save changes' : 'set as club\'s current read';
+  // Hide both "← back to search" buttons in edit mode (no search to go back to)
+  document.querySelectorAll('#pick-club-edit-pane .bc-back, #pick-club-edit-pane button[onclick="_pickClubBack()"]').forEach(el => {
+    el.style.display = _pickClubMode === 'edit' ? 'none' : '';
+  });
 }
 
 // Switch from search → edit pane, prefilling the form from a picked search result
@@ -6360,13 +6432,13 @@ function _pickClubChoose(payloadEncoded) {
   });
 }
 
-// Submit the edit form — actually inserts into book_club_books
+// Submit the edit form — dispatches to insert (pick mode) or update (edit mode)
 async function _pickClubSubmit() {
   if (!_pickClubForId) return;
   const status = document.getElementById('pick-club-edit-status');
   const title = (document.getElementById('pce-title').value || '').trim();
   if (!title) { status.textContent = 'title is required.'; return; }
-  status.textContent = 'setting…';
+  status.textContent = _pickClubMode === 'edit' ? 'saving…' : 'setting…';
   const tagsRaw = (document.getElementById('pce-tags').value || '').trim();
   const book = {
     title,
@@ -6386,12 +6458,16 @@ async function _pickClubSubmit() {
     spiceLevel: document.getElementById('pce-spiceLevel').value || '',
   };
   try {
-    await clubsAPI.pickBook(_pickClubForId, book);
+    if (_pickClubMode === 'edit' && _editingClubBookId) {
+      await clubsAPI.updateClubBook(_editingClubBookId, book);
+    } else {
+      await clubsAPI.pickBook(_pickClubForId, book);
+    }
     closeModal('modal-pick-club-book');
     if (typeof _refreshMyClubsCache === 'function') _refreshMyClubsCache();
     renderClubPage(_pickClubForId);
   } catch (e) {
-    status.textContent = 'couldn\'t set — ' + (e.message || 'try again?');
+    status.textContent = (_pickClubMode === 'edit' ? 'couldn\'t save — ' : 'couldn\'t set — ') + (e.message || 'try again?');
   }
 }
 
