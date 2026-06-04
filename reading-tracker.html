@@ -455,6 +455,68 @@ body.onboarding #welcome-screen { display: flex; }
 .tap-profile { cursor: pointer; transition: opacity 0.15s; }
 .tap-profile:hover { opacity: 0.75; }
 
+/* Book clubs */
+.bc-empty { font-size: 13px; color: var(--ink-3); font-style: italic; padding: 32px 0; text-align: center; line-height: 1.7; }
+.bc-cta-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+.bc-cta-btn { font-family: var(--font-body); font-size: 13px; padding: 9px 18px; border-radius: 99px; cursor: pointer; font-weight: 500; }
+.bc-cta-primary { background: var(--accent); color: var(--paper); border: none; }
+.bc-cta-secondary { background: var(--paper-2); color: var(--ink-2); border: 1px solid var(--paper-3); }
+.bc-clubs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.bc-club-card { background: var(--paper-2); border: 1px solid var(--paper-3); border-radius: var(--radius); padding: 16px 18px; cursor: pointer; transition: all 0.15s; }
+.bc-club-card:hover { background: var(--paper); border-color: var(--accent-2); transform: translateY(-1px); }
+.bc-club-card-name { font-family: var(--font-display); font-style: italic; font-size: 18px; color: var(--ink); margin-bottom: 4px; line-height: 1.25; }
+.bc-club-card-meta { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+.bc-club-card-current { display: flex; gap: 10px; align-items: center; }
+.bc-club-card-cover { width: 32px; height: 48px; border-radius: 3px; flex-shrink: 0; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; font-size: 8px; text-align: center; padding: 3px; font-weight: 500; line-height: 1.15; box-shadow: var(--shadow); }
+.bc-club-card-current-info { flex: 1; min-width: 0; font-size: 12px; color: var(--ink-2); }
+.bc-club-card-current-title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bc-club-card-current-author { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bc-club-card-current-empty { font-size: 12px; color: var(--ink-3); font-style: italic; }
+
+/* Single club page (rendered inside page-bookClubs when _viewingClubId is set) */
+.bc-back { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-body); font-size: 12px; color: var(--ink-3); cursor: pointer; padding: 6px 0; margin-bottom: 12px; background: none; border: none; }
+.bc-back:hover { color: var(--accent); }
+.bc-club-header { margin-bottom: 18px; }
+.bc-club-name { font-family: var(--font-display); font-style: italic; font-size: 28px; color: var(--ink); line-height: 1.2; margin-bottom: 6px; }
+.bc-club-desc { font-size: 13px; color: var(--ink-2); line-height: 1.6; margin-bottom: 10px; }
+.bc-club-meta-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--ink-3); }
+.bc-invite-code { font-family: var(--font-display); font-style: italic; font-size: 13px; color: var(--accent); letter-spacing: 0.15em; background: var(--paper-2); padding: 5px 12px; border-radius: 4px; cursor: pointer; }
+.bc-invite-code:hover { background: var(--paper-3); }
+.bc-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); margin: 24px 0 12px; font-weight: 500; }
+.bc-current-book { display: flex; gap: 14px; align-items: flex-start; background: var(--paper-2); border: 1px solid var(--paper-3); border-radius: var(--radius); padding: 16px; }
+.bc-current-cover { width: 64px; height: 96px; border-radius: 4px; flex-shrink: 0; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; text-align: center; padding: 4px; font-weight: 500; line-height: 1.2; box-shadow: var(--shadow); }
+.bc-current-info { flex: 1; min-width: 0; }
+.bc-current-title { font-family: var(--font-display); font-size: 18px; font-weight: 500; line-height: 1.2; color: var(--ink); margin-bottom: 4px; }
+.bc-current-author { font-size: 12px; color: var(--ink-3); margin-bottom: 8px; }
+.bc-current-meta { font-size: 11px; color: var(--ink-3); font-style: italic; }
+.bc-wrap-link { display: inline-block; font-family: var(--font-body); font-size: 12px; color: var(--accent); cursor: pointer; margin-top: 8px; }
+.bc-pick-empty { background: var(--paper-2); border: 1px dashed var(--paper-3); border-radius: var(--radius); padding: 22px 16px; text-align: center; font-size: 13px; color: var(--ink-3); font-style: italic; }
+.bc-pick-empty .bc-cta-btn { margin-top: 12px; }
+
+/* Comments thread */
+.bc-composer { display: flex; gap: 10px; margin-top: 14px; align-items: flex-start; }
+.bc-composer textarea { flex: 1; min-height: 60px; font-family: var(--font-body); font-size: 13px; padding: 9px 12px; background: var(--paper); border: 1px solid var(--paper-3); border-radius: var(--radius); outline: none; color: var(--ink); resize: vertical; }
+.bc-composer button { font-family: var(--font-body); font-size: 13px; padding: 9px 16px; background: var(--accent); color: var(--paper); border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; align-self: stretch; }
+.bc-composer button:disabled { opacity: 0.4; cursor: not-allowed; }
+.bc-comments { margin-top: 18px; }
+.bc-comment { display: flex; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--paper-3); align-items: flex-start; }
+.bc-comment:last-child { border-bottom: none; }
+.bc-comment-body { flex: 1; min-width: 0; }
+.bc-comment-meta { font-size: 11px; color: var(--ink-3); margin-bottom: 4px; }
+.bc-comment-meta strong { color: var(--ink-2); font-weight: 500; }
+.bc-comment-text { font-size: 13px; color: var(--ink-2); line-height: 1.55; white-space: pre-wrap; word-wrap: break-word; }
+.bc-comment-del { font-size: 11px; color: var(--ink-3); cursor: pointer; background: none; border: none; padding: 2px 0; margin-top: 4px; font-family: var(--font-body); }
+.bc-comment-del:hover { color: #b85; }
+
+/* Pick-book search results inside the pick-club-book modal */
+.bc-pick-result { display: flex; gap: 12px; padding: 10px; align-items: center; cursor: pointer; border-radius: var(--radius); transition: background 0.15s; }
+.bc-pick-result:hover { background: var(--paper-2); }
+.bc-pick-result img { width: 36px; height: 54px; border-radius: 3px; flex-shrink: 0; object-fit: cover; box-shadow: var(--shadow); }
+.bc-pick-fallback { width: 36px; height: 54px; border-radius: 3px; flex-shrink: 0; background: var(--paper-3); }
+.bc-pick-result-info { flex: 1; min-width: 0; }
+.bc-pick-result-title { font-size: 13px; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bc-pick-result-author { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* The reading room — recommendations block (distinct cards pinned above the feed) */
 .rr-recs-block { margin-bottom: 24px; display: flex; flex-direction: column; gap: 14px; }
 .rr-rec { background: var(--paper-2); border: 1px solid var(--accent-2); border-radius: var(--radius); padding: 14px; transition: box-shadow 0.15s; }
@@ -1045,6 +1107,56 @@ body.onboarding #welcome-screen { display: flex; }
   </div>
 </div>
 
+<!-- Book club: create a new club -->
+<div class="modal-backdrop" id="modal-create-club">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <h3 class="modal-title">start a club</h3>
+      <button class="modal-close" onclick="closeModal('modal-create-club')">×</button>
+    </div>
+    <div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-weight:500;">club name</div>
+    <input type="text" id="create-club-name" maxlength="50" placeholder="a slow read of the russians" style="font-family:var(--font-body);font-size:14px;padding:9px 12px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;color:var(--ink);width:100%;box-sizing:border-box;margin-bottom:14px;">
+    <div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-weight:500;">description <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-3);">(optional)</span></div>
+    <textarea id="create-club-desc" maxlength="140" rows="2" placeholder="one tea-stained chapter at a time" style="font-family:var(--font-body);font-size:13px;padding:9px 12px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;color:var(--ink);width:100%;box-sizing:border-box;resize:vertical;margin-bottom:18px;"></textarea>
+    <div id="create-club-status" style="font-size:12px;color:var(--ink-3);font-style:italic;min-height:18px;margin-bottom:8px;"></div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button onclick="closeModal('modal-create-club')" style="font-family:var(--font-body);padding:9px 18px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">cancel</button>
+      <button onclick="submitCreateClub()" style="font-family:var(--font-body);padding:9px 20px;background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">create club</button>
+    </div>
+  </div>
+</div>
+
+<!-- Book club: join via 6-char code -->
+<div class="modal-backdrop" id="modal-join-club">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h3 class="modal-title">join a club</h3>
+      <button class="modal-close" onclick="closeModal('modal-join-club')">×</button>
+    </div>
+    <div style="font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:14px;">enter the 6-character code your friend shared with you.</div>
+    <input type="text" id="join-club-code" maxlength="6" placeholder="KX7M9P" autocapitalize="characters" style="font-family:var(--font-display);font-style:italic;font-size:24px;text-align:center;letter-spacing:0.2em;padding:14px 12px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;color:var(--ink);width:100%;box-sizing:border-box;margin-bottom:14px;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6); _onJoinCodeInput();">
+    <div id="join-club-preview" style="font-size:13px;color:var(--ink-2);font-style:italic;min-height:40px;line-height:1.5;text-align:center;margin-bottom:8px;"></div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button onclick="closeModal('modal-join-club')" style="font-family:var(--font-body);padding:9px 18px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">cancel</button>
+      <button id="join-club-btn" disabled onclick="submitJoinClub()" style="font-family:var(--font-body);padding:9px 20px;background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;opacity:0.4;">join</button>
+    </div>
+  </div>
+</div>
+
+<!-- Book club: owner picks a book for the club. Reuses Google Books / Open Library -->
+<div class="modal-backdrop" id="modal-pick-club-book">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3 class="modal-title">pick the next read</h3>
+      <button class="modal-close" onclick="closeModal('modal-pick-club-book')">×</button>
+    </div>
+    <div style="font-size:12px;color:var(--ink-3);line-height:1.5;margin-bottom:14px;">search by title or author. tap a result to set it as the club's current read.</div>
+    <input type="text" id="pick-club-search" placeholder="search…" oninput="_pickClubSearch(this.value)" style="font-family:var(--font-body);font-size:14px;padding:9px 12px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;color:var(--ink);width:100%;box-sizing:border-box;margin-bottom:8px;">
+    <div id="pick-club-status" style="font-size:11px;color:var(--ink-3);font-style:italic;min-height:16px;margin-bottom:8px;"></div>
+    <div id="pick-club-results" style="max-height:380px;overflow-y:auto;"></div>
+  </div>
+</div>
+
 <!-- Reading-room peek modal — opens when you tap a friend's event in the feed -->
 <div class="modal-backdrop" id="modal-rr-peek">
   <div class="modal" style="max-width:520px;">
@@ -1434,6 +1546,16 @@ body.onboarding #welcome-screen { display: flex; }
   </div>
   <div class="content">
     <div id="rr-content"></div>
+  </div>
+</div>
+
+<div id="page-bookClubs" class="hidden">
+  <div class="topbar">
+    <div><h2 class="page-title" id="bc-page-title">book clubs</h2><p class="page-subtitle" id="bc-page-subtitle">small rooms for slow reads. one book at a time.</p></div>
+    <button class="btn-add" onclick="openCreateClub()">+ start a club</button>
+  </div>
+  <div class="content">
+    <div id="bc-content"></div>
   </div>
 </div>
 
@@ -3624,6 +3746,196 @@ const recommendsAPI = {
 };
 
 // ─────────────────────────────────────────────────────────────
+// SUPABASE DATA LAYER — book clubs (small private group + monthly pick + thread)
+// One row per club. RLS gates everything to members; two RPCs (peek+join) cover
+// the invite-code lookup + self-insert that pure RLS can't handle.
+// ─────────────────────────────────────────────────────────────
+const CLUB_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I/O/0/1
+function _generateClubCode() {
+  let s = '';
+  for (let i = 0; i < 6; i++) s += CLUB_CODE_CHARS[Math.floor(Math.random() * CLUB_CODE_CHARS.length)];
+  return s;
+}
+
+const clubsAPI = {
+  // List every club I'm in, with member count + the currently-reading book (or null).
+  async listMine() {
+    const userId = await _currentUserId();
+    if (!userId) return [];
+    // 1. My membership rows → club ids
+    const { data: memberships, error: mErr } = await db.from('book_club_members')
+      .select('club_id, role').eq('user_id', userId);
+    if (mErr) { console.error('clubs listMine memberships failed:', mErr); return []; }
+    const myRoles = {};
+    (memberships || []).forEach(m => { myRoles[m.club_id] = m.role; });
+    const clubIds = Object.keys(myRoles);
+    if (!clubIds.length) return [];
+    // 2. Club rows
+    const { data: clubs, error: cErr } = await db.from('book_clubs')
+      .select('*').in('id', clubIds);
+    if (cErr) { console.error('clubs listMine clubs failed:', cErr); return []; }
+    // 3. Member counts (one query, group client-side)
+    const { data: allMembers } = await db.from('book_club_members')
+      .select('club_id, user_id').in('club_id', clubIds);
+    const memberCount = {};
+    (allMembers || []).forEach(m => { memberCount[m.club_id] = (memberCount[m.club_id] || 0) + 1; });
+    // 4. Currently reading book per club (wrapped_at is null)
+    const { data: currentBooks } = await db.from('book_club_books')
+      .select('*').in('club_id', clubIds).is('wrapped_at', null);
+    const currentBy = {};
+    (currentBooks || []).forEach(b => { currentBy[b.club_id] = b; });
+    // Augment and return
+    return (clubs || []).map(c => ({
+      ...c,
+      myRole: myRoles[c.id],
+      memberCount: memberCount[c.id] || 0,
+      currentBook: currentBy[c.id] || null,
+    }));
+  },
+
+  // Single-club details (used by the club page)
+  async get(clubId) {
+    const { data, error } = await db.from('book_clubs').select('*').eq('id', clubId).maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
+  async getMembers(clubId) {
+    // Join member rows with public profiles for avatar/handle display
+    const { data: rows, error } = await db.from('book_club_members')
+      .select('user_id, role, joined_at').eq('club_id', clubId);
+    if (error) { console.error('clubs getMembers failed:', error); return []; }
+    const ids = (rows || []).map(r => r.user_id);
+    if (!ids.length) return [];
+    const { data: profiles } = await db.from('public_profiles').select('*').in('id', ids);
+    const profMap = {};
+    (profiles || []).forEach(p => { profMap[p.id] = p; });
+    return rows.map(r => ({ ...r, profile: profMap[r.user_id] || { id: r.user_id, handle: '?', avatar_url: null } }));
+  },
+
+  // All books for a club, ordered newest-pick first. Filter wrapped_at client-side.
+  async getBooks(clubId) {
+    const { data, error } = await db.from('book_club_books')
+      .select('*').eq('club_id', clubId).order('picked_at', { ascending: false });
+    if (error) { console.error('clubs getBooks failed:', error); return []; }
+    return data || [];
+  },
+
+  // Comments under a specific club-book, oldest first (chronological discussion)
+  async getComments(clubBookId) {
+    const { data: rows, error } = await db.from('book_club_comments')
+      .select('*').eq('club_book_id', clubBookId).order('created_at', { ascending: true });
+    if (error) { console.error('clubs getComments failed:', error); return []; }
+    const ids = [...new Set((rows || []).map(r => r.user_id))];
+    if (!ids.length) return [];
+    const { data: profiles } = await db.from('public_profiles').select('*').in('id', ids);
+    const profMap = {};
+    (profiles || []).forEach(p => { profMap[p.id] = p; });
+    return rows.map(r => ({ ...r, profile: profMap[r.user_id] || { id: r.user_id, handle: '?', avatar_url: null } }));
+  },
+
+  // Create a club. Returns the new club id. Retries on rare invite-code collision (unique).
+  async create({ name, description }) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const cleanName = (name || '').trim().slice(0, 50);
+    if (!cleanName) throw new Error('name is required');
+    const cleanDesc = (description || '').trim().slice(0, 140) || null;
+    // Try a few times in case of code collision (extremely unlikely with 32^6 space but defensive)
+    let lastErr;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const code = _generateClubCode();
+      const { data, error } = await db.from('book_clubs').insert({
+        name: cleanName,
+        description: cleanDesc,
+        invite_code: code,
+        founding_owner_id: userId,
+      }).select().single();
+      if (!error) {
+        // Insert the owner membership row. RLS allows because founding_owner_id matches.
+        const { error: mErr } = await db.from('book_club_members').insert({
+          club_id: data.id, user_id: userId, role: 'owner',
+        });
+        if (mErr) { console.warn('owner membership insert failed:', mErr); /* club exists; member row is recoverable */ }
+        return data;
+      }
+      lastErr = error;
+      // Only retry on unique-violation on invite_code; bail on anything else
+      if (!/duplicate|unique/i.test(error.message || '')) break;
+    }
+    throw lastErr || new Error('couldn\'t create club');
+  },
+
+  // Anon-allowed lookup: show club name + member count before signup or before joining
+  async peekByCode(code) {
+    const { data, error } = await db.rpc('peek_club_by_invite_code', { code: (code || '').trim() });
+    if (error) { console.warn('peek failed:', error); return null; }
+    return (data && data[0]) || null;
+  },
+
+  // Authenticated join. Returns the club id (idempotent if already in).
+  async joinByCode(code) {
+    const { data, error } = await db.rpc('join_club_by_invite_code', { code: (code || '').trim() });
+    if (error) throw error;
+    return data;
+  },
+
+  // Pick a new book for the club. Wrapped_at left null = currently reading.
+  async pickBook(clubId, book) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const { data, error } = await db.from('book_club_books').insert({
+      club_id: clubId,
+      title: (book.title || '').trim().slice(0, 200),
+      author: (book.author || '').trim().slice(0, 200) || null,
+      cover_url: book.coverUrl || null,
+      google_books_id: book.googleBooksId || null,
+      picked_by: userId,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  // Mark a club book as wrapped — moves it to the archive
+  async wrapUp(clubBookId) {
+    const { data, error } = await db.from('book_club_books')
+      .update({ wrapped_at: new Date().toISOString() })
+      .eq('id', clubBookId)
+      .select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  // Post a comment under a club book
+  async postComment(clubBookId, body) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const clean = (body || '').trim().slice(0, 2000);
+    if (!clean) throw new Error('comment is empty');
+    const { data, error } = await db.from('book_club_comments').insert({
+      club_book_id: clubBookId, user_id: userId, body: clean,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  // Delete a comment (RLS enforces it has to be yours)
+  async deleteComment(commentId) {
+    const { error } = await db.from('book_club_comments').delete().eq('id', commentId);
+    if (error) throw error;
+  },
+
+  // Leave a club (delete my membership row — RLS allows self-delete)
+  async leave(clubId) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const { error } = await db.from('book_club_members').delete()
+      .eq('club_id', clubId).eq('user_id', userId);
+    if (error) throw error;
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
 // SUPABASE DATA LAYER — book comments (visible on any book you can SELECT via RLS)
 // ─────────────────────────────────────────────────────────────
 const commentsAPI = {
@@ -5011,6 +5323,442 @@ function _onFpLibFilter(kind, value) {
   _renderFriendLibraryTab();
 }
 
+// ─────────────────────────────────────────────────────────────
+// BOOK CLUBS — landing + single-club view inside page-bookClubs
+// State is in-memory: _viewingClubId picks the render mode.
+// ─────────────────────────────────────────────────────────────
+let _viewingClubId = null;     // null = list mode, set = single-club mode
+let _pickClubSearchTimer = null;
+
+async function renderBookClubs() {
+  if (_viewingClubId) await renderClubPage(_viewingClubId);
+  else await renderClubsList();
+}
+
+async function renderClubsList() {
+  // Reset topbar to its default "book clubs" + "+ start a club" state
+  const title = document.getElementById('bc-page-title');
+  const sub = document.getElementById('bc-page-subtitle');
+  if (title) title.textContent = 'book clubs';
+  if (sub) sub.textContent = 'small rooms for slow reads. one book at a time.';
+  const topbarBtn = document.querySelector('#page-bookClubs .topbar .btn-add');
+  if (topbarBtn) { topbarBtn.textContent = '+ start a club'; topbarBtn.onclick = openCreateClub; topbarBtn.style.display = ''; }
+
+  const wrap = document.getElementById('bc-content');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="bc-empty">loading your clubs…</div>';
+  const clubs = await clubsAPI.listMine();
+  if (!clubs.length) {
+    wrap.innerHTML = '<div class="bc-empty">no clubs yet. start one and share the code, or join one with a code a friend gave you.'
+      + '<div class="bc-cta-row">'
+      + '<button class="bc-cta-btn bc-cta-primary" onclick="openCreateClub()">+ start a club</button>'
+      + '<button class="bc-cta-btn bc-cta-secondary" onclick="openJoinClub()">join with a code</button>'
+      + '</div></div>';
+    return;
+  }
+  // Render the grid of club cards. Each card shows: name, member count, current book if any.
+  const cards = clubs.map(c => {
+    const memberLabel = c.memberCount + ' member' + (c.memberCount === 1 ? '' : 's');
+    let currentBlock;
+    if (c.currentBook) {
+      const cb = c.currentBook;
+      const bg = cb.cover_url
+        ? 'background-image:url(\'' + cb.cover_url + '\');'
+        : 'background:' + bookColor(cb.title) + ';';
+      const fallback = cb.cover_url ? '' : (cb.title || '');
+      currentBlock = '<div class="bc-club-card-current">'
+        + '<div class="bc-club-card-cover" style="' + bg + '">' + fallback + '</div>'
+        + '<div class="bc-club-card-current-info">'
+          + '<div style="font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">currently reading</div>'
+          + '<div class="bc-club-card-current-title">' + (cb.title || '') + '</div>'
+          + '<div class="bc-club-card-current-author">' + (cb.author || '') + '</div>'
+        + '</div>'
+      + '</div>';
+    } else {
+      currentBlock = '<div class="bc-club-card-current-empty">no book picked yet</div>';
+    }
+    return '<div class="bc-club-card" onclick="openClub(\'' + c.id + '\')">'
+      + '<div class="bc-club-card-name">' + (c.name || '') + '</div>'
+      + '<div class="bc-club-card-meta">' + memberLabel + (c.myRole === 'owner' ? ' · you own' : c.myRole === 'co-owner' ? ' · co-owner' : '') + '</div>'
+      + currentBlock
+    + '</div>';
+  }).join('');
+
+  wrap.innerHTML = '<div class="bc-clubs-grid">' + cards + '</div>'
+    + '<div style="margin-top:24px;text-align:center;font-size:12px;color:var(--ink-3);">'
+    + '<button class="bc-cta-btn bc-cta-secondary" onclick="openJoinClub()" style="font-size:12px;padding:7px 14px;">+ join another club with a code</button>'
+    + '</div>';
+}
+
+function openClub(clubId) {
+  _viewingClubId = clubId;
+  renderBookClubs();
+}
+
+function exitClub() {
+  _viewingClubId = null;
+  renderBookClubs();
+}
+
+// Single-club view inside page-bookClubs. Renders header + current book + comments thread.
+async function renderClubPage(clubId) {
+  const wrap = document.getElementById('bc-content');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="bc-empty">loading…</div>';
+
+  // Hide the "+ start a club" button while inside a single club view
+  const topbarBtn = document.querySelector('#page-bookClubs .topbar .btn-add');
+  if (topbarBtn) topbarBtn.style.display = 'none';
+
+  let club;
+  try {
+    club = await clubsAPI.get(clubId);
+    if (!club) { wrap.innerHTML = '<div class="bc-empty">club not found — maybe you left it?</div>'; return; }
+  } catch (e) { wrap.innerHTML = '<div class="bc-empty">couldn\'t load that club. try again?</div>'; return; }
+
+  const members = await clubsAPI.getMembers(clubId);
+  const books = await clubsAPI.getBooks(clubId);
+  const myUid = await _currentUserId();
+  const me = members.find(m => m.user_id === myUid);
+  const myRole = me ? me.role : 'member';
+  const canManage = myRole === 'owner' || myRole === 'co-owner';
+
+  // Update top-bar title + subtitle for context
+  const title = document.getElementById('bc-page-title');
+  const sub = document.getElementById('bc-page-subtitle');
+  if (title) title.textContent = club.name;
+  if (sub) sub.textContent = members.length + ' member' + (members.length === 1 ? '' : 's') + (club.cadence_weeks ? ' · every ' + club.cadence_weeks + ' week' + (club.cadence_weeks === 1 ? '' : 's') : '');
+
+  const current = books.find(b => !b.wrapped_at);
+
+  // Header block — name, description, invite code chip, meta
+  const headerHtml = '<button class="bc-back" onclick="exitClub()">← all clubs</button>'
+    + '<div class="bc-club-header">'
+      + (club.description ? '<div class="bc-club-desc">' + club.description + '</div>' : '')
+      + '<div class="bc-club-meta-row">'
+        + '<span title="tap to copy" class="bc-invite-code" onclick="copyInviteCode(\'' + club.invite_code + '\')">' + club.invite_code + '</span>'
+        + '<span>' + members.length + ' member' + (members.length === 1 ? '' : 's') + '</span>'
+        + (myRole !== 'owner' ? '<span onclick="leaveClubConfirm(\'' + club.id + '\', \'' + (club.name || '').replace(/'/g,"\\'") + '\')" style="cursor:pointer;color:var(--ink-3);text-decoration:underline;text-decoration-style:dotted;">leave</span>' : '')
+      + '</div>'
+    + '</div>';
+
+  // Current book + comments below it
+  let currentBlock;
+  if (current) {
+    const bg = current.cover_url
+      ? 'background-image:url(\'' + current.cover_url + '\');'
+      : 'background:' + bookColor(current.title) + ';';
+    const fallback = current.cover_url ? '' : current.title;
+    const pickedAgo = current.picked_at ? new Date(current.picked_at).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : '';
+    currentBlock = '<div class="bc-section-title">currently reading</div>'
+      + '<div class="bc-current-book">'
+        + '<div class="bc-current-cover" style="' + bg + '">' + fallback + '</div>'
+        + '<div class="bc-current-info">'
+          + '<div class="bc-current-title">' + (current.title || '') + '</div>'
+          + '<div class="bc-current-author">' + (current.author || '') + '</div>'
+          + (pickedAgo ? '<div class="bc-current-meta">picked ' + pickedAgo + '</div>' : '')
+          + (canManage ? '<span class="bc-wrap-link" onclick="wrapUpClubBook(\'' + current.id + '\', \'' + (current.title || '').replace(/'/g,"\\'") + '\')">wrap this one up →</span>' : '')
+        + '</div>'
+      + '</div>';
+  } else {
+    currentBlock = '<div class="bc-section-title">currently reading</div>'
+      + '<div class="bc-pick-empty">'
+        + (canManage
+          ? 'no book picked yet.<br><button class="bc-cta-btn bc-cta-primary" onclick="openPickClubBook(\'' + club.id + '\')">+ pick a book</button>'
+          : 'no book picked yet. waiting on the owner.')
+      + '</div>';
+  }
+
+  // Comments thread + composer (only if there's a current book to attach comments to)
+  let commentsBlock = '';
+  if (current) {
+    const comments = await clubsAPI.getComments(current.id);
+    const commentRows = comments.length
+      ? comments.map(c => _clubCommentHtml(c, myUid)).join('')
+      : '<div class="bc-empty" style="padding:20px 0;">no comments yet. say something first.</div>';
+    commentsBlock = '<div class="bc-section-title">the discussion</div>'
+      + '<div class="bc-composer">'
+        + '<textarea id="bc-composer-input" placeholder="what are you thinking?" maxlength="2000" oninput="document.getElementById(\'bc-composer-btn\').disabled = !this.value.trim();"></textarea>'
+        + '<button id="bc-composer-btn" disabled onclick="submitClubComment(\'' + current.id + '\')">post</button>'
+      + '</div>'
+      + '<div class="bc-comments">' + commentRows + '</div>';
+  }
+
+  wrap.innerHTML = headerHtml + currentBlock + commentsBlock;
+}
+
+function _clubCommentHtml(c, myUid) {
+  const handle = (c.profile && c.profile.handle) || '?';
+  const avatar = avatarHtml(c.profile, 32);
+  const when = c.created_at ? _relativeTime(c.created_at) : '';
+  const canDelete = c.user_id === myUid;
+  return '<div class="bc-comment">'
+    + avatar
+    + '<div class="bc-comment-body">'
+      + '<div class="bc-comment-meta"><strong>@' + handle + '</strong>' + (when ? ' · ' + when : '') + '</div>'
+      + '<div class="bc-comment-text">' + _escapeHtml(c.body || '') + '</div>'
+      + (canDelete ? '<button class="bc-comment-del" onclick="deleteClubComment(\'' + c.id + '\')">delete</button>' : '')
+    + '</div>'
+  + '</div>';
+}
+
+// Light HTML-escape so comment bodies don't open XSS holes (innerHTML target)
+function _escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Relative time helper — "2 hours ago", "3 days ago", etc.
+function _relativeTime(iso) {
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return '';
+  const diff = (Date.now() - t) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff/60) + ' min ago';
+  if (diff < 86400) return Math.floor(diff/3600) + ' hr ago';
+  if (diff < 86400*7) return Math.floor(diff/86400) + ' day' + (Math.floor(diff/86400)===1?'':'s') + ' ago';
+  return new Date(iso).toLocaleDateString('en-GB', { day:'numeric', month:'short', year: new Date(iso).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
+}
+
+// Copy invite code to clipboard + toast
+async function copyInviteCode(code) {
+  try {
+    await navigator.clipboard.writeText(code);
+    // Quick toast via the existing sync-bar pattern — reuse if we have one, else alert
+    const bar = document.createElement('div');
+    bar.textContent = 'code copied · ' + code;
+    bar.style.cssText = 'position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:99px;font-size:12px;font-family:var(--font-body);z-index:9999;box-shadow:var(--shadow-lg);';
+    document.body.appendChild(bar);
+    setTimeout(() => bar.remove(), 1800);
+  } catch (e) {
+    alert('code: ' + code);
+  }
+}
+
+// ─── Create club flow ───────────────────────────────────────
+function openCreateClub() {
+  document.getElementById('create-club-name').value = '';
+  document.getElementById('create-club-desc').value = '';
+  document.getElementById('create-club-status').textContent = '';
+  openModal('modal-create-club');
+  setTimeout(() => document.getElementById('create-club-name').focus(), 50);
+}
+
+async function submitCreateClub() {
+  const nameEl = document.getElementById('create-club-name');
+  const descEl = document.getElementById('create-club-desc');
+  const status = document.getElementById('create-club-status');
+  const name = (nameEl.value || '').trim();
+  if (!name) {
+    status.textContent = 'give it a name — something to remember it by.';
+    status.style.color = '#b85';
+    return;
+  }
+  status.textContent = 'creating…'; status.style.color = 'var(--ink-3)';
+  try {
+    const club = await clubsAPI.create({ name, description: descEl.value });
+    closeModal('modal-create-club');
+    // Land on the new club's page
+    openClub(club.id);
+    // Make sure we're on the page-bookClubs route (in case user opened modal from a different page)
+    if (document.getElementById('page-bookClubs').classList.contains('hidden')) showPage('bookClubs');
+  } catch (e) {
+    status.textContent = 'couldn\'t create — ' + (e.message || 'try again?');
+    status.style.color = '#b85';
+  }
+}
+
+// ─── Join club flow ─────────────────────────────────────────
+function openJoinClub() {
+  document.getElementById('join-club-code').value = '';
+  document.getElementById('join-club-preview').textContent = '';
+  document.getElementById('join-club-btn').disabled = true;
+  document.getElementById('join-club-btn').style.opacity = '0.4';
+  openModal('modal-join-club');
+  setTimeout(() => document.getElementById('join-club-code').focus(), 50);
+}
+
+let _joinPeekTimer = null;
+async function _onJoinCodeInput() {
+  const code = (document.getElementById('join-club-code').value || '').trim();
+  const preview = document.getElementById('join-club-preview');
+  const btn = document.getElementById('join-club-btn');
+  btn.disabled = code.length !== 6;
+  btn.style.opacity = btn.disabled ? '0.4' : '1';
+  if (code.length !== 6) { preview.textContent = ''; return; }
+  // Debounce the peek so we don't hammer the RPC on every keystroke
+  if (_joinPeekTimer) clearTimeout(_joinPeekTimer);
+  preview.textContent = 'checking…';
+  preview.style.color = 'var(--ink-3)';
+  _joinPeekTimer = setTimeout(async () => {
+    const peek = await clubsAPI.peekByCode(code);
+    if (!peek) {
+      preview.textContent = 'no club with that code. double-check?';
+      preview.style.color = '#b85';
+      btn.disabled = true;
+      btn.style.opacity = '0.4';
+    } else {
+      preview.innerHTML = '<strong style="color:var(--ink);">' + _escapeHtml(peek.name) + '</strong><br>' + peek.member_count + ' member' + (peek.member_count === 1 ? '' : 's');
+      preview.style.color = 'var(--ink-2)';
+    }
+  }, 350);
+}
+
+async function submitJoinClub() {
+  const code = (document.getElementById('join-club-code').value || '').trim();
+  const preview = document.getElementById('join-club-preview');
+  if (code.length !== 6) return;
+  preview.textContent = 'joining…';
+  try {
+    const clubId = await clubsAPI.joinByCode(code);
+    closeModal('modal-join-club');
+    openClub(clubId);
+    if (document.getElementById('page-bookClubs').classList.contains('hidden')) showPage('bookClubs');
+  } catch (e) {
+    preview.textContent = 'couldn\'t join — ' + (e.message || 'try again?');
+    preview.style.color = '#b85';
+  }
+}
+
+// ─── Pick a book for the club ────────────────────────────────
+let _pickClubForId = null;
+function openPickClubBook(clubId) {
+  _pickClubForId = clubId;
+  document.getElementById('pick-club-search').value = '';
+  document.getElementById('pick-club-results').innerHTML = '';
+  document.getElementById('pick-club-status').textContent = '';
+  openModal('modal-pick-club-book');
+  setTimeout(() => document.getElementById('pick-club-search').focus(), 50);
+}
+
+function _pickClubSearch(val) {
+  const q = (val || '').trim();
+  const status = document.getElementById('pick-club-status');
+  const results = document.getElementById('pick-club-results');
+  if (_pickClubSearchTimer) clearTimeout(_pickClubSearchTimer);
+  if (q.length < 2) { results.innerHTML = ''; status.textContent = ''; return; }
+  status.textContent = 'searching…';
+  _pickClubSearchTimer = setTimeout(async () => {
+    let items = [];
+    try {
+      const r = await fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(q) + '&maxResults=8');
+      if (r.ok) {
+        const d = await r.json();
+        items = (d.items || []).filter(i => i.volumeInfo?.title);
+      }
+    } catch (e) { /* fall through to Open Library */ }
+    if (!items.length) {
+      try {
+        const r2 = await fetch('https://openlibrary.org/search.json?q=' + encodeURIComponent(q) + '&limit=8');
+        if (r2.ok) {
+          const d2 = await r2.json();
+          items = (d2.docs || []).filter(x => x.title).slice(0, 8).map(openLibraryDocToItem);
+        }
+      } catch (e) {}
+    }
+    if (!items.length) { results.innerHTML = ''; status.textContent = 'no results.'; return; }
+    status.textContent = '';
+    results.innerHTML = items.map(item => {
+      const info = item.volumeInfo;
+      const thumb = info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '';
+      const authors = (info.authors || []).join(', ');
+      // Pack the data into a base-64-safe JSON blob in the onclick to avoid escaping nightmares
+      const payload = encodeURIComponent(JSON.stringify({
+        title: info.title || '',
+        author: authors,
+        coverUrl: thumb,
+        googleBooksId: item.id || null,
+      }));
+      return '<div class="bc-pick-result" onclick="_pickClubChoose(\'' + payload + '\')">'
+        + (thumb ? '<img src="' + thumb + '" alt="">' : '<div class="bc-pick-fallback"></div>')
+        + '<div class="bc-pick-result-info">'
+          + '<div class="bc-pick-result-title">' + _escapeHtml(info.title || '') + '</div>'
+          + '<div class="bc-pick-result-author">' + _escapeHtml(authors) + '</div>'
+        + '</div>'
+      + '</div>';
+    }).join('');
+  }, 320);
+}
+
+async function _pickClubChoose(payloadEncoded) {
+  if (!_pickClubForId) return;
+  let book;
+  try { book = JSON.parse(decodeURIComponent(payloadEncoded)); }
+  catch (e) { alert('couldn\'t parse that pick.'); return; }
+  const status = document.getElementById('pick-club-status');
+  status.textContent = 'setting…';
+  try {
+    await clubsAPI.pickBook(_pickClubForId, book);
+    closeModal('modal-pick-club-book');
+    // Re-render the club page to show the new current book + empty comments
+    renderClubPage(_pickClubForId);
+  } catch (e) {
+    status.textContent = 'couldn\'t set — ' + (e.message || 'try again?');
+  }
+}
+
+// ─── Comment actions ────────────────────────────────────────
+async function submitClubComment(clubBookId) {
+  const ta = document.getElementById('bc-composer-input');
+  const btn = document.getElementById('bc-composer-btn');
+  const body = (ta.value || '').trim();
+  if (!body) return;
+  btn.disabled = true;
+  try {
+    await clubsAPI.postComment(clubBookId, body);
+    ta.value = '';
+    // Re-render this club's page so the new comment appears
+    if (_viewingClubId) renderClubPage(_viewingClubId);
+  } catch (e) {
+    alert('couldn\'t post — ' + (e.message || e));
+    btn.disabled = false;
+  }
+}
+
+async function deleteClubComment(commentId) {
+  const ok = await dinkusConfirm({
+    title: 'delete this comment?',
+    message: 'this is just for you. anyone in the club who saw it will still have seen it.',
+    confirmLabel: 'delete',
+    cancelLabel: 'keep it',
+    danger: true,
+  });
+  if (!ok) return;
+  try {
+    await clubsAPI.deleteComment(commentId);
+    if (_viewingClubId) renderClubPage(_viewingClubId);
+  } catch (e) { alert('couldn\'t delete — ' + (e.message || e)); }
+}
+
+// Owner wraps the current book up — moves it to the archive, opens slot for the next pick
+async function wrapUpClubBook(clubBookId, title) {
+  const ok = await dinkusConfirm({
+    title: 'wrap this one up?',
+    message: '"' + title + '" moves to the archive. you can pick the next book after.',
+    confirmLabel: 'archive it',
+    cancelLabel: 'still reading',
+  });
+  if (!ok) return;
+  try {
+    await clubsAPI.wrapUp(clubBookId);
+    if (_viewingClubId) renderClubPage(_viewingClubId);
+  } catch (e) { alert('couldn\'t wrap — ' + (e.message || e)); }
+}
+
+async function leaveClubConfirm(clubId, name) {
+  const ok = await dinkusConfirm({
+    title: 'leave this club?',
+    message: 'you\'ll stop seeing "' + name + '" and its picks. you can rejoin with the code anytime.',
+    confirmLabel: 'leave',
+    cancelLabel: 'stay',
+    danger: true,
+  });
+  if (!ok) return;
+  try {
+    await clubsAPI.leave(clubId);
+    exitClub();
+  } catch (e) { alert('couldn\'t leave — ' + (e.message || e)); }
+}
+
 // Friend's book row (currently reading) — tap to open the peek modal
 function _fpFriendBookRow(b) {
   const bg = b.coverUrl
@@ -5658,6 +6406,7 @@ const NAV_GROUPS = [
   ]},
   { id: 'friends',  label: 'friends',  pages: [
     { id: 'readingRoom',  label: 'the reading room' },
+    { id: 'bookClubs',    label: 'book clubs' },
     { id: 'friendsList',  label: 'friends' },
   ]},
   { id: 'you',      label: 'you',      pages: [
@@ -5668,7 +6417,7 @@ const NAV_GROUPS = [
   ]},
 ];
 
-const PAGES = ['dashboard','library','stats','want','series','oracle','readingRoom','goals','friendsList','profile'];
+const PAGES = ['dashboard','library','stats','want','series','oracle','readingRoom','goals','friendsList','profile','bookClubs'];
 // Per-group memory of the last sub-page visited, so re-tapping a group lands you back where you were
 const _groupLastPage = {
   home: 'dashboard',
@@ -5731,6 +6480,7 @@ function showPage(name) {
   if (name==='goals') renderGoals();
   if (name==='oracle') renderOracle();
   if (name==='readingRoom') renderReadingRoom();
+  if (name==='bookClubs') renderBookClubs();
   if (name==='friendsList') renderFriendsListPage();
   if (name==='profile') renderProfile();
   if (name==='settings') renderSettings();
