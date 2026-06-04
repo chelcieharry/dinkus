@@ -564,7 +564,9 @@ body.onboarding #welcome-screen { display: flex; }
 .bc-arch-rating-stars { color: var(--accent); font-size: 12px; }
 .bc-arch-rating-stars.unrated { color: var(--ink-3); font-style: italic; font-size: 11px; }
 .bc-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); margin: 24px 0 12px; font-weight: 500; }
-.bc-current-book { display: flex; gap: 14px; align-items: flex-start; background: var(--paper-2); border: 1px solid var(--paper-3); border-radius: var(--radius); padding: 16px; }
+.bc-current-book { display: flex; gap: 14px; align-items: flex-start; background: var(--paper-2); border: 1px solid var(--paper-3); border-radius: var(--radius); padding: 16px; position: relative; }
+.bc-current-remove { position: absolute; top: 8px; right: 10px; background: none; border: none; font-size: 18px; color: var(--ink-3); cursor: pointer; padding: 4px 8px; line-height: 1; border-radius: 4px; }
+.bc-current-remove:hover { color: #b85; background: var(--paper); }
 .bc-current-cover { width: 64px; height: 96px; border-radius: 4px; flex-shrink: 0; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; text-align: center; padding: 4px; font-weight: 500; line-height: 1.2; box-shadow: var(--shadow); }
 .bc-current-info { flex: 1; min-width: 0; }
 .bc-current-title { font-family: var(--font-display); font-size: 18px; font-weight: 500; line-height: 1.2; color: var(--ink); margin-bottom: 4px; }
@@ -4163,6 +4165,12 @@ const clubsAPI = {
     return data;
   },
 
+  // Remove a club book outright — doesn't land in the archive. Cascades comments.
+  async removeClubBook(clubBookId) {
+    const { error } = await db.from('book_club_books').delete().eq('id', clubBookId);
+    if (error) throw error;
+  },
+
   // Post a comment under a club book
   async postComment(clubBookId, body) {
     const userId = await _currentUserId();
@@ -5955,6 +5963,7 @@ async function renderClubPage(clubId) {
     }
     currentBlock = '<div class="bc-section-title">currently reading</div>'
       + '<div class="bc-current-book">'
+        + (canManage ? '<button class="bc-current-remove" title="remove this book from the club" aria-label="remove" onclick="removeClubBookConfirm(\'' + current.id + '\', \'' + (current.title || '').replace(/'/g,"\\'") + '\')">×</button>' : '')
         + '<div class="bc-current-cover" style="' + bg + '">' + fallback + '</div>'
         + '<div class="bc-current-info">'
           + '<div class="bc-current-title">' + (current.title || '') + '</div>'
@@ -6588,6 +6597,25 @@ async function moveClubBookFromTbr(myBookId, clubBookId) {
     renderClubPage(_viewingClubId);
   } catch (e) {
     alert('couldn\'t move — ' + (e.message || e));
+  }
+}
+
+// Owner removes the current book outright — destructive, doesn't land in the archive.
+// Use this for test/junk picks; use wrap-up for finished books that should be remembered.
+async function removeClubBookConfirm(clubBookId, title) {
+  const ok = await dinkusConfirm({
+    title: 'remove this book from the club\'s currently reading?',
+    message: '"' + title + '" — this deletes it entirely, including any comments under it. it won\'t land in the archive. for finished books, use "wrap this one up" instead.',
+    confirmLabel: 'remove',
+    cancelLabel: 'cancel',
+    danger: true,
+  });
+  if (!ok) return;
+  try {
+    await clubsAPI.removeClubBook(clubBookId);
+    if (_viewingClubId) renderClubPage(_viewingClubId);
+  } catch (e) {
+    alert('couldn\'t remove — ' + (e.message || e));
   }
 }
 
