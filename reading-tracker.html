@@ -604,6 +604,7 @@ body.onboarding #welcome-screen { display: flex; }
 
 /* Pick-club-book edit pane — labels + inputs styled compact */
 .pce-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); font-weight: 500; margin: 12px 0 4px; }
+.pce-sublabel { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); font-weight: 400; margin: 0 0 4px; }
 .pce-input { width: 100%; box-sizing: border-box; font-family: var(--font-body); font-size: 13px; padding: 8px 11px; background: var(--paper); border: 1px solid var(--paper-3); border-radius: var(--radius); outline: none; color: var(--ink); }
 .pce-row { display: flex; gap: 10px; align-items: flex-start; }
 .pce-row > div { flex: 1; }
@@ -1343,6 +1344,7 @@ body.onboarding #welcome-screen { display: flex; }
       </div>
       <label class="pce-label">genre</label>
       <input type="text" id="pce-genre" class="pce-input" placeholder="literary fiction, classics, …">
+      <div class="pill-picker" id="pce-pick-genre"></div>
       <div class="pce-row">
         <div style="flex:2;">
           <label class="pce-label">series</label>
@@ -1353,16 +1355,20 @@ body.onboarding #welcome-screen { display: flex; }
           <input type="text" id="pce-seriesNum" class="pce-input">
         </div>
       </div>
-      <label class="pce-label">tags</label>
-      <input type="text" id="pce-tags" class="pce-input" placeholder="comma, separated, tags">
-      <label class="pce-label">author demographics <span style="text-transform:none;letter-spacing:0;color:var(--ink-3);font-style:italic;font-weight:400;">(helps the stats page)</span></label>
+      <label class="pce-label">author <span style="text-transform:none;letter-spacing:0;color:var(--ink-3);font-style:italic;font-weight:400;">(helps the stats page)</span></label>
       <div class="pce-row">
-        <div style="flex:1;"><input type="text" id="pce-nationality" class="pce-input" placeholder="nationality"></div>
-        <div style="flex:1;"><input type="text" id="pce-gender" class="pce-input" placeholder="gender"></div>
-        <div style="flex:1;"><input type="text" id="pce-race" class="pce-input" placeholder="race"></div>
+        <div style="flex:1;">
+          <div class="pce-sublabel">nationality</div>
+          <input type="text" id="pce-nationality" class="pce-input" list="nationality-list" placeholder="start typing — or use 'X / Y' for dual">
+        </div>
+        <div style="flex:1;">
+          <div class="pce-sublabel">gender</div>
+          <select id="pce-gender" class="pce-input"></select>
+        </div>
       </div>
-      <label class="pce-label">spice level <span style="text-transform:none;letter-spacing:0;color:var(--ink-3);font-style:italic;font-weight:400;">(0–5, optional)</span></label>
-      <input type="number" id="pce-spiceLevel" class="pce-input" min="0" max="5" style="max-width:80px;">
+      <div class="pce-sublabel" style="margin-top:12px;">race / ethnicity</div>
+      <input type="text" id="pce-race" class="pce-input" placeholder="click below; multi-select for mixed heritage">
+      <div class="pill-picker" id="pce-pick-race"></div>
       <div id="pick-club-edit-status" style="font-size:11px;color:#b85;font-style:italic;min-height:16px;margin-top:14px;"></div>
       <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px;">
         <button onclick="_pickClubBack()" style="font-family:var(--font-body);padding:9px 18px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">cancel</button>
@@ -6290,11 +6296,9 @@ async function openEditClubBook(clubBookId) {
     genre: cb.genre || '',
     series: cb.series || '',
     seriesNum: cb.series_num || '',
-    tags: Array.isArray(cb.tags) ? cb.tags.join(', ') : '',
     nationality: cb.nationality || '',
     gender: cb.gender || '',
     race: cb.race || '',
-    spiceLevel: cb.spice_level || '',
   });
   _pickClubUpdateSubmitLabel();
   openModal('modal-pick-club-book');
@@ -6328,14 +6332,24 @@ function _pickClubShowEdit(prefill) {
   document.getElementById('pce-genre').value       = prefill.genre || '';
   document.getElementById('pce-series').value      = prefill.series || '';
   document.getElementById('pce-seriesNum').value   = prefill.seriesNum || '';
-  document.getElementById('pce-tags').value        = prefill.tags || '';
   document.getElementById('pce-nationality').value = prefill.nationality || '';
-  document.getElementById('pce-gender').value      = prefill.gender || '';
   document.getElementById('pce-race').value        = prefill.race || '';
-  document.getElementById('pce-spiceLevel').value  = prefill.spiceLevel || '';
   document.getElementById('pick-club-edit-status').textContent = '';
+  // Wire datalist + select + pill pickers AFTER prefill so they reflect the values
+  _pickClubSetupPickers(prefill.gender || '');
   _pickClubCoverChanged();
   _pickClubFormatChanged();
+}
+
+// Populate the nationality datalist + gender select + genre/race pill pickers.
+// Called every time the edit pane is shown so the pickers reflect the current values.
+function _pickClubSetupPickers(genderValue) {
+  if (typeof populateNationalityList === 'function') populateNationalityList();
+  if (typeof populateGenderSelect === 'function') populateGenderSelect(genderValue || '', 'pce-gender');
+  if (typeof buildPillPicker === 'function') {
+    if (typeof allGenreOptions === 'function') buildPillPicker('pce-genre', 'pce-pick-genre', allGenreOptions());
+    if (typeof allEthnicityOptions === 'function') buildPillPicker('pce-race', 'pce-pick-race', allEthnicityOptions());
+  }
 }
 
 // Back to the search pane (also clears edit state)
@@ -6439,7 +6453,6 @@ async function _pickClubSubmit() {
   const title = (document.getElementById('pce-title').value || '').trim();
   if (!title) { status.textContent = 'title is required.'; return; }
   status.textContent = _pickClubMode === 'edit' ? 'saving…' : 'setting…';
-  const tagsRaw = (document.getElementById('pce-tags').value || '').trim();
   const book = {
     title,
     author: document.getElementById('pce-author').value || '',
@@ -6451,11 +6464,9 @@ async function _pickClubSubmit() {
     genre: document.getElementById('pce-genre').value || '',
     series: document.getElementById('pce-series').value || '',
     seriesNum: document.getElementById('pce-seriesNum').value || '',
-    tags: tagsRaw ? tagsRaw.split(',').map(s => s.trim()).filter(Boolean) : [],
     nationality: document.getElementById('pce-nationality').value || '',
     gender: document.getElementById('pce-gender').value || '',
     race: document.getElementById('pce-race').value || '',
-    spiceLevel: document.getElementById('pce-spiceLevel').value || '',
   };
   try {
     if (_pickClubMode === 'edit' && _editingClubBookId) {
@@ -8215,8 +8226,8 @@ function allGenderOptions() {
 // Populate the gender select. Pass `legacyValue` so we can include it as a one-off
 // option for books that still have an older value (e.g. "Female (duo)") — keeps the
 // edit-modal display correct without polluting the canonical list.
-function populateGenderSelect(legacyValue) {
-  const sel = document.getElementById('f-gender');
+function populateGenderSelect(legacyValue, selectId) {
+  const sel = document.getElementById(selectId || 'f-gender');
   if (!sel) return;
   const cur = legacyValue !== undefined ? legacyValue : sel.value;
   let html = '<option value="">—</option>'
