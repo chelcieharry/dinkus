@@ -573,6 +573,19 @@ body.onboarding #welcome-screen { display: flex; }
 .bc-wrap-link { display: inline-block; font-family: var(--font-body); font-size: 12px; color: var(--accent); cursor: pointer; margin-top: 8px; }
 .bc-pick-empty { background: var(--paper-2); border: 1px dashed var(--paper-3); border-radius: var(--radius); padding: 22px 16px; text-align: center; font-size: 13px; color: var(--ink-3); font-style: italic; }
 .bc-pick-empty .bc-cta-btn { margin-top: 12px; }
+/* "+ add to my currently reading" button + state */
+.bc-add-mine-btn { font-family: var(--font-body); font-size: 12px; padding: 6px 14px; background: var(--accent); color: var(--paper); border: none; border-radius: 99px; cursor: pointer; font-weight: 500; }
+.bc-add-mine-btn:hover { opacity: 0.92; }
+.bc-add-mine-state { font-size: 12px; color: var(--ink-3); font-style: italic; }
+/* Auto-pulled reviews — pinned at the top of the discussion */
+.bc-reviews-block { background: var(--paper-2); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 18px; }
+.bc-reviews-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); font-weight: 500; margin-bottom: 10px; }
+.bc-review { padding: 10px 0; border-bottom: 1px solid var(--paper-3); }
+.bc-review:last-child { border-bottom: none; }
+.bc-review-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; color: var(--ink-2); }
+.bc-review-stars { color: var(--accent); font-size: 12px; margin-left: 4px; }
+.bc-review-body { font-family: var(--font-display); font-style: italic; font-size: 13px; color: var(--ink-2); line-height: 1.6; padding-left: 36px; white-space: pre-wrap; word-wrap: break-word; }
+.bc-review-no-thoughts { font-size: 11px; color: var(--ink-3); font-style: italic; padding-left: 36px; }
 
 /* Comments thread */
 .bc-composer { display: flex; gap: 10px; margin-top: 14px; align-items: flex-start; }
@@ -589,6 +602,11 @@ body.onboarding #welcome-screen { display: flex; }
 .bc-comment-del { font-size: 11px; color: var(--ink-3); cursor: pointer; background: none; border: none; padding: 2px 0; margin-top: 4px; font-family: var(--font-body); }
 .bc-comment-del:hover { color: #b85; }
 
+/* Pick-club-book edit pane — labels + inputs styled compact */
+.pce-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); font-weight: 500; margin: 12px 0 4px; }
+.pce-input { width: 100%; box-sizing: border-box; font-family: var(--font-body); font-size: 13px; padding: 8px 11px; background: var(--paper); border: 1px solid var(--paper-3); border-radius: var(--radius); outline: none; color: var(--ink); }
+.pce-row { display: flex; gap: 10px; align-items: flex-start; }
+.pce-row > div { flex: 1; }
 /* Pick-book search results inside the pick-club-book modal */
 .bc-pick-result { display: flex; gap: 12px; padding: 10px; align-items: center; cursor: pointer; border-radius: var(--radius); transition: background 0.15s; }
 .bc-pick-result:hover { background: var(--paper-2); }
@@ -1261,17 +1279,96 @@ body.onboarding #welcome-screen { display: flex; }
   </div>
 </div>
 
-<!-- Book club: owner picks a book for the club. Reuses Google Books / Open Library -->
+<!-- Book club: owner picks a book for the club. Two states inside one modal:
+     - search: find a book via Google Books / Open Library
+     - edit:   refine title/author/cover/published/format/pages/length/genre/series/tags/demographics/spice
+     The edit pane lets the owner pre-fill metadata so members who tap
+     "+ add to my currently reading" get a properly categorized book in one click. -->
 <div class="modal-backdrop" id="modal-pick-club-book">
-  <div class="modal" style="max-width:520px;">
+  <div class="modal" style="max-width:560px;">
     <div class="modal-header">
-      <h3 class="modal-title">pick the next read</h3>
+      <h3 class="modal-title" id="pick-club-title">pick the next read</h3>
       <button class="modal-close" onclick="closeModal('modal-pick-club-book')">×</button>
     </div>
-    <div style="font-size:12px;color:var(--ink-3);line-height:1.5;margin-bottom:14px;">search by title or author. tap a result to set it as the club's current read.</div>
-    <input type="text" id="pick-club-search" placeholder="search…" oninput="_pickClubSearch(this.value)" style="font-family:var(--font-body);font-size:14px;padding:9px 12px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;color:var(--ink);width:100%;box-sizing:border-box;margin-bottom:8px;">
-    <div id="pick-club-status" style="font-size:11px;color:var(--ink-3);font-style:italic;min-height:16px;margin-bottom:8px;"></div>
-    <div id="pick-club-results" style="max-height:380px;overflow-y:auto;"></div>
+
+    <!-- State 1: search -->
+    <div id="pick-club-search-pane">
+      <div style="font-size:12px;color:var(--ink-3);line-height:1.5;margin-bottom:14px;">search by title or author. tap a result to refine its details. (or <button class="bc-set-link" onclick="_pickClubManualEntry()">enter manually</button>)</div>
+      <input type="text" id="pick-club-search" placeholder="search…" oninput="_pickClubSearch(this.value)" style="font-family:var(--font-body);font-size:14px;padding:9px 12px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;color:var(--ink);width:100%;box-sizing:border-box;margin-bottom:8px;">
+      <div id="pick-club-status" style="font-size:11px;color:var(--ink-3);font-style:italic;min-height:16px;margin-bottom:8px;"></div>
+      <div id="pick-club-results" style="max-height:380px;overflow-y:auto;"></div>
+    </div>
+
+    <!-- State 2: edit -->
+    <div id="pick-club-edit-pane" class="hidden">
+      <button class="bc-back" onclick="_pickClubBack()" style="margin-bottom:14px;">← back to search</button>
+      <div style="display:flex;gap:14px;margin-bottom:16px;">
+        <div style="flex-shrink:0;">
+          <div id="pce-cover-preview" style="width:72px;height:108px;border-radius:4px;background-size:cover;background-position:center;background-color:var(--paper-3);box-shadow:var(--shadow);"></div>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <label class="pce-label">cover url</label>
+          <input type="text" id="pce-coverUrl" class="pce-input" placeholder="https://…" oninput="_pickClubCoverChanged()" style="font-size:11px;">
+        </div>
+      </div>
+      <label class="pce-label">title <span style="color:#b85;">*</span></label>
+      <input type="text" id="pce-title" class="pce-input" maxlength="200">
+      <label class="pce-label">author</label>
+      <input type="text" id="pce-author" class="pce-input" maxlength="200">
+      <div class="pce-row">
+        <div style="flex:1;">
+          <label class="pce-label">published (year)</label>
+          <input type="text" id="pce-published" class="pce-input" maxlength="20" placeholder="1847">
+        </div>
+        <div style="flex:1;">
+          <label class="pce-label">format</label>
+          <select id="pce-format" class="pce-input" onchange="_pickClubFormatChanged()">
+            <option value="">—</option>
+            <option value="paperback">paperback</option>
+            <option value="hardback">hardback</option>
+            <option value="ebook">ebook</option>
+            <option value="audio">audio</option>
+          </select>
+        </div>
+      </div>
+      <div class="pce-row">
+        <div style="flex:1;">
+          <label class="pce-label">pages</label>
+          <input type="number" id="pce-pages" class="pce-input" min="0">
+        </div>
+        <div style="flex:1;" id="pce-length-wrap" class="hidden">
+          <label class="pce-label">length (hours)</label>
+          <input type="number" id="pce-length" class="pce-input" min="0" step="0.5">
+        </div>
+      </div>
+      <label class="pce-label">genre</label>
+      <input type="text" id="pce-genre" class="pce-input" placeholder="literary fiction, classics, …">
+      <div class="pce-row">
+        <div style="flex:2;">
+          <label class="pce-label">series</label>
+          <input type="text" id="pce-series" class="pce-input">
+        </div>
+        <div style="flex:1;">
+          <label class="pce-label">series #</label>
+          <input type="text" id="pce-seriesNum" class="pce-input">
+        </div>
+      </div>
+      <label class="pce-label">tags</label>
+      <input type="text" id="pce-tags" class="pce-input" placeholder="comma, separated, tags">
+      <label class="pce-label">author demographics <span style="text-transform:none;letter-spacing:0;color:var(--ink-3);font-style:italic;font-weight:400;">(helps the stats page)</span></label>
+      <div class="pce-row">
+        <div style="flex:1;"><input type="text" id="pce-nationality" class="pce-input" placeholder="nationality"></div>
+        <div style="flex:1;"><input type="text" id="pce-gender" class="pce-input" placeholder="gender"></div>
+        <div style="flex:1;"><input type="text" id="pce-race" class="pce-input" placeholder="race"></div>
+      </div>
+      <label class="pce-label">spice level <span style="text-transform:none;letter-spacing:0;color:var(--ink-3);font-style:italic;font-weight:400;">(0–5, optional)</span></label>
+      <input type="number" id="pce-spiceLevel" class="pce-input" min="0" max="5" style="max-width:80px;">
+      <div id="pick-club-edit-status" style="font-size:11px;color:#b85;font-style:italic;min-height:16px;margin-top:14px;"></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px;">
+        <button onclick="_pickClubBack()" style="font-family:var(--font-body);padding:9px 18px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">cancel</button>
+        <button onclick="_pickClubSubmit()" style="font-family:var(--font-body);padding:9px 20px;background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">set as club's current read</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -4004,18 +4101,35 @@ const clubsAPI = {
     return data;
   },
 
-  // Pick a new book for the club. Wrapped_at left null = currently reading.
+  // Pick a new book for the club with full metadata. Wrapped_at null = currently reading.
+  // Members can copy this into their own books table via "+ add to my currently reading",
+  // so we capture everything the standard library row holds (minus the review fields).
   async pickBook(clubId, book) {
     const userId = await _currentUserId();
     if (!userId) throw new Error('not signed in');
-    const { data, error } = await db.from('book_club_books').insert({
+    const payload = {
       club_id: clubId,
       title: (book.title || '').trim().slice(0, 200),
       author: (book.author || '').trim().slice(0, 200) || null,
       cover_url: book.coverUrl || null,
       google_books_id: book.googleBooksId || null,
       picked_by: userId,
-    }).select().single();
+    };
+    // Sparse — only attach the new columns if the caller supplied them, so the
+    // INSERT keeps working even before push-2d-schema.sql is run.
+    if (book.published   !== undefined) payload.published   = book.published || null;
+    if (book.format      !== undefined) payload.format      = book.format || null;
+    if (book.pages       !== undefined) payload.pages       = parseInt(book.pages) || null;
+    if (book.length      !== undefined) payload.length      = parseFloat(book.length) || null;
+    if (book.genre       !== undefined) payload.genre       = book.genre || null;
+    if (book.series      !== undefined) payload.series      = book.series || null;
+    if (book.seriesNum   !== undefined) payload.series_num  = book.seriesNum || null;
+    if (book.tags        !== undefined) payload.tags        = Array.isArray(book.tags) ? book.tags : null;
+    if (book.nationality !== undefined) payload.nationality = book.nationality || null;
+    if (book.gender      !== undefined) payload.gender      = book.gender || null;
+    if (book.race        !== undefined) payload.race        = book.race || null;
+    if (book.spiceLevel  !== undefined) payload.spice_level = (parseInt(book.spiceLevel) || null);
+    const { data, error } = await db.from('book_club_books').insert(payload).select().single();
     if (error) throw error;
     return data;
   },
@@ -5614,8 +5728,8 @@ let _viewingClubId = null;     // null = list mode, set = single-club mode
 let _pickClubSearchTimer = null;
 
 async function renderBookClubs() {
-  // Cheap idempotent sync on tab open — catches new picks shipped while the tab was closed
-  if (typeof syncClubBooksToTBR === 'function') syncClubBooksToTBR();
+  // Refresh the clubs cache (for the "from [club]" badge on TBR cards / book modal)
+  if (typeof _refreshMyClubsCache === 'function') _refreshMyClubsCache();
   if (_viewingClubId) await renderClubPage(_viewingClubId);
   else await renderClubsList();
 }
@@ -5766,7 +5880,10 @@ async function renderClubPage(clubId) {
   } catch (e) { wrap.innerHTML = '<div class="bc-empty">couldn\'t load that club. try again?</div>'; return; }
 
   const members = await clubsAPI.getMembers(clubId);
-  const books = await clubsAPI.getBooks(clubId);
+  // Renamed from `books` to avoid shadowing the global library array — we need
+  // to look up the user's own library copies of the current pick to decide
+  // whether to show "add to currently reading" / "already there" / etc.
+  const clubBooks = await clubsAPI.getBooks(clubId);
   const myUid = await _currentUserId();
   const me = members.find(m => m.user_id === myUid);
   const myRole = me ? me.role : 'member';
@@ -5778,7 +5895,7 @@ async function renderClubPage(clubId) {
   if (title) title.textContent = club.name;
   if (sub) sub.textContent = members.length + ' member' + (members.length === 1 ? '' : 's') + (club.cadence_weeks ? ' · every ' + club.cadence_weeks + ' week' + (club.cadence_weeks === 1 ? '' : 's') : '');
 
-  const current = books.find(b => !b.wrapped_at);
+  const current = clubBooks.find(b => !b.wrapped_at);
 
   // Header block — name, description, invite-member button, meta, settings cog
   const headerHtml = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
@@ -5802,6 +5919,21 @@ async function renderClubPage(clubId) {
       : 'background:' + bookColor(current.title) + ';';
     const fallback = current.cover_url ? '' : current.title;
     const pickedAgo = current.picked_at ? new Date(current.picked_at).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : '';
+    // What's my library state for this book? Drives the "add to my currently reading" button copy.
+    const matchKey = ((current.title || '') + '|' + (current.author || '')).toLowerCase();
+    const myCopy = books.find(b => (b.title + '|' + b.author).toLowerCase() === matchKey);
+    let addBtn;
+    if (!myCopy) {
+      addBtn = '<button class="bc-add-mine-btn" onclick="addClubBookToCurrently(\'' + current.id + '\')">+ add to my currently reading</button>';
+    } else if (myCopy.status === 'currently') {
+      addBtn = '<div class="bc-add-mine-state">in your currently reading</div>';
+    } else if (myCopy.status === 'read') {
+      addBtn = '<div class="bc-add-mine-state">you\'ve read this · <span onclick="viewBook(\'' + myCopy.id + '\')" style="color:var(--accent);cursor:pointer;">view in library</span></div>';
+    } else if (myCopy.status === 'want') {
+      addBtn = '<button class="bc-add-mine-btn" onclick="moveClubBookFromTbr(\'' + myCopy.id + '\', \'' + current.id + '\')">+ move from tbr to currently reading</button>';
+    } else {
+      addBtn = '<button class="bc-add-mine-btn" onclick="addClubBookToCurrently(\'' + current.id + '\')">+ add to my currently reading</button>';
+    }
     currentBlock = '<div class="bc-section-title">currently reading</div>'
       + '<div class="bc-current-book">'
         + '<div class="bc-current-cover" style="' + bg + '">' + fallback + '</div>'
@@ -5809,7 +5941,8 @@ async function renderClubPage(clubId) {
           + '<div class="bc-current-title">' + (current.title || '') + '</div>'
           + '<div class="bc-current-author">' + (current.author || '') + '</div>'
           + (pickedAgo ? '<div class="bc-current-meta">picked ' + pickedAgo + '</div>' : '')
-          + (canManage ? '<span class="bc-wrap-link" onclick="wrapUpClubBook(\'' + current.id + '\', \'' + (current.title || '').replace(/'/g,"\\'") + '\')">wrap this one up →</span>' : '')
+          + (canManage ? '<div><span class="bc-wrap-link" onclick="wrapUpClubBook(\'' + current.id + '\', \'' + (current.title || '').replace(/'/g,"\\'") + '\')">wrap this one up →</span></div>' : '')
+          + '<div style="margin-top:10px;">' + addBtn + '</div>'
         + '</div>'
       + '</div>';
   } else {
@@ -5824,11 +5957,25 @@ async function renderClubPage(clubId) {
   // Comments thread + composer (only if there's a current book to attach comments to)
   let commentsBlock = '';
   if (current) {
-    const comments = await clubsAPI.getComments(current.id);
+    // Pull both manual comments AND member takes (ratings + thoughts from each
+    // member's own library row) in parallel. Reviews pin to the top of the
+    // discussion so people get pulled into reactions before they post their own.
+    const [comments, takes] = await Promise.all([
+      clubsAPI.getComments(current.id),
+      clubsAPI.getBookMemberTakes(current.id),
+    ]);
+    const reviews = (takes || []).filter(t => (t.thoughts || '').trim() || (t.rating && t.rating > 0));
+    const reviewsBlock = reviews.length
+      ? '<div class="bc-reviews-block">'
+        + '<div class="bc-reviews-title">reviews from the group · ' + reviews.length + '</div>'
+        + reviews.map(_clubReviewHtml).join('')
+      + '</div>'
+      : '';
     const commentRows = comments.length
       ? comments.map(c => _clubCommentHtml(c, myUid)).join('')
       : '<div class="bc-empty" style="padding:20px 0;">no comments yet. say something first.</div>';
     commentsBlock = '<div class="bc-section-title">the discussion</div>'
+      + reviewsBlock
       + '<div class="bc-composer">'
         + '<textarea id="bc-composer-input" placeholder="what are you thinking?" maxlength="2000" oninput="document.getElementById(\'bc-composer-btn\').disabled = !this.value.trim();"></textarea>'
         + '<button id="bc-composer-btn" disabled onclick="submitClubComment(\'' + current.id + '\')">post</button>'
@@ -5837,7 +5984,7 @@ async function renderClubPage(clubId) {
   }
 
   // Archive — past picks (wrapped_at not null). Each pick's quotes + ratings load async.
-  const archivePicks = books.filter(b => !!b.wrapped_at);
+  const archivePicks = clubBooks.filter(b => !!b.wrapped_at);
   let archiveBlock = '';
   if (archivePicks.length) {
     archiveBlock = '<div class="bc-section-title">the archive · ' + archivePicks.length + '</div>'
@@ -5923,6 +6070,26 @@ function _truncateForQuote(s, n) {
   const cut = s.slice(0, n);
   const lastSpace = cut.lastIndexOf(' ');
   return (lastSpace > 80 ? cut.slice(0, lastSpace) : cut).trim() + '…';
+}
+
+// Review pulled from a member's own library — rating + thoughts, auto-surfaced
+// in the discussion when they've logged the book. Stars-only is fine (no thoughts).
+function _clubReviewHtml(t) {
+  const handle = (t.handle || '?');
+  const stars = (t.rating && t.rating > 0)
+    ? '<span class="bc-review-stars">' + renderStarsStatic(t.rating, true) + '</span>'
+    : '';
+  const body = (t.thoughts || '').trim()
+    ? '<div class="bc-review-body">"' + _escapeHtml(t.thoughts) + '"</div>'
+    : '<div class="bc-review-no-thoughts">rated, no review yet</div>';
+  return '<div class="bc-review">'
+    + '<div class="bc-review-meta">'
+      + avatarHtml({ handle, avatar_url: t.avatar_url }, 28)
+      + '<strong>@' + _escapeHtml(handle) + '</strong>'
+      + stars
+    + '</div>'
+    + body
+  + '</div>';
 }
 
 function _clubCommentHtml(c, myUid) {
@@ -6061,11 +6228,69 @@ async function submitJoinClub() {
 let _pickClubForId = null;
 function openPickClubBook(clubId) {
   _pickClubForId = clubId;
+  // Reset both panes
   document.getElementById('pick-club-search').value = '';
   document.getElementById('pick-club-results').innerHTML = '';
   document.getElementById('pick-club-status').textContent = '';
+  document.getElementById('pick-club-search-pane').classList.remove('hidden');
+  document.getElementById('pick-club-edit-pane').classList.add('hidden');
+  document.getElementById('pick-club-title').textContent = 'pick the next read';
   openModal('modal-pick-club-book');
   setTimeout(() => document.getElementById('pick-club-search').focus(), 50);
+}
+
+// Switch from search → edit pane, prefilling the form from a picked search result
+function _pickClubShowEdit(prefill) {
+  prefill = prefill || {};
+  document.getElementById('pick-club-search-pane').classList.add('hidden');
+  document.getElementById('pick-club-edit-pane').classList.remove('hidden');
+  document.getElementById('pick-club-title').textContent = 'fine-tune the details';
+  // Prefill — only the fields the search gave us; rest stay blank for the owner
+  document.getElementById('pce-coverUrl').value    = prefill.coverUrl || '';
+  document.getElementById('pce-title').value       = prefill.title || '';
+  document.getElementById('pce-author').value      = prefill.author || '';
+  document.getElementById('pce-published').value   = prefill.published || '';
+  document.getElementById('pce-format').value      = prefill.format || '';
+  document.getElementById('pce-pages').value       = prefill.pages || '';
+  document.getElementById('pce-length').value      = prefill.length || '';
+  document.getElementById('pce-genre').value       = prefill.genre || '';
+  document.getElementById('pce-series').value      = prefill.series || '';
+  document.getElementById('pce-seriesNum').value   = prefill.seriesNum || '';
+  document.getElementById('pce-tags').value        = prefill.tags || '';
+  document.getElementById('pce-nationality').value = prefill.nationality || '';
+  document.getElementById('pce-gender').value      = prefill.gender || '';
+  document.getElementById('pce-race').value        = prefill.race || '';
+  document.getElementById('pce-spiceLevel').value  = prefill.spiceLevel || '';
+  document.getElementById('pick-club-edit-status').textContent = '';
+  _pickClubCoverChanged();
+  _pickClubFormatChanged();
+}
+
+// Back to the search pane (also clears edit state)
+function _pickClubBack() {
+  document.getElementById('pick-club-edit-pane').classList.add('hidden');
+  document.getElementById('pick-club-search-pane').classList.remove('hidden');
+  document.getElementById('pick-club-title').textContent = 'pick the next read';
+}
+
+// "enter manually" link — skip search, jump to empty edit form
+function _pickClubManualEntry() {
+  _pickClubShowEdit({});
+  setTimeout(() => document.getElementById('pce-title').focus(), 50);
+}
+
+// Cover URL input → update the preview tile
+function _pickClubCoverChanged() {
+  const url = (document.getElementById('pce-coverUrl').value || '').trim();
+  const prev = document.getElementById('pce-cover-preview');
+  if (url) prev.style.backgroundImage = "url('" + url.replace(/'/g, '%27') + "')";
+  else prev.style.backgroundImage = 'none';
+}
+
+// Format → show/hide the audio length field
+function _pickClubFormatChanged() {
+  const f = document.getElementById('pce-format').value;
+  document.getElementById('pce-length-wrap').classList.toggle('hidden', f !== 'audio');
 }
 
 function _pickClubSearch(val) {
@@ -6105,6 +6330,8 @@ function _pickClubSearch(val) {
         author: authors,
         coverUrl: thumb,
         googleBooksId: item.id || null,
+        published: info.publishedDate ? info.publishedDate.slice(0, 4) : '',
+        pages: info.pageCount || '',
       }));
       return '<div class="bc-pick-result" onclick="_pickClubChoose(\'' + payload + '\')">'
         + (thumb ? '<img src="' + thumb + '" alt="">' : '<div class="bc-pick-fallback"></div>')
@@ -6117,19 +6344,51 @@ function _pickClubSearch(val) {
   }, 320);
 }
 
-async function _pickClubChoose(payloadEncoded) {
+// Search result tapped → prefill the edit form (don't insert yet)
+function _pickClubChoose(payloadEncoded) {
   if (!_pickClubForId) return;
   let book;
   try { book = JSON.parse(decodeURIComponent(payloadEncoded)); }
   catch (e) { alert('couldn\'t parse that pick.'); return; }
-  const status = document.getElementById('pick-club-status');
+  _pickClubShowEdit({
+    coverUrl: book.coverUrl,
+    title: book.title,
+    author: book.author,
+    published: book.published,
+    // pages comes from Google Books as pageCount
+    pages: book.pages,
+  });
+}
+
+// Submit the edit form — actually inserts into book_club_books
+async function _pickClubSubmit() {
+  if (!_pickClubForId) return;
+  const status = document.getElementById('pick-club-edit-status');
+  const title = (document.getElementById('pce-title').value || '').trim();
+  if (!title) { status.textContent = 'title is required.'; return; }
   status.textContent = 'setting…';
+  const tagsRaw = (document.getElementById('pce-tags').value || '').trim();
+  const book = {
+    title,
+    author: document.getElementById('pce-author').value || '',
+    coverUrl: (document.getElementById('pce-coverUrl').value || '').trim(),
+    published: document.getElementById('pce-published').value || '',
+    format: document.getElementById('pce-format').value || '',
+    pages: document.getElementById('pce-pages').value || '',
+    length: document.getElementById('pce-length').value || '',
+    genre: document.getElementById('pce-genre').value || '',
+    series: document.getElementById('pce-series').value || '',
+    seriesNum: document.getElementById('pce-seriesNum').value || '',
+    tags: tagsRaw ? tagsRaw.split(',').map(s => s.trim()).filter(Boolean) : [],
+    nationality: document.getElementById('pce-nationality').value || '',
+    gender: document.getElementById('pce-gender').value || '',
+    race: document.getElementById('pce-race').value || '',
+    spiceLevel: document.getElementById('pce-spiceLevel').value || '',
+  };
   try {
     await clubsAPI.pickBook(_pickClubForId, book);
     closeModal('modal-pick-club-book');
-    // Pull the new pick into the picker's own TBR right away (other members get it on next sync)
-    if (typeof syncClubBooksToTBR === 'function') syncClubBooksToTBR();
-    // Re-render the club page to show the new current book + empty comments
+    if (typeof _refreshMyClubsCache === 'function') _refreshMyClubsCache();
     renderClubPage(_pickClubForId);
   } catch (e) {
     status.textContent = 'couldn\'t set — ' + (e.message || 'try again?');
@@ -6167,6 +6426,82 @@ async function deleteClubComment(commentId) {
     await clubsAPI.deleteComment(commentId);
     if (_viewingClubId) renderClubPage(_viewingClubId);
   } catch (e) { alert('couldn\'t delete — ' + (e.message || e)); }
+}
+
+// ─── Add this club's current pick to MY library as currently reading ───
+// Copies all the metadata the owner filled in on the club book row (title,
+// author, cover, published, format, pages, length, genre, series, tags,
+// demographics, spice) into a fresh row in my own books table.
+// Stamps source_club_id so the "from [club]" badge picks it up.
+async function addClubBookToCurrently(clubBookId) {
+  if (!_viewingClubId) return;
+  // Find the club book we're acting on (it's in the rendered clubBooks list)
+  let cb;
+  try {
+    const list = await clubsAPI.getBooks(_viewingClubId);
+    cb = (list || []).find(b => b.id === clubBookId);
+  } catch (e) { alert('couldn\'t fetch the book — try again?'); return; }
+  if (!cb) { alert('that book is no longer the current pick.'); return; }
+  // Defensive dedup (e.g. button-tapped twice quickly): if already in library, bail
+  const key = ((cb.title || '') + '|' + (cb.author || '')).toLowerCase();
+  if (books.some(b => (b.title + '|' + b.author).toLowerCase() === key)) {
+    renderClubPage(_viewingClubId);  // re-render so the button updates
+    return;
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const newBook = {
+    title: cb.title || '',
+    author: cb.author || '',
+    coverUrl: cb.cover_url || '',
+    published: cb.published || '',
+    format: cb.format || '',
+    pages: cb.pages || 0,
+    length: cb.length || 0,
+    genre: cb.genre || '',
+    series: cb.series || '',
+    seriesNum: cb.series_num || '',
+    tags: Array.isArray(cb.tags) ? cb.tags : [],
+    nationality: cb.nationality || '',
+    gender: cb.gender || '',
+    race: cb.race || '',
+    spiceLevel: cb.spice_level || 0,
+    status: 'currently',
+    started: today,
+    sourceClubId: cb.club_id,
+    addedAt: new Date().toISOString(),
+    readings: [],
+  };
+  try {
+    const inserted = await booksAPI.insert(newBook);
+    books.unshift(inserted);
+    save();
+    renderClubPage(_viewingClubId);
+  } catch (e) {
+    alert('couldn\'t add — ' + (e.message || e));
+  }
+}
+
+// Member already had the book in TBR — flip it to currently reading instead of duplicating.
+// Stamps source_club_id too so attribution holds.
+async function moveClubBookFromTbr(myBookId, clubBookId) {
+  if (!_viewingClubId) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const existing = books.find(b => b.id === myBookId);
+  if (!existing) return;
+  try {
+    const patch = {
+      status: 'currently',
+      started: existing.started || today,
+      sourceClubId: _viewingClubId,
+    };
+    const updated = await booksAPI.update(myBookId, patch);
+    const idx = books.findIndex(b => b.id === myBookId);
+    if (idx !== -1) books[idx] = { ...books[idx], ...updated };
+    save();
+    renderClubPage(_viewingClubId);
+  } catch (e) {
+    alert('couldn\'t move — ' + (e.message || e));
+  }
 }
 
 // Owner wraps the current book up — moves it to the archive, opens slot for the next pick
@@ -6553,56 +6888,24 @@ function _dismissPendingJoinCode() {
   localStorage.removeItem('_pending_join_code');
 }
 
-// ─── TBR auto-sync from book clubs ───────────────────────────
-// Pull-based: for each club I'm in, ensure its currently-reading book is in
-// my own books (status='want') with source_club_id set for attribution.
-// Skip if I already have the book (title+author match — same dedup as friend recs).
-// Cached map of {clubId: club} for fast display lookups (the "from X" badge).
+// Cached map of {clubId: club} for fast display lookups (the "from [club]" badge
+// on TBR cards + book view modal). Populated by _refreshMyClubsCache(), which is
+// called on app start and when the book-clubs sub-tab opens.
+//
+// We USED to auto-insert each club's current book into every member's TBR (a
+// "syncClubBooksToTBR" pull-sync). It dupes too easily across whitespace and
+// punctuation differences between editions, so we rolled it back in 2d.
+// Members now opt in with the "+ add to my currently reading" button instead.
 let _myClubsById = {};
 
-async function syncClubBooksToTBR() {
+async function _refreshMyClubsCache() {
   try {
     const userId = await _currentUserId();
     if (!userId) return;
     const myClubs = await clubsAPI.listMine();
-    // Refresh the lookup cache regardless — display reads from this
     _myClubsById = {};
     myClubs.forEach(c => { _myClubsById[c.id] = c; });
-    if (!myClubs.length) return;
-    // Dedup against my existing library by (title|author)
-    const myKeys = new Set();
-    books.forEach(b => myKeys.add(((b.title || '') + '|' + (b.author || '')).toLowerCase()));
-    const toInsert = [];
-    for (const c of myClubs) {
-      if (!c.currentBook) continue;
-      const cb = c.currentBook;
-      const key = ((cb.title || '') + '|' + (cb.author || '')).toLowerCase();
-      if (myKeys.has(key)) continue;
-      toInsert.push({
-        title: cb.title || '',
-        author: cb.author || '',
-        coverUrl: cb.cover_url || '',
-        status: 'want',
-        sourceClubId: c.id,
-        addedAt: new Date().toISOString(),
-        readings: [],
-      });
-      myKeys.add(key);  // dedup within this sync pass too
-    }
-    if (!toInsert.length) return;
-    for (const newBook of toInsert) {
-      try {
-        const inserted = await booksAPI.insert(newBook);
-        books.unshift(inserted);
-      } catch (e) { console.warn('club TBR insert failed:', e); }
-    }
-    save();
-    // If the TBR page is on screen, re-render so the new books appear immediately
-    const wantPage = document.getElementById('page-want');
-    if (wantPage && !wantPage.classList.contains('hidden') && typeof renderWantToRead === 'function') renderWantToRead();
-  } catch (e) {
-    console.warn('syncClubBooksToTBR failed:', e);
-  }
+  } catch (e) { console.warn('clubs cache refresh failed:', e); }
 }
 
 // Friend's book row (currently reading) — tap to open the peek modal
@@ -7224,9 +7527,9 @@ async function syncBooksFromDb() {
     // Refresh the reading-room notification dot
     if (typeof refreshReadingRoomDot === 'function') refreshReadingRoomDot();
 
-    // Pull-sync any club picks into the user's TBR (auto-add with attribution).
-    // Runs after books are loaded so dedup works. Failures don't block the rest.
-    if (typeof syncClubBooksToTBR === 'function') syncClubBooksToTBR();
+    // Refresh the clubs cache so the "from [club]" badge can resolve names
+    // for any books that already have source_club_id (manually added).
+    if (typeof _refreshMyClubsCache === 'function') _refreshMyClubsCache();
 
     // Surface a soft error banner if any endpoint timed out, so the user knows data is partial
     if (failed.length) document.body.classList.add('sync-error');
