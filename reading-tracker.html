@@ -548,6 +548,10 @@ body.onboarding #welcome-screen { display: flex; }
 .bc-inv-actions button { font-family: var(--font-body); font-size: 12px; padding: 6px 14px; border-radius: 99px; cursor: pointer; font-weight: 500; border: none; }
 .bc-inv-join { background: var(--accent); color: var(--paper); }
 .bc-inv-dismiss { background: none; color: var(--ink-3); border: 1px solid var(--paper-3) !important; }
+/* Archive section header — title + right-aligned "+ log a past read" link */
+.bc-archive-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 24px 0 12px; }
+.bc-archive-add { font-family: var(--font-display); font-style: italic; font-size: 12px; color: var(--accent); cursor: pointer; white-space: nowrap; }
+.bc-archive-add:hover { text-decoration: underline; }
 /* Archive section on the club page */
 .bc-arch-card { background: var(--paper-2); border: 1px solid var(--paper-3); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
 .bc-arch-header { display: flex; gap: 14px; align-items: flex-start; }
@@ -1267,6 +1271,23 @@ body.onboarding #welcome-screen { display: flex; }
   </div>
 </div>
 
+<!-- Feedback modal — composes a mailto: to hello@dinkus.app with the user's note -->
+<div class="modal-backdrop" id="modal-feedback">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <h3 class="modal-title">send feedback</h3>
+      <button class="modal-close" onclick="closeModal('modal-feedback')">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:14px;">a bug, an idea, a complaint, a love note — whatever's on your mind. lands directly with chelcie at <strong>hello@dinkus.app</strong>.</p>
+    <textarea id="feedback-body" placeholder="what's on your mind?" maxlength="2000" rows="6" style="font-family:var(--font-body);font-size:13px;padding:10px 12px;background:var(--paper);border:1px solid var(--paper-3);border-radius:var(--radius);outline:none;color:var(--ink);width:100%;box-sizing:border-box;resize:vertical;margin-bottom:8px;"></textarea>
+    <div style="font-size:11px;color:var(--ink-3);font-style:italic;margin-bottom:14px;line-height:1.5;">tap send → opens your mail app with the note pre-filled. you can edit before sending.</div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button onclick="closeModal('modal-feedback')" style="font-family:var(--font-body);padding:9px 18px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;font-size:13px;">cancel</button>
+      <button onclick="sendFeedback()" style="font-family:var(--font-body);padding:9px 20px;background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">send</button>
+    </div>
+  </div>
+</div>
+
 <!-- Book club: confirm-join modal (used by invite-link flow + "I have a code" flow when peek returned a name) -->
 <div class="modal-backdrop" id="modal-confirm-join-club">
   <div class="modal" style="max-width:420px;">
@@ -1302,9 +1323,23 @@ body.onboarding #welcome-screen { display: flex; }
       <div id="pick-club-results" style="max-height:380px;overflow-y:auto;"></div>
     </div>
 
-    <!-- State 2: edit -->
+    <!-- State 2: edit (also serves the 'archive' backfill flow with date inputs visible) -->
     <div id="pick-club-edit-pane" class="hidden">
       <button class="bc-back" onclick="_pickClubBack()" style="margin-bottom:14px;">← back to search</button>
+      <!-- Date inputs — only visible in 'archive' mode for backfilling old reads -->
+      <div id="pce-dates-row" class="hidden" style="background:var(--paper-2);border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;">
+        <div style="font-size:11px;color:var(--ink-3);font-style:italic;margin-bottom:8px;line-height:1.5;">when did the club read this?</div>
+        <div class="pce-row">
+          <div style="flex:1;">
+            <div class="pce-sublabel">picked</div>
+            <input type="date" id="pce-pickedAt" class="pce-input">
+          </div>
+          <div style="flex:1;">
+            <div class="pce-sublabel">wrapped</div>
+            <input type="date" id="pce-wrappedAt" class="pce-input">
+          </div>
+        </div>
+      </div>
       <div style="display:flex;gap:14px;margin-bottom:16px;">
         <div style="flex-shrink:0;">
           <div id="pce-cover-preview" style="width:72px;height:108px;border-radius:4px;background-size:cover;background-position:center;background-color:var(--paper-3);box-shadow:var(--shadow);"></div>
@@ -4155,6 +4190,26 @@ const clubsAPI = {
     return data;
   },
 
+  // Log a past read — inserts straight into the archive with both dates set.
+  // Lets clubs that existed before dinkus backfill their reading history.
+  // RLS uses the same "owners pick books" INSERT policy.
+  async logPastRead(clubId, book, pickedAt, wrappedAt) {
+    const userId = await _currentUserId();
+    if (!userId) throw new Error('not signed in');
+    const payload = Object.assign(
+      {
+        club_id: clubId,
+        picked_by: userId,
+        picked_at: pickedAt,
+        wrapped_at: wrappedAt,
+      },
+      this._clubBookPayload(book)
+    );
+    const { data, error } = await db.from('book_club_books').insert(payload).select().single();
+    if (error) throw error;
+    return data;
+  },
+
   // Mark a club book as wrapped — moves it to the archive
   async wrapUp(clubBookId) {
     const { data, error } = await db.from('book_club_books')
@@ -4783,6 +4838,29 @@ function skipOnboardingBirthday() {
   showOnboardingStep('home');
 }
 
+// Feedback flow — opens a modal, composes a mailto: URL with the user's note + handle context
+function openFeedback() {
+  const ta = document.getElementById('feedback-body');
+  if (ta) ta.value = '';
+  openModal('modal-feedback');
+  setTimeout(() => ta && ta.focus(), 50);
+}
+
+function sendFeedback() {
+  const body = (document.getElementById('feedback-body').value || '').trim();
+  if (!body) { alert('add a note first.'); return; }
+  const handle = (profile && profile.handle) ? '@' + profile.handle : 'a dinkus user';
+  const subject = 'feedback from ' + handle;
+  // Two newlines + handle footer so it's clear who it's from even if mail strips the From
+  const fullBody = body + '\n\n— from ' + handle + ' in dinkus';
+  const mailto = 'mailto:hello@dinkus.app'
+    + '?subject=' + encodeURIComponent(subject)
+    + '&body=' + encodeURIComponent(fullBody);
+  closeModal('modal-feedback');
+  // Trigger the mailto via location to maximise compatibility (some browsers block window.open for mailto)
+  window.location.href = mailto;
+}
+
 // Save the global "share library with new friends" default. Affects future friendships only.
 async function saveDefaultShareLibrary() {
   const input = document.getElementById('default-share-library-input');
@@ -4911,6 +4989,14 @@ async function renderSettings() {
         sign out of this device. your data stays put.
       </div>
       <button onclick="signOut()" style="font-family:var(--font-body);font-size:12px;padding:7px 14px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;">sign out</button>
+    </div>
+
+    <div class="stat-block" style="margin-bottom:18px;">
+      <div class="stat-block-title">send feedback</div>
+      <div style="font-size:12px;color:var(--ink-3);margin-bottom:10px;line-height:1.5;">
+        bugs, ideas, requests, complaints — all welcome. opens your mail app pre-filled to hello@dinkus.app.
+      </div>
+      <button onclick="openFeedback()" style="font-family:var(--font-body);font-size:12px;padding:7px 14px;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius);cursor:pointer;">send feedback</button>
     </div>
 
     <div class="stat-block" style="margin-bottom:18px;">
@@ -6014,12 +6100,24 @@ async function renderClubPage(clubId) {
       + '<div class="bc-comments">' + commentRows + '</div>';
   }
 
-  // Archive — past picks (wrapped_at not null). Each pick's quotes + ratings load async.
+  // Archive — past picks (wrapped_at not null). Owners/co-owners can backfill old reads
+  // via "+ log a past read". When empty, only owners see the section (with a CTA) so
+  // members don't get an empty archive header on a fresh club.
   const archivePicks = clubBooks.filter(b => !!b.wrapped_at);
   let archiveBlock = '';
-  if (archivePicks.length) {
-    archiveBlock = '<div class="bc-section-title">the archive · ' + archivePicks.length + '</div>'
-      + archivePicks.map(_archivePickHtml).join('');
+  if (archivePicks.length || canManage) {
+    const headerLink = canManage
+      ? '<span class="bc-archive-add" onclick="openLogPastRead(\'' + club.id + '\')">+ log a past read</span>'
+      : '';
+    archiveBlock = '<div class="bc-archive-header">'
+        + '<div class="bc-section-title" style="margin:0;">the archive' + (archivePicks.length ? ' · ' + archivePicks.length : '') + '</div>'
+        + headerLink
+      + '</div>';
+    if (archivePicks.length) {
+      archiveBlock += archivePicks.map(_archivePickHtml).join('');
+    } else {
+      archiveBlock += '<div class="bc-empty" style="padding:18px 0;">no past reads logged yet · use <em>+ log a past read</em> above to backfill any that the club read before dinkus.</div>';
+    }
   }
 
   wrap.innerHTML = headerHtml + currentBlock + commentsBlock + archiveBlock;
@@ -6279,6 +6377,23 @@ function openPickClubBook(clubId) {
   setTimeout(() => document.getElementById('pick-club-search').focus(), 50);
 }
 
+// Open the modal in 'archive' mode — log a past read straight into the archive.
+// Date inputs visible at top, dates required on submit. Otherwise same form as pick.
+function openLogPastRead(clubId) {
+  _pickClubForId = clubId;
+  _pickClubMode = 'archive';
+  _editingClubBookId = null;
+  document.getElementById('pick-club-search').value = '';
+  document.getElementById('pick-club-results').innerHTML = '';
+  document.getElementById('pick-club-status').textContent = '';
+  document.getElementById('pick-club-search-pane').classList.remove('hidden');
+  document.getElementById('pick-club-edit-pane').classList.add('hidden');
+  document.getElementById('pick-club-title').textContent = 'log a past read';
+  _pickClubUpdateSubmitLabel();
+  openModal('modal-pick-club-book');
+  setTimeout(() => document.getElementById('pick-club-search').focus(), 50);
+}
+
 // Open the edit pane directly, prefilled from an existing club book row.
 // Owner/co-owner only — gated by the caller (renderClubPage hides the link otherwise).
 async function openEditClubBook(clubBookId) {
@@ -6314,14 +6429,29 @@ async function openEditClubBook(clubBookId) {
   setTimeout(() => document.getElementById('pce-title').focus(), 50);
 }
 
-// Adjust the submit button label + show/hide the back-to-search affordance
+// Adjust the submit button label + show/hide the back-to-search + date affordances
 function _pickClubUpdateSubmitLabel() {
   const submitBtn = document.querySelector('#pick-club-edit-pane button[onclick="_pickClubSubmit()"]');
-  if (submitBtn) submitBtn.textContent = _pickClubMode === 'edit' ? 'save changes' : 'set as club\'s current read';
-  // Hide both "← back to search" buttons in edit mode (no search to go back to)
+  if (submitBtn) {
+    submitBtn.textContent = _pickClubMode === 'edit'    ? 'save changes'
+                          : _pickClubMode === 'archive' ? 'add to archive'
+                          :                                'set as club\'s current read';
+  }
+  // Hide "← back to search" buttons in edit mode (no search to go back to)
   document.querySelectorAll('#pick-club-edit-pane .bc-back, #pick-club-edit-pane button[onclick="_pickClubBack()"]').forEach(el => {
     el.style.display = _pickClubMode === 'edit' ? 'none' : '';
   });
+  // Show date row only in archive mode
+  const datesRow = document.getElementById('pce-dates-row');
+  if (datesRow) datesRow.classList.toggle('hidden', _pickClubMode !== 'archive');
+  // Cap date pickers at today so users can't backfill into the future
+  if (_pickClubMode === 'archive') {
+    const today = new Date().toISOString().slice(0, 10);
+    const pickedInput = document.getElementById('pce-pickedAt');
+    const wrappedInput = document.getElementById('pce-wrappedAt');
+    if (pickedInput && !pickedInput.max) pickedInput.max = today;
+    if (wrappedInput && !wrappedInput.max) wrappedInput.max = today;
+  }
 }
 
 // Switch from search → edit pane, prefilling the form from a picked search result
@@ -6455,13 +6585,23 @@ function _pickClubChoose(payloadEncoded) {
   });
 }
 
-// Submit the edit form — dispatches to insert (pick mode) or update (edit mode)
+// Submit the edit form — dispatches to insert (pick), update (edit), or logPastRead (archive)
 async function _pickClubSubmit() {
   if (!_pickClubForId) return;
   const status = document.getElementById('pick-club-edit-status');
   const title = (document.getElementById('pce-title').value || '').trim();
   if (!title) { status.textContent = 'title is required.'; return; }
-  status.textContent = _pickClubMode === 'edit' ? 'saving…' : 'setting…';
+  // Archive mode requires both dates + picked ≤ wrapped
+  let pickedAt = null, wrappedAt = null;
+  if (_pickClubMode === 'archive') {
+    pickedAt  = (document.getElementById('pce-pickedAt').value  || '').trim();
+    wrappedAt = (document.getElementById('pce-wrappedAt').value || '').trim();
+    if (!pickedAt || !wrappedAt) { status.textContent = 'both dates are required for a past read.'; return; }
+    if (pickedAt > wrappedAt) { status.textContent = '"picked" needs to be on or before "wrapped".'; return; }
+  }
+  status.textContent = _pickClubMode === 'edit'    ? 'saving…'
+                    : _pickClubMode === 'archive' ? 'adding to archive…'
+                    :                                'setting…';
   const book = {
     title,
     author: document.getElementById('pce-author').value || '',
@@ -6480,6 +6620,8 @@ async function _pickClubSubmit() {
   try {
     if (_pickClubMode === 'edit' && _editingClubBookId) {
       await clubsAPI.updateClubBook(_editingClubBookId, book);
+    } else if (_pickClubMode === 'archive') {
+      await clubsAPI.logPastRead(_pickClubForId, book, pickedAt, wrappedAt);
     } else {
       await clubsAPI.pickBook(_pickClubForId, book);
     }
@@ -6487,7 +6629,8 @@ async function _pickClubSubmit() {
     if (typeof _refreshMyClubsCache === 'function') _refreshMyClubsCache();
     renderClubPage(_pickClubForId);
   } catch (e) {
-    status.textContent = (_pickClubMode === 'edit' ? 'couldn\'t save — ' : 'couldn\'t set — ') + (e.message || 'try again?');
+    const verb = _pickClubMode === 'edit' ? 'save' : _pickClubMode === 'archive' ? 'add' : 'set';
+    status.textContent = 'couldn\'t ' + verb + ' — ' + (e.message || 'try again?');
   }
 }
 
