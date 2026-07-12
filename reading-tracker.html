@@ -762,6 +762,24 @@ body.onboarding #welcome-screen { display: flex; }
 .pick-pill { background: var(--paper-3); color: var(--ink-3); border-radius: 99px; padding: 3px 10px; font-size: 11px; cursor: pointer; transition: background 0.15s, color 0.15s; user-select: none; }
 .pick-pill:hover { background: var(--paper); color: var(--ink-2); }
 .pick-pill.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+/* Favourite quotes — chain-add entries + a clear + button */
+.quote-entry { position: relative; margin-bottom: 8px; }
+.quote-entry textarea { width: 100%; box-sizing: border-box; font-family: var(--font-display); font-style: italic; font-size: 14px; line-height: 1.55; padding: 10px 34px 10px 12px; background: var(--paper); border: 1px solid var(--paper-3); border-radius: var(--radius); outline: none; color: var(--ink-2); resize: vertical; min-height: 60px; }
+.quote-remove { position: absolute; top: 6px; right: 8px; background: none; border: none; font-size: 16px; color: var(--ink-3); cursor: pointer; padding: 2px 6px; line-height: 1; border-radius: 4px; }
+.quote-remove:hover { color: #b85; background: var(--paper-2); }
+.quote-add-btn { font-family: var(--font-body); font-size: 15px; font-weight: 500; padding: 4px 16px; background: none; border: 1px dashed var(--paper-3); color: var(--ink-3); border-radius: 99px; cursor: pointer; margin-top: 6px; line-height: 1.6; }
+.quote-add-btn:hover { background: var(--paper-2); border-color: var(--accent-2); color: var(--accent); }
+/* DNF toggle — highlighted state when active */
+#f-dnf-btn.active { background: #8b3a3a !important; color: white !important; border-color: #8b3a3a !important; }
+/* Quotes page — display font passages with book attribution below each */
+.quote-page-entry { display: flex; gap: 14px; padding: 18px 0; border-bottom: 1px solid var(--paper-3); align-items: flex-start; }
+.quote-page-entry:last-child { border-bottom: none; }
+.quote-page-cover { width: 40px; height: 60px; border-radius: 3px; flex-shrink: 0; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; font-size: 8px; text-align: center; padding: 3px; font-weight: 500; line-height: 1.15; box-shadow: var(--shadow); cursor: pointer; }
+.quote-page-body { flex: 1; min-width: 0; }
+.quote-page-text { font-family: var(--font-display); font-style: italic; font-size: 15px; line-height: 1.65; color: var(--ink-2); border-left: 2px solid var(--accent-2); padding: 4px 0 4px 14px; margin-bottom: 8px; white-space: pre-wrap; }
+.quote-page-attr { font-size: 12px; color: var(--ink-3); }
+.quote-page-attr strong { color: var(--ink-2); font-weight: 500; cursor: pointer; }
+.quote-page-attr strong:hover { color: var(--accent); }
 .quarter-stars { display: flex; gap: 3px; align-items: center; touch-action: none; user-select: none; }
 .quarter-stars .star-wrap { position: relative; width: 40px; height: 40px; cursor: pointer; flex-shrink: 0; }
 .quarter-stars .star-outline,
@@ -1807,6 +1825,15 @@ body.onboarding #welcome-screen { display: flex; }
   </div>
 </div>
 
+<div id="page-quotes" class="hidden">
+  <div class="topbar">
+    <div><h2 class="page-title">quotes</h2><p class="page-subtitle">every passage you couldn't let go of. attributed. chronological.</p></div>
+  </div>
+  <div class="content">
+    <div id="quotes-content"></div>
+  </div>
+</div>
+
 <div id="page-bookClubs" class="hidden">
   <div class="topbar">
     <div><h2 class="page-title" id="bc-page-title">book clubs</h2><p class="page-subtitle" id="bc-page-subtitle">small rooms for slow reads. one book at a time.</p></div>
@@ -1922,10 +1949,9 @@ body.onboarding #welcome-screen { display: flex; }
         <div class="field">
           <label>Status</label>
           <select id="f-status" onchange="handleStatusChange()">
-            <option value="read">Read</option>
-            <option value="currently">currently reading</option>
             <option value="want">want to read</option>
-            <option value="dnf">DNF</option>
+            <option value="currently">currently reading</option>
+            <option value="read">read</option>
           </select>
         </div>
         <div class="field hidden" id="f-progress-wrap">
@@ -1942,11 +1968,11 @@ body.onboarding #welcome-screen { display: flex; }
       </div>
       <div class="form-row cols-2" id="f-dates-wrap">
         <div class="field"><label>Started</label><input type="date" id="f-started"></div>
-        <div class="field">
+        <div class="field" id="f-finished-wrap">
           <label>Finished</label>
           <div style="display:flex;gap:8px;align-items:center;">
             <input type="date" id="f-finished" style="flex:1;">
-            <button type="button" onclick="markDnfInForm()" style="font-family:var(--font-body);font-size:11px;padding:7px 10px;background:#f5e8e8;border:1px solid #e8c4c4;color:#8b3a3a;border-radius:var(--radius);cursor:pointer;white-space:nowrap;" title="mark as DNF — no shame, life is short">✕ DNF</button>
+            <button type="button" id="f-dnf-btn" onclick="toggleDnfInForm()" style="font-family:var(--font-body);font-size:11px;padding:7px 10px;background:#f5e8e8;border:1px solid #e8c4c4;color:#8b3a3a;border-radius:var(--radius);cursor:pointer;white-space:nowrap;" title="mark as DNF — no shame, life is short">✕ DNF</button>
           </div>
         </div>
       </div>
@@ -1962,8 +1988,15 @@ body.onboarding #welcome-screen { display: flex; }
           <input type="hidden" id="f-narration" value="0">
         </div>
       </div>
-      <div class="form-row">
+      <div class="form-row" id="f-thoughts-wrap">
         <div class="field"><label>Thoughts / notes</label><textarea id="f-thoughts" placeholder="Your review, notes, reflections…"></textarea></div>
+      </div>
+      <div class="form-row" id="f-quotes-wrap">
+        <div class="field" style="flex:1;">
+          <label>Favourite quotes</label>
+          <div id="f-quotes-list"></div>
+          <button type="button" class="quote-add-btn" onclick="addQuoteField()" title="add a quote">+</button>
+        </div>
       </div>
       <div class="book-page-nav">
         <button class="nav-back" onclick="goBookPage(1)">← back</button>
@@ -2983,13 +3016,58 @@ const CHALLENGES = {
     ],
     check: (b) => {
       const nat = (b.nationality||'').toLowerCase();
-      if (nat.includes('nigerian')||nat.includes('ghanian')||nat.includes('kenyan')||nat.includes('south african')||nat.includes('egyptian')) return 'africa';
-      if (nat.includes('japanese')||nat.includes('chinese')||nat.includes('korean')||nat.includes('indian')||nat.includes('thai')) return 'asia';
-      if (nat.includes('british')||nat.includes('uk')||nat.includes('french')||nat.includes('german')||nat.includes('irish')||nat.includes('belgian')||nat.includes('turkish')||nat.includes('swedish')) return 'europe';
-      if (nat.includes('usa')||nat.includes('american')||nat.includes('canadian')) return 'north_america';
-      if (nat.includes('brazilian')||nat.includes('argentinian')||nat.includes('colombian')) return 'south_america';
-      if (nat.includes('australian')||nat.includes('new zealand')) return 'oceania';
-      if (nat.includes('middle east')||nat.includes('arab')||nat.includes('iranian')||nat.includes('israeli')) return 'middle_east';
+      if (!nat) return null;
+      // Continent → list of nationality adjectives that map to it.
+      // Aligned with COUNTRY_OPTIONS so anything the user can select
+      // via the nationality datalist gets a continent credit.
+      // Middle East check runs BEFORE Asia so Iranian/Israeli/etc. don't
+      // false-positive elsewhere. Turkish → Middle East by convention here.
+      const CONTINENT_MAP = [
+        ['middle_east', [
+          'middle east', 'arab', 'israeli', 'iranian', 'iraqi', 'lebanese', 'syrian',
+          'saudi arabian', 'saudi', 'emirati', 'jordanian', 'turkish', 'palestinian',
+          'yemeni', 'kuwaiti', 'omani', 'qatari', 'bahraini',
+        ]],
+        ['africa', [
+          'nigerian', 'ghanian', 'ghanaian', 'kenyan', 'south african', 'egyptian',
+          'moroccan', 'ethiopian', 'senegalese', 'tanzanian', 'ugandan', 'zimbabwean',
+          'algerian', 'tunisian', 'sudanese', 'somali', 'rwandan', 'cameroonian',
+          'ivorian', 'malian', 'zambian', 'angolan', 'mozambican',
+        ]],
+        ['asia', [
+          'japanese', 'chinese', 'korean', 'indian', 'thai', 'pakistani', 'bangladeshi',
+          'sri lankan', 'nepali', 'nepalese', 'taiwanese', 'vietnamese', 'indonesian',
+          'filipino', 'malaysian', 'singaporean', 'burmese', 'myanmar', 'cambodian',
+          'mongolian', 'afghan', 'bhutanese', 'laotian', 'hong kong',
+        ]],
+        ['europe', [
+          'british', 'english', 'scottish', 'welsh', 'northern irish', 'irish',
+          'french', 'german', 'italian', 'spanish', 'portuguese', 'dutch', 'belgian',
+          'swedish', 'norwegian', 'danish', 'finnish', 'icelandic', 'polish',
+          'czech', 'slovak', 'hungarian', 'austrian', 'swiss', 'russian', 'ukrainian',
+          'greek', 'bulgarian', 'romanian', 'serbian', 'croatian', 'slovenian',
+          'bosnian', 'albanian', 'macedonian', 'estonian', 'latvian', 'lithuanian',
+          'moldovan', 'belarusian', 'maltese', 'luxembourgish', 'uk',
+        ]],
+        ['north_america', [
+          'usa', 'american', 'canadian', 'mexican', 'guatemalan', 'honduran',
+          'salvadoran', 'nicaraguan', 'costa rican', 'panamanian', 'jamaican',
+          'haitian', 'dominican', 'puerto rican', 'trinidadian', 'bahamian',
+          'barbadian', 'cuban',
+        ]],
+        ['south_america', [
+          'brazilian', 'argentinian', 'argentine', 'chilean', 'colombian', 'peruvian',
+          'venezuelan', 'ecuadorian', 'bolivian', 'uruguayan', 'paraguayan',
+          'guyanese', 'surinamese',
+        ]],
+        ['oceania', [
+          'australian', 'new zealander', 'new zealand', 'kiwi', 'fijian', 'samoan',
+          'tongan', 'papua new guinean', 'ni-vanuatu', 'solomon islander',
+        ]],
+      ];
+      for (const [continent, adjectives] of CONTINENT_MAP) {
+        if (adjectives.some(adj => nat.includes(adj))) return continent;
+      }
       return null;
     }
   },
@@ -3020,11 +3098,9 @@ const CHALLENGES = {
       {id:'translated', label:'translated from another language'},
       {id:'nonbinary', label:'by a non-binary author'},
       {id:'indigenous', label:'by an indigenous author'},
-      {id:'own_shelves', label:'from your own unread shelf (the audacity)'},
       {id:'rec_friend', label:'recommended by a friend'},
       {id:'award_winner', label:'award winner or shortlistee'},
       {id:'reread', label:'a re-read'},
-      {id:'different_genre', label:'a genre you\'ve never tried'},
     ],
     check: (b) => {
       const checks = [];
@@ -3038,7 +3114,10 @@ const CHALLENGES = {
       if (tags.some(t => t.includes('translation'))) checks.push('translated');
       // Author identity
       if ((b.gender||'').toLowerCase().includes('non-binary')) checks.push('nonbinary');
-      if (/indigenous|first nations|aboriginal|native american/i.test(b.race||b.nationality||'')) checks.push('indigenous');
+      // Indigenous — regex covers the main global indigenous identifiers people use
+      // in nationality/race fields (Māori, Inuit, Hawaiian, Sámi included). If the
+      // user has both race and nationality set, check both.
+      if (/indigenous|first nations|aboriginal|native american|m[āa]ori|inuit|hawaiian|s[áa]mi|m[ée]tis/i.test((b.race||'')+' '+(b.nationality||''))) checks.push('indigenous');
       // Friend-sourced
       if (b.sourceFriendId) checks.push('rec_friend');
       // Born year — only if the user has set their birthday in profile
@@ -3653,6 +3732,7 @@ function _dbToBook(row) {
     lentTo: row.lent_to || '',
     lentDate: row.lent_date || '',
     isAllTimeFavourite: !!row.is_all_time_favourite,
+    quotes: Array.isArray(row.quotes) ? row.quotes : [],
   };
 }
 
@@ -3687,6 +3767,7 @@ function _bookToDb(book, userId) {
   if (userId) out.user_id = userId;
   if (book.sourceFriendId !== undefined) out.source_friend_id = book.sourceFriendId;
   if (book.sourceClubId !== undefined) out.source_club_id = book.sourceClubId;
+  if (book.quotes !== undefined) out.quotes = Array.isArray(book.quotes) ? book.quotes : [];
   if (book.spiceLevel !== undefined) out.spice_level = book.spiceLevel || null;
   if (book.lentTo !== undefined) out.lent_to = book.lentTo || '';
   if (book.lentDate !== undefined) out.lent_date = book.lentDate || null;
@@ -5840,6 +5921,48 @@ function _onFpLibFilter(kind, value) {
 let _viewingClubId = null;     // null = list mode, set = single-club mode
 let _pickClubSearchTimer = null;
 
+// ─────────────────────────────────────────────────────────────
+// QUOTES — every favourite passage across the library
+// One page per user, chronological (most recent finish/added first).
+// Tapping a book cover or title opens that book's view modal.
+// ─────────────────────────────────────────────────────────────
+function renderQuotes() {
+  const wrap = document.getElementById('quotes-content');
+  if (!wrap) return;
+  // Flatten: each quote becomes its own entry with the book attached.
+  // Sort books by finished (fallback addedAt) desc, keep each book's quote order stable.
+  const withQuotes = books
+    .filter(b => Array.isArray(b.quotes) && b.quotes.length)
+    .sort((a, b) => (b.finished || b.addedAt || '').localeCompare(a.finished || a.addedAt || ''));
+  const total = withQuotes.reduce((n, b) => n + b.quotes.length, 0);
+  if (!total) {
+    wrap.innerHTML = '<div class="bc-empty" style="padding:40px 0;">'
+      + 'no quotes yet. next time a passage catches you, log it on the book\'s edit page — under thoughts.'
+      + '</div>';
+    return;
+  }
+  const entries = [];
+  withQuotes.forEach(b => {
+    const bg = b.coverUrl
+      ? 'background-image:url(\'' + b.coverUrl + '\');'
+      : 'background:' + bookColor(b.title) + ';';
+    const fallback = b.coverUrl ? '' : (b.title || '').slice(0, 40);
+    b.quotes.forEach(q => {
+      entries.push('<div class="quote-page-entry">'
+        + '<div class="quote-page-cover" style="' + bg + '" onclick="viewBook(\'' + b.id + '\')">' + _escapeHtml(fallback) + '</div>'
+        + '<div class="quote-page-body">'
+          + '<div class="quote-page-text">"' + _escapeHtml(q) + '"</div>'
+          + '<div class="quote-page-attr">— <strong onclick="viewBook(\'' + b.id + '\')">' + _escapeHtml(b.title || '') + '</strong>' + (b.author ? ' · ' + _escapeHtml(b.author) : '') + '</div>'
+        + '</div>'
+      + '</div>');
+    });
+  });
+  wrap.innerHTML = '<div style="font-size:12px;color:var(--ink-3);font-style:italic;margin-bottom:14px;">'
+    + total + ' quote' + (total === 1 ? '' : 's') + ' from ' + withQuotes.length + ' book' + (withQuotes.length === 1 ? '' : 's')
+    + '</div>'
+    + entries.join('');
+}
+
 async function renderBookClubs() {
   // Refresh the clubs cache (for the "from [club]" badge on TBR cards / book modal)
   if (typeof _refreshMyClubsCache === 'function') _refreshMyClubsCache();
@@ -7823,13 +7946,14 @@ const NAV_GROUPS = [
   ]},
   { id: 'you',      label: 'you',      pages: [
     { id: 'profile',      label: 'profile' },
+    { id: 'quotes',       label: 'quotes' },
     { id: 'oracle',       label: 'your reading' },
     { id: 'goals',        label: 'goals' },
     { id: 'settings',     label: 'settings' },
   ]},
 ];
 
-const PAGES = ['dashboard','library','stats','want','series','oracle','readingRoom','goals','friendsList','profile','bookClubs'];
+const PAGES = ['dashboard','library','stats','want','series','oracle','readingRoom','goals','friendsList','profile','bookClubs','quotes'];
 // Per-group memory of the last sub-page visited, so re-tapping a group lands you back where you were
 const _groupLastPage = {
   home: 'dashboard',
@@ -7894,6 +8018,7 @@ function showPage(name) {
   if (name==='readingRoom') renderReadingRoom();
   if (name==='bookClubs') renderBookClubs();
   if (name==='friendsList') renderFriendsListPage();
+  if (name==='quotes') renderQuotes();
   if (name==='profile') renderProfile();
   if (name==='settings') renderSettings();
 }
@@ -8082,10 +8207,47 @@ async function deleteSessionFromDay(bookId, sessionId) {
   renderDashboard();
 }
 
-function markDnfInForm() {
-  document.getElementById('f-status').value = 'dnf';
-  document.getElementById('f-finished').value = '';
+// Toggle DNF on the read view. Sets/clears the DNF toggle state, which
+// handleStatusChange reads to hide the Finished date. saveBook translates the
+// toggle into status='dnf' on write. Second tap reverts to a normal 'read'.
+function toggleDnfInForm() {
+  const currentlyOn = _isDnfActive();
+  _setDnfActive(!currentlyOn);
+  if (!currentlyOn) document.getElementById('f-finished').value = '';
   handleStatusChange();
+}
+
+// Add one quote entry to the form. Each entry is a textarea with an × remove.
+// The + button below the list stays put — chain-add multiple quotes by tapping again.
+function addQuoteField(initialText) {
+  const list = document.getElementById('f-quotes-list');
+  if (!list) return;
+  const entry = document.createElement('div');
+  entry.className = 'quote-entry';
+  entry.innerHTML = '<button type="button" class="quote-remove" title="remove this quote" onclick="this.parentNode.remove();">×</button>'
+    + '<textarea placeholder="paste or type a passage…"></textarea>';
+  list.appendChild(entry);
+  const ta = entry.querySelector('textarea');
+  if (initialText) ta.value = initialText;
+  else setTimeout(() => ta.focus(), 30);
+}
+
+// Read the quotes back out of the form. Trims + filters empties so a stray
+// unfilled entry doesn't pollute the array.
+function _readQuotesFromForm() {
+  const list = document.getElementById('f-quotes-list');
+  if (!list) return [];
+  return Array.from(list.querySelectorAll('textarea'))
+    .map(ta => (ta.value || '').trim())
+    .filter(Boolean);
+}
+
+// Pre-populate the form with an existing book's quotes (used by openEditBook).
+function _fillQuotesToForm(quotes) {
+  const list = document.getElementById('f-quotes-list');
+  if (!list) return;
+  list.innerHTML = '';
+  (quotes || []).forEach(q => { if (q) addQuoteField(q); });
 }
 
 // ── DAILY READING LOG (slider + timer) ──────────────────────
@@ -9659,6 +9821,7 @@ function viewBook(id) {
     </div>
   ${b.tags&&b.tags.length?`<div class="tag-list" style="margin-bottom:14px;">${b.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
     ${b.thoughts?`<div style="background:var(--paper-2);border-radius:var(--radius);padding:14px;font-size:13px;line-height:1.7;color:var(--ink-2);margin-bottom:16px;font-style:italic;">"${b.thoughts}"</div>`:''}
+    ${(b.quotes && b.quotes.length) ? `<div style="margin-bottom:16px;"><div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);font-weight:500;margin-bottom:10px;">favourite quotes${b.quotes.length>1?' · '+b.quotes.length:''}</div>${b.quotes.map(q => `<div style="font-family:var(--font-display);font-style:italic;font-size:14px;line-height:1.65;color:var(--ink-2);border-left:2px solid var(--accent-2);padding:6px 0 6px 12px;margin-bottom:8px;white-space:pre-wrap;">"${_escapeHtml(q)}"</div>`).join('')}</div>`:''}
     ${b.lentTo?`<div style="background:var(--paper-2);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--ink-2);margin-bottom:14px;font-style:italic;">📖 lent to <strong>${b.lentTo}</strong>${b.lentDate?' · since '+fmtDate(b.lentDate):''} · <span onclick="markBookReturned('${b.id}')" style="color:var(--accent);cursor:pointer;text-decoration:underline;">mark returned</span></div>`:''}
     ${sourceSlot}
     <div style="display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;">
@@ -9934,7 +10097,8 @@ function openAddBook(defaultStatus) {
   editingId = null;
   document.getElementById('modal-book-title').textContent = 'Log a book';
   clearForm();
-  document.getElementById('f-status').value = defaultStatus || 'read';
+  document.getElementById('f-status').value = defaultStatus || 'want';
+  _setDnfActive(false);
   handleStatusChange(); handleFormatChange();
   buildStarPicker('qs-rating','f-rating',0);
   buildStarPicker('qs-narration','f-narration',0);
@@ -9972,7 +10136,12 @@ function openEditBook(id, opts) {
   document.getElementById('f-series-num').value = b.seriesNum||'';
   document.getElementById('f-tags').value = (b.tags||[]).join(', ');
   document.getElementById('f-format').value = b.format||'';
-  document.getElementById('f-status').value = b.status||'read';
+  // DNF isn't in the dropdown anymore — it's a toggle. If the book is DNF,
+  // show 'read' in the dropdown and activate the DNF toggle so the form still
+  // renders review fields but hides the Finished date.
+  const isDnf = b.status === 'dnf';
+  document.getElementById('f-status').value = isDnf ? 'read' : (b.status || 'read');
+  _setDnfActive(isDnf);
   document.getElementById('f-progress').value = b.progress||'';
   document.getElementById('f-started').value = b.started||'';
   document.getElementById('f-finished').value = b.finished||'';
@@ -9980,6 +10149,7 @@ function openEditBook(id, opts) {
   document.getElementById('f-title')._coverUrl = b.coverUrl||'';
   document.getElementById('f-cover-url').value = b.coverUrl||'';
   updateCoverPreview();
+  _fillQuotesToForm(b.quotes || []);
   handleFormatChange(); handleStatusChange();
   buildStarPicker('qs-rating','f-rating',b.rating||0);
   buildStarPicker('qs-narration','f-narration',b.narration||0);
@@ -10011,10 +10181,14 @@ function clearForm() {
     const el = document.getElementById('f-'+k); if(el) { el.value=''; el._coverUrl=''; }
   });
   document.getElementById('f-format').value='';
-  document.getElementById('f-status').value='read';
+  document.getElementById('f-status').value='want';
   document.getElementById('f-rating').value=0;
   document.getElementById('f-narration').value=0;
   if (document.getElementById('f-spice-level')) document.getElementById('f-spice-level').value = 0;
+  // Reset quotes list + DNF toggle
+  const qList = document.getElementById('f-quotes-list');
+  if (qList) qList.innerHTML = '';
+  _setDnfActive(false);
   document.getElementById('autofill-status').textContent='';
   document.getElementById('autofill-suggestions').classList.add('hidden');
   updateCoverPreview();
@@ -10026,11 +10200,44 @@ function handleFormatChange() {
   document.getElementById('f-pages-wrap').classList.toggle('hidden', !fmt || fmt === 'audio');
   document.getElementById('f-narration-wrap').classList.toggle('hidden', fmt !== 'audio');
 }
+// Progressive disclosure on "your experience":
+//  want       → hide everything (dates, rating, thoughts, quotes)
+//  currently  → show started only; hide finished/rating/thoughts/quotes
+//  read       → show everything
+//  dnf        → show everything EXCEPT finished date (DNF-by-definition wasn't finished)
+// The tracked status is what the dropdown reads. DNF is set via the toggle,
+// which flips the effective status to 'dnf' without touching the dropdown label.
 function handleStatusChange() {
-  const s = document.getElementById('f-status').value;
-  document.getElementById('f-progress-wrap').classList.toggle('hidden', s!=='currently');
-  document.getElementById('f-dates-wrap').classList.toggle('hidden', s==='want');
-  document.getElementById('f-rating-wrap').classList.toggle('hidden', s==='want'||s==='dnf');
+  const dropdown = document.getElementById('f-status').value;
+  const dnfActive = _isDnfActive();
+  const effective = dnfActive ? 'dnf' : dropdown;
+
+  const dnfBtn = document.getElementById('f-dnf-btn');
+  if (dnfBtn) dnfBtn.style.display = (dropdown === 'read') ? '' : 'none';
+  if (dropdown !== 'read' && dnfActive) _setDnfActive(false);  // dnf only makes sense on 'read'
+
+  document.getElementById('f-progress-wrap').classList.toggle('hidden', dropdown !== 'currently');
+  document.getElementById('f-dates-wrap').classList.toggle('hidden', dropdown === 'want');
+  // Finished field lives inside dates-wrap — hide it individually when currently OR dnf
+  const finishedWrap = document.getElementById('f-finished-wrap');
+  if (finishedWrap) finishedWrap.classList.toggle('hidden', dropdown === 'currently' || effective === 'dnf');
+  document.getElementById('f-rating-wrap').classList.toggle('hidden', dropdown === 'want' || dropdown === 'currently');
+  const thoughtsWrap = document.getElementById('f-thoughts-wrap');
+  if (thoughtsWrap) thoughtsWrap.classList.toggle('hidden', dropdown === 'want' || dropdown === 'currently');
+  const quotesWrap = document.getElementById('f-quotes-wrap');
+  if (quotesWrap) quotesWrap.classList.toggle('hidden', dropdown === 'want' || dropdown === 'currently');
+}
+
+// Read/write the DNF toggle state via a data attribute on the button
+function _isDnfActive() {
+  const btn = document.getElementById('f-dnf-btn');
+  return !!(btn && btn.classList.contains('active'));
+}
+function _setDnfActive(on) {
+  const btn = document.getElementById('f-dnf-btn');
+  if (!btn) return;
+  btn.classList.toggle('active', !!on);
+  btn.title = on ? 'currently marked DNF — tap to restore' : 'mark as DNF — no shame, life is short';
 }
 
 // Show/hide the romance tropes picker based on the genre input
@@ -10125,13 +10332,14 @@ async function saveBook() {
     nationality: document.getElementById('f-nationality').value.trim(),
     gender: document.getElementById('f-gender').value.trim(),
     race: document.getElementById('f-race').value.trim(),
-    status: document.getElementById('f-status').value,
+    status: _isDnfActive() ? 'dnf' : document.getElementById('f-status').value,
     progress: parseInt(document.getElementById('f-progress').value)||0,
     started: document.getElementById('f-started').value,
     finished: document.getElementById('f-finished').value,
     rating: parseFloat(document.getElementById('f-rating').value)||0,
     narration: parseFloat(document.getElementById('f-narration').value)||0,
     thoughts: document.getElementById('f-thoughts').value.trim(),
+    quotes: _readQuotesFromForm(),
     coverUrl: document.getElementById('f-title')._coverUrl||'',
     addedAt: new Date().toISOString(),
   };
